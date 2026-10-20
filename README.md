@@ -33,7 +33,7 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 - **Seasonal menus.** Make a version of a menu for set dates (a Raya menu, a year-end sale). It takes over by itself on its first day and steps back after its last, in the site's own time zone.
 - On the site, drop-downs work with a mouse, a keyboard (Escape closes them) and on phones, where they open in place. The footer menu shows its links in groups.
 
-![The menu editor: one list, with a row's drawer open](docs/screenshots/site-menus.png)
+![The menu editor: seasonal versions on the left; on the right, arranging in words, a warning about a draft page, and that row's drawer open](docs/screenshots/site-menus.png)
 
 ![A wide panel on the site: links in columns, the newest posts and a picture card](docs/screenshots/wide-panel.png)
 
