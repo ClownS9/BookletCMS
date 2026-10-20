@@ -522,6 +522,14 @@ class Site
         return \App\Support\Blocks::forEntry($entry);
     }
 
+    /** What search engines and shared links say about an entry: its own search description, or its first lines. */
+    public function description(Entry $entry): string
+    {
+        $own = trim((string) $entry->get('meta_description', ''));
+
+        return $own !== '' ? Str::limit($own, 300, '') : $this->excerpt($entry, 160);
+    }
+
     public function excerpt(Entry $entry, int $length = 180): string
     {
         $text = (string) ($entry->get('excerpt') ?? $entry->get('meta_description') ?? '');

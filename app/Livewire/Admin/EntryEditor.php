@@ -863,6 +863,45 @@ class EntryEditor extends Component
         return $data;
     }
 
+    /**
+     * The search result and share card, from what's in the form now (unsaved
+     * changes included), for the "Search & sharing" card.
+     */
+    protected function searchCard(): ?array
+    {
+        return rescue(function () {
+            $existing = $this->entryId ? Booklet::entries()->find($this->entryId) : null;
+            $data = [];
+            foreach ($this->allFields() as $field) {
+                $handle = $field['handle'];
+                $value = $this->values[$handle] ?? null;
+                $data[$handle] = match ($field['type']) {
+                    'terms' => $existing?->get($handle), // never made up while typing
+                    'assets' => $value === '' || $value === null ? [] : (array) $value,
+                    'blocks' => Blocks::clean((array) ($value ?? [])) ?: null,
+                    'entries', 'grid' => $existing?->get($handle),
+                    default => $value === '' ? null : $value,
+                };
+            }
+
+            $entry = $existing
+                ? (clone $existing)->setData(array_merge($existing->data(), $data))
+                : Booklet::entries()->make(['collection' => $this->collection, 'slug' => $this->slug ?: Str::slug((string) ($this->values['title'] ?? ''))], $data);
+            if ($this->date) {
+                rescue(fn () => $entry->setAttribute('date', \Illuminate\Support\Carbon::parse($this->date)->format('Y-m-d H:i:s')), null, false);
+            }
+
+            $slug = $this->slug ?: Str::slug((string) ($this->values['title'] ?? '')) ?: 'new';
+            $url = $existing && $existing->slug() === $this->slug
+                ? app(\App\Booklet\Site::class)->url($existing)
+                : url(rtrim(Str::before((string) $this->model->route(), '{'), '/').'/'.$slug);
+
+            return \App\Support\SearchCard::for($entry, $url) + [
+                'fields' => array_values(array_intersect(['meta_title', 'meta_description'], array_column($this->allFields(), 'handle'))),
+            ];
+        }, null, false);
+    }
+
     protected function termSlugs(string $input, array $field): array
     {
         $taxonomy = $field['taxonomy'];
@@ -1279,6 +1318,7 @@ class EntryEditor extends Component
             'subscriberCount' => rescue(fn () => \App\Models\Subscriber::active()->count(), 0, false),
             'canTranslate' => $stacyHelp && $this->entryId && \App\Stacy\StacyConfig::allowsAction('translate'),
             'routePrefix' => Str::before((string) $this->model->route(), '{'),
+            'searchCard' => $this->searchCard(),
             'coEditors' => $this->coEditors(),
             'review' => ($reviewed = $this->entryId ? Booklet::entries()->find($this->entryId) : null) ? \App\Support\Reviews::state($reviewed) : null,
             'reviewInfo' => $reviewed ? \App\Support\Reviews::details($reviewed) : null,
