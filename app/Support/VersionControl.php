@@ -121,6 +121,7 @@ class VersionControl
     /** Start a history in the book's folder (only when there isn't one). */
     public static function init(): void
     {
+        self::guardPrivateFolders();
         if (self::isRepo()) {
             return;
         }
@@ -129,6 +130,28 @@ class VersionControl
             throw new RuntimeException('Git couldn’t start a history here: '.Str::limit(trim($result->errorOutput()), 200));
         }
         rescue(fn () => self::git(['symbolic-ref', 'HEAD', 'refs/heads/main']), null, false); // "main", like GitHub
+    }
+
+    /**
+     * Booklet's own storage (revisions, form submissions) never goes to git:
+     * it gets a .gitignore of its own, the way Laravel's storage folders do,
+     * so even a plain "git add ." by hand leaves it out. Made again if it
+     * goes missing; one already there (perhaps edited) is left alone.
+     */
+    public static function guardPrivateFolders(): void
+    {
+        $folder = (string) config('booklet.paths.storage', storage_path('booklet'));
+        $file = $folder.'/.gitignore';
+        if ($folder === '' || is_file($file)) {
+            return;
+        }
+
+        rescue(function () use ($folder, $file) {
+            if (! is_dir($folder)) {
+                mkdir($folder, 0755, true);
+            }
+            file_put_contents($file, "# Booklet's revisions and form submissions: kept on this server, never in git.\n*\n!.gitignore\n");
+        }, null, false);
     }
 
     // What's tracked ----------------------------------------------------------------------------

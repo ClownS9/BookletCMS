@@ -297,4 +297,29 @@ class VersionControlTest extends TestCase
         $this->assertSame('content/collections/posts/kuih-lapis.md', $this->git('show', '--name-only', '--format=', 'HEAD'));
         $this->assertSame('app/Work.php', $this->git('diff', '--cached', '--name-only')); // still staged, not committed
     }
+
+    public function test_booklets_own_storage_stays_out_of_git_even_with_a_plain_git_add(): void
+    {
+        config(['booklet.paths.storage' => $this->repo.'/storage/booklet']);
+        $this->write('storage/booklet/revisions/collections/posts/kuih-lapis/1.yaml', "title: An older draft\n");
+        $this->write('storage/booklet/forms/contact/1.yaml', "email: visitor@example.com\n");
+
+        $this->start();
+
+        $this->assertFileExists($this->repo.'/storage/booklet/.gitignore');
+        // By hand, everything at once: still nothing from Booklet's storage.
+        $this->git('add', '.');
+        $staged = $this->git('diff', '--cached', '--name-only');
+        $this->assertStringNotContainsString('storage/booklet/revisions', $staged);
+        $this->assertStringNotContainsString('storage/booklet/forms', $staged);
+
+        // Taken away, it comes back on the next run; one someone edited is left as it is.
+        unlink($this->repo.'/storage/booklet/.gitignore');
+        $this->artisan('booklet:git-commit')->assertExitCode(0);
+        $this->assertFileExists($this->repo.'/storage/booklet/.gitignore');
+
+        file_put_contents($this->repo.'/storage/booklet/.gitignore', "# mine\n*\n");
+        VersionControl::guardPrivateFolders();
+        $this->assertSame("# mine\n*\n", file_get_contents($this->repo.'/storage/booklet/.gitignore'));
+    }
 }

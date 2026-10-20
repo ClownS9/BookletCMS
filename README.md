@@ -149,7 +149,7 @@ BOOKLET_GIT_REMOTE=origin
 BOOKLET_GIT_PATH=         # another repository (default: this project)
 ```
 
-By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `resources/forms` are committed (and Media, if you ask). Switch on **Commit everything, not just content** to have the whole project committed too, code and README included. `.env`, the database file, `vendor/`, `node_modules/`, logs and backups are never committed either way.
+By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `resources/forms` are committed (and Media, if you ask). Switch on **Commit everything, not just content** to have the whole project committed too, code and README included. `.env`, the database file, `vendor/`, `node_modules/`, logs, backups, and Booklet's own revisions and form submissions (`storage/booklet/`) are never committed either way.
 
 ## Security
 
@@ -162,6 +162,7 @@ By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `r
 - **Safe database access.** All queries go through Laravel's query builder and Eloquent, with bound parameters, never raw values pasted into SQL.
 - **Backups leave secrets out.** AI keys and the mail password are never put in a backup file. Everything else is, so keep backups somewhere private.
 - **Version control never commits secrets.** `.env` files, the database file, `vendor/`, logs and backups are left out even if `.gitignore` forgets them.
+- **Revisions and form submissions stay on the server.** `storage/booklet/` has its own `.gitignore` (put back if it goes missing), so even a hand-typed `git add .` leaves them out. Your content's history is in git already, through `content/`.
 - **Tests can't touch your content.** They always run against an in-memory database and refuse to start otherwise.
 
 ### Signing in

@@ -16,6 +16,8 @@ class BookletGitCommit extends Command
 
     public function handle(): int
     {
+        VersionControl::guardPrivateFolders();
+
         if ($this->option('when-due') && ! VersionControl::due()) {
             return self::SUCCESS;
         }
