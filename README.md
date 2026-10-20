@@ -140,7 +140,26 @@ In **Settings › Stacy's brain**, pick an AI service and paste its key, or poin
 
 ## Version control settings
 
-Switch it on in **Settings › Version control**, or in `.env`:
+Switch it on in **Settings › Version control**, or in `.env`.
+
+### Sending it to GitHub, without the command line
+
+Under **A copy on GitHub** in the same page, three steps:
+
+1. **Make an empty repository on GitHub** (the button opens GitHub's page). Choose Private, and leave README, .gitignore and licence off.
+2. **Paste its address** (`https://github.com/you/repo`, the SSH address, or just `you/repo`).
+3. **Let Booklet send to it** with a fine-grained token made for that one repository, with *Contents: Read and write*. Or use the computer's own GitHub sign-in (an SSH key or a saved login).
+
+Then **Connect and send**. From then on, every commit is sent there too.
+
+- **The token** is kept encrypted with your `APP_KEY` in `storage/app/private`. It's only ever handed to git while sending, never written into `.git/config`, and never shown again. The Mac Keychain prompt stays out of it.
+- **When something goes wrong,** the page explains it in plain words (expired token, wrong address, no internet), with the fix.
+- **If GitHub already has other commits** (a README made there, or an older history), Booklet asks before doing anything. You can replace GitHub's copy with this book, or use a different, empty repository. It never merges the two by itself.
+- **Before anything is sent,** Booklet checks for:
+  - private files git kept from before (`.env`, the database, `storage/booklet`), with a button to take them out of git and keep them on disk;
+  - files with unfinished merge marks (`<<<<<<<`). Those are never committed, and the check-up names any content file that can't be read.
+
+### In `.env`
 
 ```dotenv
 BOOKLET_GIT=true          # commit changes on their own

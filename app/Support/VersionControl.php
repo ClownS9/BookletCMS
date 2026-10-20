@@ -103,6 +103,16 @@ class VersionControl
             'GIT_AUTHOR_EMAIL' => $author?->email ?: (string) ($committer['email'] ?? 'booklet@localhost'),
         ];
 
+        // Talking to GitHub with a saved token: handed to git for this one run
+        // (never written into .git/config), and the computer's own password
+        // helpers (macOS Keychain) are kept out of it so nothing pops up.
+        $network = in_array($args[0] ?? '', ['push', 'ls-remote', 'fetch'], true);
+        if ($network && ($token = self::token()) !== null && ($askpass = self::askpass()) !== null) {
+            $env['GIT_ASKPASS'] = $askpass;
+            $env['BOOKLET_GIT_SECRET'] = $token;
+            $args = ['-c', 'credential.helper=', ...$args];
+        }
+
         return Process::path(self::root())->env($env)->timeout($timeout)
             ->run([(string) config('booklet.git.binary', 'git'), ...$args]);
     }
@@ -292,6 +302,13 @@ class VersionControl
             throw new RuntimeException('None of the folders to keep a history of are here: '.implode(', ', (array) config('booklet.git.paths')).'.');
         }
 
+        // Never commit files still carrying unfinished merge marks (<<<<<<< … >>>>>>>).
+        if (($marked = self::conflicted()) !== []) {
+            return self::failed('Some files still have unfinished merge marks (<<<<<<< and >>>>>>>), so nothing was committed: '
+                .implode(', ', array_slice($marked, 0, 5)).(count($marked) > 5 ? ' and '.(count($marked) - 5).' more' : '')
+                .'. Open them, keep the lines you want and delete the marks, and Booklet carries on by itself.');
+        }
+
         // Everything in scope: the book's folders (or the whole project, with "everything" on).
         $added = self::git(['-c', 'advice.addIgnoredFile=false', 'add', '--all', '--', ...self::scope()]);
         // Git calls it an error when some excluded paths are already in .gitignore; everything else was added.
@@ -334,22 +351,329 @@ class VersionControl
         return $hash;
     }
 
-    /** Send commits to the remote (origin, unless set otherwise). Returns true when it went. */
-    public static function push(): bool
+    /**
+     * Send commits to the remote (origin, unless set otherwise). Returns true
+     * when it went. $replace sends this book's history over whatever the
+     * remote has (only ever when someone chose that, having been asked).
+     */
+    public static function push(bool $replace = false): bool
     {
-        $remote = (string) config('booklet.git.remote', 'origin');
+        $remote = self::remoteName();
         if (! in_array($remote, self::remotes(), true)) {
-            self::remember(['pushed' => false, 'push_error' => "There’s no remote called “{$remote}” to send to."]);
+            self::remember(['pushed' => false, 'push_error' => 'Not connected to GitHub (or anywhere else) yet.', 'push_problem' => 'none']);
 
             return false;
         }
-        $branch = (string) (config('booklet.git.branch') ?: trim(self::git(['rev-parse', '--abbrev-ref', 'HEAD'])->output()));
-        $result = self::git(['push', $remote, 'HEAD:'.$branch], timeout: 90);
-        self::remember($result->successful()
-            ? ['pushed' => now()->toIso8601String(), 'push_error' => null]
-            : ['pushed' => false, 'push_error' => Str::limit(trim($result->errorOutput()), 300)]);
+        if (trim(self::git(['rev-parse', '--verify', '--quiet', 'HEAD'], timeout: 10)->output()) === '') {
+            self::remember(['pushed' => false, 'push_error' => 'There’s nothing to send yet: no commits.', 'push_problem' => 'empty']);
 
-        return $result->successful();
+            return false;
+        }
+        $branch = self::branch();
+        $result = self::git(['push', ...($replace ? ['--force'] : []), '--set-upstream', $remote, 'HEAD:refs/heads/'.$branch], timeout: 120);
+        if ($result->successful()) {
+            self::remember(['pushed' => now()->toIso8601String(), 'push_error' => null, 'push_problem' => null]);
+
+            return true;
+        }
+        [$problem, $words] = self::explain($result->errorOutput() ?: $result->output());
+        self::remember(['pushed' => false, 'push_error' => $words, 'push_problem' => $problem]);
+
+        return false;
+    }
+
+    public static function remoteName(): string
+    {
+        return (string) config('booklet.git.remote', 'origin');
+    }
+
+    /** The branch commits go to: set in .env, or the one checked out ("main"). */
+    public static function branch(): string
+    {
+        $current = trim(rescue(fn () => self::git(['symbolic-ref', '--short', 'HEAD'], timeout: 10)->output(), '', false));
+
+        return (string) (config('booklet.git.branch') ?: ($current !== '' ? $current : 'main'));
+    }
+
+    // Connecting to GitHub (or another git host), without the command line ------------------------
+
+    /**
+     * What someone pasted, as a git address: a GitHub page or clone address
+     * (https or SSH), or just "owner/repository". Null when it isn't one, or
+     * when it has a password in it (that goes in the token box instead).
+     */
+    public static function normalizeRemote(string $input): ?string
+    {
+        $input = trim($input);
+        if ($input === '' || preg_match('/\s/', $input)) {
+            return null;
+        }
+        // owner/repository
+        if (preg_match('#^([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9._-]{1,100})$#', $input, $m)) {
+            return 'https://github.com/'.$m[1].'/'.preg_replace('/\.git$/', '', $m[2]).'.git';
+        }
+        // git@host:owner/repository(.git)
+        if (preg_match('#^git@([A-Za-z0-9.-]+):([A-Za-z0-9._/-]+?)(\.git)?/?$#', $input, $m)) {
+            return 'git@'.$m[1].':'.$m[2].'.git';
+        }
+        // https://host/owner/repository(.git), a page on GitHub included (…/tree/main and so on)
+        if (preg_match('#^https://([^/@\s]+)/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+?)(?:\.git)?(?:/.*)?$#', $input, $m)) {
+            return 'https://'.strtolower($m[1]).'/'.$m[2].'/'.$m[3].'.git';
+        }
+
+        return null;
+    }
+
+    /** The remote's address, if there is one. */
+    public static function remoteUrl(): ?string
+    {
+        $url = trim(rescue(fn () => self::git(['remote', 'get-url', self::remoteName()], timeout: 10)->output(), '', false));
+
+        return $url !== '' ? $url : null;
+    }
+
+    /** A web page for the remote ("https://github.com/owner/repo"), for a link. */
+    public static function webUrl(?string $remote = null): ?string
+    {
+        $remote ??= self::remoteUrl();
+        if (! $remote) {
+            return null;
+        }
+        if (preg_match('#^git@([^:]+):(.+?)(\.git)?$#', $remote, $m)) {
+            return 'https://'.$m[1].'/'.$m[2];
+        }
+        if (preg_match('#^https://(?:[^@/]+@)?([^/]+)/(.+?)(\.git)?$#', $remote, $m)) {
+            return 'https://'.$m[1].'/'.$m[2];
+        }
+
+        return null;
+    }
+
+    /** "owner/repository", for showing. */
+    public static function remoteLabel(?string $remote = null): ?string
+    {
+        $web = self::webUrl($remote);
+
+        return $web ? (string) preg_replace('#^https://(github\.com/)?#', '', $web) : null;
+    }
+
+    /**
+     * Point the book at a remote (adding or changing it), keep the token if
+     * one was given, and make sure the remote can be reached. Throws with a
+     * plain explanation when it can't.
+     */
+    public static function connect(string $address, ?string $token = null): void
+    {
+        if (! self::isRepo()) {
+            throw new RuntimeException('Start the history first, then connect it.');
+        }
+        $remote = self::remoteName();
+        $result = in_array($remote, self::remotes(), true)
+            ? self::git(['remote', 'set-url', $remote, $address])
+            : self::git(['remote', 'add', $remote, $address]);
+        if (! $result->successful()) {
+            throw new RuntimeException('Git couldn’t save that address: '.Str::limit(trim($result->errorOutput()), 200));
+        }
+        if ($token !== null) {
+            self::saveToken($token);
+        }
+
+        $test = self::git(['ls-remote', '--heads', $remote], timeout: 45);
+        if (! $test->successful()) {
+            [, $words] = self::explain($test->errorOutput());
+            throw new RuntimeException($words);
+        }
+        self::remember(['push_error' => null, 'push_problem' => null]);
+    }
+
+    /** Does the remote have no commits yet (a new, empty repository)? Null when it can't be asked. */
+    public static function remoteIsEmpty(): ?bool
+    {
+        $result = self::git(['ls-remote', '--heads', '--tags', self::remoteName()], timeout: 45);
+
+        return $result->successful() ? trim($result->output()) === '' : null;
+    }
+
+    /** Stop sending anywhere: the remote and its token go; the history stays. */
+    public static function disconnect(): void
+    {
+        if (in_array(self::remoteName(), self::remotes(), true)) {
+            self::git(['remote', 'remove', self::remoteName()]);
+        }
+        self::saveToken(null);
+        self::saveSettings(['push' => false]);
+        self::remember(['pushed' => null, 'push_error' => null, 'push_problem' => null]);
+    }
+
+    /**
+     * What git said, in words: [problem, explanation]. Problems: signin,
+     * missing, diverged, offline, sshkey, other.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function explain(string $said): array
+    {
+        $said = trim($said);
+        $is = fn (string ...$words) => collect($words)->contains(fn ($w) => stripos($said, $w) !== false);
+
+        return match (true) {
+            $is('Repository not found', 'does not appear to be a git repository', 'not found') => ['missing',
+                'GitHub can’t find that repository, or the token isn’t allowed to see it. Check the address, and that the token was made for this repository.'],
+            $is('Permission denied (publickey)', 'Host key verification failed') => ['sshkey',
+                'This computer’s SSH key isn’t set up with GitHub. Use the https address with a token instead (it’s simpler), or add the key in GitHub › Settings › SSH keys.'],
+            $is('Authentication failed', 'could not read Username', 'could not read Password', 'Invalid username or password', 'terminal prompts disabled', 'The requested URL returned error: 403', 'Permission to', 'denied to') => ['signin',
+                'GitHub didn’t accept the sign-in. Make a new token for this repository with “Contents: Read and write”, and paste it in again. (Tokens also stop working when they expire.)'],
+            $is('[rejected]', 'fetch first', 'non-fast-forward', 'Updates were rejected') => ['diverged',
+                'GitHub already has commits this book doesn’t: perhaps a README made with the repository, or an older history. Choose below what to do.'],
+            $is('Could not resolve host', 'timed out', 'Connection refused', 'unable to access', 'Network is unreachable', 'Operation timed out') => ['offline',
+                'Couldn’t reach GitHub. Check this computer’s internet connection, then send again.'],
+            default => ['other', 'Sending didn’t work. Git said: '.Str::limit($said !== '' ? $said : 'nothing at all', 240)],
+        };
+    }
+
+    // The token: kept encrypted with the app key, in storage/app/private ---------------------------
+
+    protected static function tokenFile(): string
+    {
+        return storage_path('app/private/version-control-token');
+    }
+
+    public static function saveToken(?string $token): void
+    {
+        $token = $token !== null ? trim($token) : null;
+        if ($token === null || $token === '') {
+            @unlink(self::tokenFile());
+
+            return;
+        }
+        File::ensureDirectoryExists(dirname(self::tokenFile()));
+        file_put_contents(self::tokenFile(), \Illuminate\Support\Facades\Crypt::encryptString($token));
+        @chmod(self::tokenFile(), 0600);
+    }
+
+    protected static function token(): ?string
+    {
+        if (! is_file(self::tokenFile())) {
+            return null;
+        }
+
+        // A changed APP_KEY can't read it any more: treated as no token (connect again).
+        return rescue(fn () => \Illuminate\Support\Facades\Crypt::decryptString((string) file_get_contents(self::tokenFile())), null, false);
+    }
+
+    public static function hasToken(): bool
+    {
+        return self::token() !== null;
+    }
+
+    /** The token's last four characters, to recognise it by. */
+    public static function tokenHint(): ?string
+    {
+        $token = self::token();
+
+        return $token !== null ? '…'.substr($token, -4) : null;
+    }
+
+    /** A tiny helper git asks for the password: it prints the token from this run's environment. */
+    protected static function askpass(): ?string
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            return null; // Windows: use the computer's own sign-in
+        }
+        $file = storage_path('app/private/git-askpass.sh');
+        $script = "#!/bin/sh\ncase \"\$1\" in\n  Username*) echo x-access-token ;;\n  *) printf '%s\\n' \"\$BOOKLET_GIT_SECRET\" ;;\nesac\n";
+        if (! is_file($file) || file_get_contents($file) !== $script) {
+            File::ensureDirectoryExists(dirname($file));
+            file_put_contents($file, $script);
+        }
+        @chmod($file, 0700);
+
+        return $file;
+    }
+
+    // Safety checks before anything goes anywhere -------------------------------------------------
+
+    /** Private things git should never hold (but might, from before): .env, databases, Booklet's storage, logs. */
+    public const PRIVATE = ['.env', '.env.*', '**/.env', '*.sqlite', '**/*.sqlite', '**/*.sqlite-*', 'storage/booklet', 'storage/app/private', 'storage/logs', 'auth.json'];
+
+    /**
+     * Private files git is already keeping (committed before .gitignore or
+     * Booklet's rules covered them). .env.example is fine; so are the
+     * folders' own .gitignore files.
+     *
+     * @return list<string>
+     */
+    public static function privateTracked(): array
+    {
+        if (! self::isRepo()) {
+            return [];
+        }
+        $out = rescue(fn () => self::git(['ls-files', '--', ...array_map(fn ($p) => ':(glob)'.(str_contains($p, '*') || str_contains($p, '.') ? $p : $p.'/**'), self::PRIVATE)], timeout: 15)->output(), '', false);
+
+        return array_values(array_filter(preg_split('/\R/', trim($out)), fn ($f) => $f !== '' && $f !== '.env.example' && ! str_ends_with($f, '/.gitignore')));
+    }
+
+    /**
+     * Take private files out of git, keeping them on this computer (git rm
+     * --cached), as a commit of its own. They stay in older commits; on a
+     * public repository, those need rewriting too.
+     */
+    public static function untrackPrivate(User $by): ?string
+    {
+        $files = self::privateTracked();
+        if ($files === []) {
+            return null;
+        }
+        // Only these go in this commit: nothing someone staged by hand gets swept in.
+        $staged = array_filter(preg_split('/\R/', trim(self::git(['diff', '--cached', '--name-only'])->output())));
+        if ($staged !== []) {
+            return self::failed('Some changes are waiting in git to be committed by hand ('.Str::limit(implode(', ', $staged), 120).'). Commit them first, then try again.');
+        }
+        foreach (array_chunk($files, 100) as $chunk) {
+            $result = self::git(['rm', '--cached', '--quiet', '--', ...$chunk]);
+            if (! $result->successful()) {
+                return self::failed('Git couldn’t take them out: '.Str::limit(trim($result->errorOutput()), 200));
+            }
+        }
+        // (No file names after "commit": git won't take names it no longer tracks.)
+        $result = self::git(['commit', '--no-verify', '--no-gpg-sign', '-m', 'Stop keeping private files in git', '-m', 'Still on the server, just not in the history from here on: '.implode(', ', array_slice($files, 0, 20))], $by);
+        if (! $result->successful()) {
+            return self::failed('Git couldn’t commit that: '.Str::limit(trim($result->errorOutput() ?: $result->output()), 200));
+        }
+
+        return trim(self::git(['rev-parse', '--short', 'HEAD'])->output());
+    }
+
+    /**
+     * Files (in what's committed) with unfinished merge marks: lines starting
+     * <<<<<<< or >>>>>>>. Committing those breaks pages (a stray mark in a
+     * stylesheet can switch most of it off).
+     *
+     * @return list<string>
+     */
+    public static function conflicted(): array
+    {
+        $result = rescue(fn () => self::git(['grep', '--untracked', '-I', '-l', '-E', '^(<<<<<<<|>>>>>>>)( |$)', '--', ...self::scope()], timeout: 30), null, false);
+        if (! $result || ! $result->successful()) {
+            return []; // exit code 1: none found
+        }
+
+        return array_values(array_filter(preg_split('/\R/', trim($result->output()))));
+    }
+
+    /** Is a git merge half done (started by hand, not finished)? */
+    public static function merging(): bool
+    {
+        return rescue(fn () => self::git(['rev-parse', '-q', '--verify', 'MERGE_HEAD'], timeout: 10)->successful(), false, false);
+    }
+
+    /** Go back to how things were before the unfinished merge (git merge --abort). */
+    public static function abortMerge(): void
+    {
+        $result = self::git(['merge', '--abort']);
+        if (! $result->successful()) {
+            throw new RuntimeException('Git couldn’t undo the merge: '.Str::limit(trim($result->errorOutput()), 200));
+        }
     }
 
     /** @return list<string> */

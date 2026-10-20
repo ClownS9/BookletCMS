@@ -201,7 +201,7 @@ class VersionControlTest extends TestCase
         // No remote yet: it says so, nothing breaks.
         VersionControl::saveSettings(['push' => true]);
         VersionControl::commit('One', $this->admin);
-        $this->assertStringContainsString('no remote', VersionControl::status()['push_error']);
+        $this->assertStringContainsString('Not connected', VersionControl::status()['push_error']);
 
         Process::run(['git', 'init', '--bare', $this->repo.'-remote.git']);
         $this->git('remote', 'add', 'origin', $this->repo.'-remote.git');
@@ -321,5 +321,147 @@ class VersionControlTest extends TestCase
         file_put_contents($this->repo.'/storage/booklet/.gitignore', "# mine\n*\n");
         VersionControl::guardPrivateFolders();
         $this->assertSame("# mine\n*\n", file_get_contents($this->repo.'/storage/booklet/.gitignore'));
+    }
+
+    public function test_addresses_people_paste_are_understood(): void
+    {
+        $this->assertSame('https://github.com/hana/kopi.git', VersionControl::normalizeRemote('hana/kopi'));
+        $this->assertSame('https://github.com/hana/kopi.git', VersionControl::normalizeRemote('https://github.com/hana/kopi'));
+        $this->assertSame('https://github.com/hana/kopi.git', VersionControl::normalizeRemote('https://github.com/hana/kopi.git'));
+        $this->assertSame('https://github.com/hana/kopi.git', VersionControl::normalizeRemote('https://github.com/hana/kopi/tree/main/content'));
+        $this->assertSame('git@github.com:hana/kopi.git', VersionControl::normalizeRemote('git@github.com:hana/kopi.git'));
+        $this->assertNull(VersionControl::normalizeRemote('https://hana:secret@github.com/hana/kopi.git'), 'never a password in the address');
+        $this->assertNull(VersionControl::normalizeRemote('just words'));
+        $this->assertNull(VersionControl::normalizeRemote('http://github.com/hana/kopi'));
+
+        $this->assertSame('https://github.com/hana/kopi', VersionControl::webUrl('git@github.com:hana/kopi.git'));
+        $this->assertSame('hana/kopi', VersionControl::remoteLabel('https://github.com/hana/kopi.git'));
+
+        $this->assertSame('signin', VersionControl::explain("remote: Invalid username or token.\nfatal: Authentication failed for 'https://github.com/hana/kopi.git/'")[0]);
+        $this->assertSame('missing', VersionControl::explain('remote: Repository not found.')[0]);
+        $this->assertSame('diverged', VersionControl::explain(" ! [rejected]        HEAD -> main (fetch first)\nerror: failed to push some refs")[0]);
+        $this->assertSame('offline', VersionControl::explain('fatal: unable to access: Could not resolve host: github.com')[0]);
+        $this->assertSame('sshkey', VersionControl::explain('git@github.com: Permission denied (publickey).')[0]);
+    }
+
+    public function test_connecting_sends_everything_and_keeps_sending(): void
+    {
+        $this->start();
+        Process::run(['git', 'init', '--bare', $this->repo.'-remote.git']);
+
+        VersionControl::connect($this->repo.'-remote.git', 'github_pat_'.str_repeat('a', 40));
+        $this->assertTrue(VersionControl::remoteIsEmpty());
+        $this->assertTrue(VersionControl::push());
+        $this->assertFalse(VersionControl::remoteIsEmpty());
+
+        // The token is kept encrypted by Booklet, never in git's own settings.
+        $this->assertStringNotContainsString('github_pat_', (string) file_get_contents($this->repo.'/.git/config'));
+        $this->assertStringNotContainsString('github_pat_', (string) file_get_contents(storage_path('app/private/version-control-token')));
+        $this->assertSame('…aaaa', VersionControl::tokenHint());
+
+        // Disconnecting forgets the remote and the token; the history stays.
+        VersionControl::disconnect();
+        $this->assertSame([], VersionControl::remotes());
+        $this->assertFalse(VersionControl::hasToken());
+        $this->assertNotSame('', $this->git('log', '-1', '--format=%s'));
+    }
+
+    public function test_the_token_is_handed_to_git_only_for_sending(): void
+    {
+        // A stand-in for git that writes down how it was called.
+        $spy = $this->repo.'-spy.sh';
+        file_put_contents($spy, "#!/bin/sh\nprintf '%s\\n' \"\$*\" >> \"$spy.args\"\n\"\$GIT_ASKPASS\" 'Password for https://github.com' >> \"$spy.args\"\n");
+        chmod($spy, 0755);
+        VersionControl::saveToken('github_pat_'.str_repeat('z', 40));
+        config(['booklet.git.binary' => $spy]);
+
+        VersionControl::git(['push', 'origin', 'HEAD:main']);
+        VersionControl::git(['status']);
+        $said = (string) file_get_contents($spy.'.args');
+        @unlink($spy);
+        @unlink($spy.'.args');
+        VersionControl::saveToken(null);
+
+        $this->assertStringContainsString('-c credential.helper= push origin HEAD:main', $said, 'the Mac Keychain stays out of it');
+        $this->assertStringContainsString('github_pat_'.str_repeat('z', 40), $said, 'git gets the token when it asks');
+        $this->assertStringContainsString("\nstatus", $said);
+        $this->assertStringNotContainsString('-c credential.helper= status', $said, 'only for talking to GitHub');
+    }
+
+    public function test_when_github_already_has_other_commits_it_asks_first(): void
+    {
+        $this->start();
+        // GitHub with a README made there.
+        Process::run(['git', 'init', '--bare', $this->repo.'-remote.git']);
+        $other = $this->repo.'-other';
+        Process::run(['git', 'clone', $this->repo.'-remote.git', $other]);
+        file_put_contents($other.'/README.md', '# Made on GitHub');
+        Process::path($other)->run(['git', '-c', 'user.name=GitHub', '-c', 'user.email=g@example.com', 'add', '.']);
+        Process::path($other)->run(['git', '-c', 'user.name=GitHub', '-c', 'user.email=g@example.com', 'commit', '-m', 'Initial commit']);
+        Process::path($other)->run(['git', 'push', 'origin', 'HEAD:main']);
+        File::deleteDirectory($other);
+
+        VersionControl::connect($this->repo.'-remote.git');
+        $this->assertFalse(VersionControl::remoteIsEmpty());
+        $this->assertFalse(VersionControl::push());
+        $this->assertSame('diverged', VersionControl::status()['push_problem']);
+
+        Livewire::actingAs($this->admin)->test(Page::class)
+            ->assertSee('GitHub already has commits this book doesn’t')
+            ->assertSee('Replace GitHub’s copy with this book')
+            ->call('replaceRemote')
+            ->assertDispatched('stamp');
+
+        $this->assertNotSame('Initial commit', trim(Process::run(['git', '--git-dir='.$this->repo.'-remote.git', 'log', '-1', '--format=%s', 'main'])->output()));
+        $this->assertTrue(VersionControl::settings()['push']);
+    }
+
+    public function test_a_bad_address_or_missing_token_is_explained_on_the_page(): void
+    {
+        $this->start();
+        Livewire::actingAs($this->admin)->test(Page::class)
+            ->assertSee('Make an empty repository on GitHub')
+            ->set('address', 'not an address')->call('connect')->assertHasErrors('address')
+            ->set('address', 'hana/kopi')->set('signIn', 'token')->set('token', '')->call('connect')->assertHasErrors('token');
+        $this->assertSame([], VersionControl::remotes());
+    }
+
+    public function test_private_files_from_before_can_be_taken_out_of_git(): void
+    {
+        $this->start();
+        $this->write('.env', "APP_KEY=base64:not-real\n");
+        $this->write('storage/booklet/forms/contact/1.yaml', "email: visitor@example.com\n");
+        $this->git('add', '-f', '.env', 'storage/booklet/forms/contact/1.yaml');
+        $this->git('-c', 'user.name=Someone', '-c', 'user.email=s@example.com', 'commit', '-m', 'Oops');
+
+        $this->assertSame(['.env', 'storage/booklet/forms/contact/1.yaml'], VersionControl::privateTracked());
+
+        Livewire::actingAs($this->admin)->test(Page::class)
+            ->assertSee('Take them out of git')
+            ->call('untrackPrivate')->assertDispatched('stamp');
+
+        $this->assertSame([], VersionControl::privateTracked());
+        $this->assertFileExists($this->repo.'/.env', 'still on the computer');
+        $this->assertSame('Stop keeping private files in git', $this->git('log', '-1', '--format=%s'));
+    }
+
+    public function test_files_with_merge_marks_are_never_committed(): void
+    {
+        $this->start();
+        $this->write('content/collections/posts/kuih-lapis.md', "<<<<<<< HEAD\nNine layers.\n=======\nTen layers.\n>>>>>>> 6f2f6b4\n");
+
+        try {
+            VersionControl::commit('Half merged', $this->admin);
+            $this->fail('It should have refused.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('unfinished merge marks', $e->getMessage());
+            $this->assertStringContainsString('content/collections/posts/kuih-lapis.md', $e->getMessage());
+        }
+        $this->assertNotSame('Half merged', $this->git('log', '-1', '--format=%s'));
+
+        Livewire::actingAs($this->admin)->test(Page::class)->assertSee('Some files have unfinished merge marks');
+
+        $this->write('content/collections/posts/kuih-lapis.md', "Ten layers.\n");
+        $this->assertNotNull(VersionControl::commit('Fixed', $this->admin));
     }
 }

@@ -6,6 +6,7 @@ use App\Booklet\Schema\Definition;
 use App\Booklet\Support\FrontMatter;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -121,6 +122,9 @@ class FileStore implements Store
         $this->index = null;
     }
 
+    /** @var array<string, string> Files that couldn't be read this request: path => why. */
+    public static array $unreadable = [];
+
     protected function index(): array
     {
         if ($this->index !== null) {
@@ -146,7 +150,16 @@ class FileStore implements Store
                 continue; // belongs to another kind of item sharing this folder
             }
 
-            [$attributes, $data] = $this->unserialize($file->getContents());
+            try {
+                [$attributes, $data] = $this->unserialize($file->getContents());
+            } catch (ParseException $e) {
+                // One broken file (a typo, or unfinished merge marks) mustn't take the whole
+                // site down: it's left out, noted, and the check-up names it.
+                static::$unreadable[$file->getPathname()] = $e->getMessage();
+                report($e);
+
+                continue;
+            }
             $attributes = array_merge($attributes, $derived);
             $modified = date('Y-m-d H:i:s', $file->getMTime());
 

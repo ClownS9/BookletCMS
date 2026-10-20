@@ -14,6 +14,31 @@
 
         @error('git') <p class="field__error" role="alert">{{ $message }}</p> @enderror
 
+        @if ($repo && ($merging || $conflicted !== []))
+            <div class="vc-note vc-note--danger" role="alert">
+                <p><strong>{{ $merging ? 'A git merge was started and not finished.' : 'Some files have unfinished merge marks.' }}</strong>
+                    Lines starting <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> are git showing two versions side by side. Left in, they break pages (one in a stylesheet switches most of it off), so Booklet won’t commit until they’re gone.</p>
+                @if ($conflicted !== [])
+                    <ul class="vc-paths">@foreach (array_slice($conflicted, 0, 8) as $f) <li><code>{{ $f }}</code></li> @endforeach</ul>
+                    <p class="field__hint">Open each one, keep the lines you want, and delete the three kinds of mark lines (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>). Or put the newest Booklet files back over them.</p>
+                @endif
+                @if ($merging)
+                    <button type="button" class="btn btn--sm" wire:click="abortMerge"
+                            wire:confirm="Undo the unfinished merge? Files go back to how they were before it started, including any half-fixed ones.">Undo the unfinished merge</button>
+                @endif
+            </div>
+        @endif
+
+        @if ($repo && $privateTracked !== [])
+            <div class="vc-note vc-note--warn">
+                <p><strong>Git is keeping {{ count($privateTracked) }} private {{ str('file')->plural(count($privateTracked)) }} from before</strong>, committed before the rules that leave them out. Booklet never adds them, but git keeps what it already has:</p>
+                <ul class="vc-paths">@foreach (array_slice($privateTracked, 0, 6) as $f) <li><code>{{ $f }}</code></li> @endforeach
+                    @if (count($privateTracked) > 6) <li class="muted">and {{ count($privateTracked) - 6 }} more</li> @endif</ul>
+                <button type="button" class="btn btn--ink btn--sm" wire:click="untrackPrivate" wire:loading.attr="disabled" wire:target="untrackPrivate">Take them out of git</button>
+                <p class="field__hint">They stay on this computer; git just stops keeping them. Older commits still have them: if the repository on GitHub is public and these include <code>.env</code> or form replies, change those passwords and ask for help clearing the old commits.</p>
+            </div>
+        @endif
+
         @if (! $files)
             <div class="vc-note vc-note--warn">
                 <p><strong>Your content is kept in the database</strong>, so there are no files for git to keep a history of. Version control works when content is kept as files (<code>BOOKLET_DRIVER=file</code> in <code>.env</code>). Editions and Backups still look after the database.</p>
@@ -43,12 +68,12 @@
                 </div>
                 <div class="setting-row">
                     <span>
-                        <span id="vc-push" style="display: block; font-size: 15px; font-weight: 500">Send commits to “{{ $remote }}”</span>
+                        <span id="vc-push" style="display: block; font-size: 15px; font-weight: 500">Send commits to {{ $connected ? ($remoteLabel ?? $remote) : 'GitHub' }}</span>
                         <span style="display: block; font-size: 13px; color: var(--faint)">
-                            @if (in_array($remote, $remotes, true))
-                                After each commit, push it there (GitHub, GitLab…). The server needs to be allowed to push without a password.
+                            @if ($connected)
+                                After each commit, it goes there too, so there’s a copy off this computer.
                             @else
-                                There’s no remote called “{{ $remote }}”. Add one with <code>git remote add {{ $remote }} …</code> to send commits off this server.
+                                Connect to GitHub below first. It takes three steps, no commands.
                             @endif
                             @if ($fixed['push']) Set in .env (BOOKLET_GIT_PUSH).@endif
                         </span>
@@ -73,6 +98,8 @@
                 </div>
             </div>
 
+            @include('livewire.admin.partials.version-control-github')
+
             <div class="vc-waiting">
                 @if ($pending === [])
                     <p><span class="vc-dot vc-dot--ok" aria-hidden="true"></span> Everything is committed.</p>
@@ -93,18 +120,10 @@
                 @error('message') <p class="field__error">{{ $message }}</p> @enderror
             </div>
 
-            @if (! empty($status['at']) || ! empty($status['pushed']) || ! empty($status['push_error']))
+            @if (! empty($status['at']))
                 <dl class="vc-status">
                     @if (! empty($status['at']))
                         <div><dt>Last commit</dt><dd>{{ \Illuminate\Support\Carbon::parse($status['at'])->diffForHumans() }} · <code>{{ $status['hash'] ?? '' }}</code></dd></div>
-                    @endif
-                    @if ($settings['push'])
-                        <div><dt>Sent on</dt><dd>
-                            @if (! empty($status['push_error'])) <span style="color: var(--danger)">Didn’t work: {{ \Illuminate\Support\Str::limit($status['push_error'], 160) }}</span>
-                            @elseif (! empty($status['pushed'])) {{ \Illuminate\Support\Carbon::parse($status['pushed'])->diffForHumans() }}
-                            @else Not yet @endif
-                            · <button type="button" class="link-button" style="font-size: 13px; min-height: 0" wire:click="pushNow">Send now</button>
-                        </dd></div>
                     @endif
                 </dl>
             @endif

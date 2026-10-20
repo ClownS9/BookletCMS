@@ -43,7 +43,7 @@ class Health
         foreach ([
             'php', 'extensions', 'database', 'migrations', 'folders', 'storage_link', 'space', 'app_key', 'debug', 'address',
             'scheduler', 'queue', 'mail', 'log',
-            'backups', 'version_control',
+            'backups', 'version_control', 'content_files',
             'inserts', 'stacy', 'page_cache', 'search_engines',
         ] as $check) {
             try {
@@ -342,6 +342,47 @@ class Health
         };
     }
 
+    /**
+     * Every content file can be read? A broken one (a typo in its YAML, or
+     * unfinished merge marks) is left out of the site, so say which.
+     */
+    protected static function contentFiles(): ?array
+    {
+        $folders = array_filter([
+            config('booklet.paths.content'),
+            resource_path('blueprints'), resource_path('fieldsets'), resource_path('forms'),
+        ], fn ($f) => is_string($f) && is_dir($f));
+        if ($folders === []) {
+            return null;
+        }
+
+        $broken = [];
+        $marked = false;
+        foreach ($folders as $folder) {
+            foreach (\Illuminate\Support\Facades\File::allFiles($folder) as $file) {
+                if (! in_array($file->getExtension(), ['md', 'yaml', 'yml'], true)) {
+                    continue;
+                }
+                $text = (string) $file->getContents();
+                try {
+                    $file->getExtension() === 'md' ? \App\Booklet\Support\FrontMatter::parse($text) : \Symfony\Component\Yaml\Yaml::parse($text);
+                } catch (\Symfony\Component\Yaml\Exception\ParseException) {
+                    $broken[] = str_replace(base_path().'/', '', $file->getPathname());
+                    $marked = $marked || preg_match('/^(<{7}|>{7})( |$)/m', $text) === 1;
+                }
+            }
+        }
+        if ($broken === []) {
+            return ['group' => 'running', 'label' => 'Content files', 'state' => 'ok', 'text' => 'Every content file can be read.'];
+        }
+
+        return ['group' => 'running', 'label' => 'Content files', 'state' => 'fail',
+            'text' => count($broken).' '.Str::plural('file', count($broken)).' can’t be read, so '.(count($broken) === 1 ? 'it’s' : 'they’re').' left out of the site: '.Str::limit(implode(', ', $broken), 200).'.',
+            'fix' => $marked
+                ? 'They have unfinished merge marks (lines starting <<<<<<< and >>>>>>>). Keep the lines you want and delete the marks.'
+                : 'Open them and fix the YAML at the top (often a missing quote or a tab instead of spaces).'];
+    }
+
     protected static function versionControl(): ?array
     {
         if (! VersionControl::on()) {
@@ -364,6 +405,9 @@ class Health
         }
         if (! empty($status['push_error']) && VersionControl::settings()['push']) {
             return ['group' => 'safe', 'label' => $label, 'state' => 'warn', 'text' => 'Commits are made, but sending them on didn’t work: '.Str::limit((string) $status['push_error'], 200), 'href' => $href];
+        }
+        if (($private = VersionControl::privateTracked()) !== []) {
+            return ['group' => 'safe', 'label' => $label, 'state' => 'warn', 'text' => 'Git is keeping private files from before: '.Str::limit(implode(', ', $private), 160).'.', 'fix' => 'Take them out with one click in Settings › Version control.', 'href' => $href];
         }
         $waiting = count(VersionControl::pending());
         $first = Cache::get(VersionControl::FIRST_SEEN);
