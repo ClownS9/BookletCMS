@@ -1,4 +1,4 @@
-<x-site.layout type="article" :title="$entry->get('meta_title') ?: $entry->title()" :description="$site->excerpt($entry, 160)" :image="$site->shareImage($entry) ?? \App\Support\ShareImage::urlFor($entry)">
+<x-site.layout type="article" :title="$entry->get('meta_title') ?: $entry->title()" :description="$site->description($entry)" :image-alt="$site->imageAlt($entry) ?: null" :image="$site->shareImage($entry) ?? \App\Support\ShareImage::urlFor($entry)">
     @php \App\Support\StructuredData::post($entry); @endphp
     <article class="wrap section">
         <header class="post-head">

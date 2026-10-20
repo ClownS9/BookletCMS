@@ -244,8 +244,13 @@
 
         @foreach ($this->fields['side'] as $field)
             @continue(in_array($field['handle'], $hidden, true))
+            @continue($searchCard && in_array($field['handle'], ['meta_title', 'meta_description'], true)) {{-- in the Search & sharing card --}}
             @include('livewire.admin.fields.field', ['field' => $field])
         @endforeach
+
+        @if ($searchCard)
+            @include('livewire.admin.partials.search-card')
+        @endif
 
         {{-- New posts by email --}}
         @if ($newsletter && ! $translationOf)

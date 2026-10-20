@@ -1,4 +1,4 @@
-<x-site.layout :title="$entry->get('meta_title') ?: (request()->is('/') ? null : $entry->title())" :description="$site->excerpt($entry, 160)" :image="$site->shareImage($entry) ?? \App\Support\ShareImage::urlFor($entry)">
+<x-site.layout :title="$entry->get('meta_title') ?: (request()->is('/') ? null : $entry->title())" :description="$site->description($entry)" :image-alt="$site->imageAlt($entry) ?: null" :image="$site->shareImage($entry) ?? \App\Support\ShareImage::urlFor($entry)">
     @php \App\Support\StructuredData::page($entry); @endphp
     @php
         $wide = in_array($template, ['full_width', 'landing'], true);
