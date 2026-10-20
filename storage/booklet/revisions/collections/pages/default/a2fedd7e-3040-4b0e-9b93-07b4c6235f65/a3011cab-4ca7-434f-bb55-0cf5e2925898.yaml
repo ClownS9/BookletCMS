@@ -1,0 +1,21 @@
+action: edited
+user: '1'
+message: 'Template: Landing'
+attributes:
+  date: '2026-10-17 15:41:52'
+  attributes:
+    id: a2fedd7e-3040-4b0e-9b93-07b4c6235f65
+    site: default
+    published: true
+    slug: about
+    uri: /about
+    collection: pages
+    blueprint: page
+    origin_id: null
+    date: null
+    order: null
+  data:
+    title: About
+    template: landing
+    author: 1
+    content: 'A few lines about who writes here.'

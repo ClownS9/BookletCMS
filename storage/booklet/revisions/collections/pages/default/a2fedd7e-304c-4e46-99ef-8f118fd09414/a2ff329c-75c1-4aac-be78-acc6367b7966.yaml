@@ -1,0 +1,20 @@
+action: edited
+user: '1'
+message: 'Template: Full width'
+attributes:
+  date: '2026-10-16 16:51:34'
+  attributes:
+    id: a2fedd7e-304c-4e46-99ef-8f118fd09414
+    site: default
+    published: true
+    slug: contact
+    uri: /contact
+    collection: pages
+    blueprint: page
+    origin_id: null
+    date: null
+    order: null
+  data:
+    title: Contact
+    template: full_width
+    content: 'How to get in touch.'

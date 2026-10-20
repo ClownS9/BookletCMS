@@ -1,0 +1,28 @@
+action: edited
+user: '1'
+attributes:
+  date: '2026-10-18 16:23:32'
+  attributes:
+    id: a2fedd7e-307e-4e87-adfc-722d702ca8a5
+    site: default
+    published: true
+    slug: hello-from-booklet
+    uri: /blog/hello-from-booklet
+    date: '2026-10-16 12:53:00'
+    collection: posts
+    blueprint: post
+    origin_id: null
+    order: null
+  data:
+    title: 'Hello from Booklet'
+    categories:
+      - news
+    tags:
+      - welcome
+    author: 1
+    content: |-
+      Hello Sir
+
+      I hope this message finds you well. I wanted to reach out and share a brief update on our recent developments. Over the past few weeks we’ve been fine‑tuning our workflow and testing a few new ideas that we believe will improve our overall efficiency. While the specifics are still being solidified, the early feedback has been encouraging and points toward a smoother implementation phase. Your insights have always been invaluable, and I look forward to hearing your thoughts
+    cover: []
+    share_image: []
