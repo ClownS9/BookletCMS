@@ -1,4 +1,4 @@
-@props(['title' => null, 'description' => null, 'image' => null, 'type' => 'website', 'robots' => null])
+@props(['title' => null, 'description' => null, 'image' => null, 'imageAlt' => null, 'type' => 'website', 'robots' => null])
 @php
     $site = app(\App\Booklet\Site::class);
     // Every page shares with a picture: its own, or a card drawn for the site.
@@ -35,6 +35,8 @@
             <meta property="og:image:width" content="{{ \App\Support\ShareImage::WIDTH }}">
             <meta property="og:image:height" content="{{ \App\Support\ShareImage::HEIGHT }}">
             <meta property="og:image:alt" content="{{ $title ?? $site->name() }}">
+        @elseif ($imageAlt)
+            <meta property="og:image:alt" content="{{ $imageAlt }}">
         @endif
     @endif
     <meta property="og:type" content="{{ $type }}">

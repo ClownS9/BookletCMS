@@ -13,6 +13,11 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 ### Writing and publishing
 - **Posts and pages** with drafts, scheduling, autosave, and a review step for writers before an editor publishes.
 - **Proof copies:** a private link to a draft for someone without an account (a client, a friend, the person in the story). They read it exactly as the site will show it, pick out words, and leave notes that come back to the editor's margin. Links close on their own after 3 days, a week or a month, or when you stop them.
+- **Search & sharing, built in:** on every post and page, see how it will look as a Google result and when its link is shared on Facebook or WhatsApp, live as you type. Write its own search title and description, with letter counts, and get gentle notes about:
+  - a title that gets cut off, or no description of its own;
+  - two pages with the same title;
+  - pictures with no description (alt text);
+  - shares with no photo.
 - **Editions:** every save is kept. Compare any two side by side and put back a single field.
 - **Blocks ("cut-outs"):** quotes, pictures, galleries, buttons, two columns, videos, notes and featured posts, tucked into any page and dragged into order. Inserts can add their own.
 - **Linked entries and rows:** point a page at other posts and pages (with "linked from" on the other side), or keep small tables like ingredients and opening hours.
@@ -22,6 +27,8 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 ![Cut-outs in the editor: paper slips with coloured tabs](docs/screenshots/editor-cut-outs.png)
 
 ![A proof copy: the draft as the site will show it, with a note being left in the margin](docs/screenshots/proof-copy.png)
+
+![Search & sharing in the editor: the post as a WhatsApp message, with its own search title and description](docs/screenshots/search-and-sharing.png)
 
 ### Site menus
 - **One list, drag and drop.** Rows tucked in under another drop down from it on the site, up to three levels. No mouse? Arrow keys on a row's grip do the same, and Undo takes back the last 20 moves.
