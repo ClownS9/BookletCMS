@@ -96,6 +96,60 @@
         }
     }, true);
 
+    // Proof copies: pick out words on the page, then leave a note about them --
+
+    const notes = document.querySelector('[data-proof-notes]');
+    const pick = document.querySelector('[data-proof-pick]');
+    if (notes && pick) {
+        const quoteBox = notes.querySelector('[data-proof-quote]');
+        const quoteText = notes.querySelector('[data-proof-quote-text]');
+        const quoteInput = notes.querySelector('[data-proof-quote-input]');
+        const page = document.getElementById('main');
+        let picked = '';
+
+        const openNotes = (focus) => {
+            notes.open = true;
+            const field = focus || (notes.querySelector('#proof-name').value ? notes.querySelector('#proof-body') : notes.querySelector('#proof-name'));
+            setTimeout(() => field?.focus({ preventScroll: false }), 30);
+        };
+        const setQuote = (text) => {
+            quoteText.textContent = text;
+            quoteInput.value = text;
+            quoteBox.hidden = text === '';
+        };
+
+        const offerPick = () => {
+            const sel = window.getSelection();
+            const text = sel && !sel.isCollapsed ? sel.toString().replace(/\s+/g, ' ').trim() : '';
+            if (text.length < 2 || !page || !page.contains(sel.anchorNode)) { pick.hidden = true; return; }
+            picked = text.length > 300 ? text.slice(0, 297) + '…' : text;
+            const box = sel.getRangeAt(0).getBoundingClientRect();
+            pick.style.top = Math.max(8, box.top - 44) + 'px';
+            pick.style.left = Math.min(window.innerWidth - 140, Math.max(8, box.left + box.width / 2 - 60)) + 'px';
+            pick.hidden = false;
+        };
+        document.addEventListener('mouseup', () => setTimeout(offerPick, 10));
+        document.addEventListener('keyup', (e) => e.shiftKey && offerPick());
+        // Phones select by touch (no mouseup): offer the button once the selection settles.
+        let settle;
+        document.addEventListener('selectionchange', () => {
+            clearTimeout(settle);
+            if (window.getSelection()?.isCollapsed) { pick.hidden = true; return; }
+            settle = setTimeout(offerPick, 450);
+        });
+        window.addEventListener('scroll', () => { pick.hidden = true; }, { passive: true });
+
+        pick.addEventListener('mousedown', (e) => e.preventDefault()); // keep the selection
+        pick.addEventListener('click', () => {
+            setQuote(picked);
+            pick.hidden = true;
+            openNotes();
+        });
+        notes.querySelector('[data-proof-clear]')?.addEventListener('click', () => setQuote(''));
+        document.querySelectorAll('[data-proof-open]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); openNotes(); }));
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && notes.open && notes.contains(document.activeElement)) { notes.open = false; } });
+    }
+
     // Header, progress and back-to-top, all from one scroll handler ----------
 
     const masthead = document.querySelector('[data-masthead]');
@@ -111,7 +165,7 @@
     let sentRead = false;
     const sendRead = () => {
         sentRead = true;
-        if (navigator.doNotTrack === '1') return;
+        if (navigator.doNotTrack === '1' || root.hasAttribute('data-proof')) return; // proof copies aren't visits
         const body = new Blob([JSON.stringify({ path: location.pathname })], { type: 'application/json' });
         try { navigator.sendBeacon?.('/read', body) || fetch('/read', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }); } catch (e) { /* not counted */ }
     };

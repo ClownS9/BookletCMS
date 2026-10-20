@@ -8,7 +8,7 @@
     $robots ??= request()->attributes->get('booklet_preview') ? 'noindex, nofollow' : null;
 @endphp
 <!DOCTYPE html>
-<html lang="{{ request()->attributes->get('booklet_lang') ?: str_replace('_', '-', app()->getLocale()) }}" class="no-js">
+<html lang="{{ request()->attributes->get('booklet_lang') ?: str_replace('_', '-', app()->getLocale()) }}" class="no-js"@if (request()->attributes->has('booklet_proof')) data-proof @endif>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -67,7 +67,19 @@
     <a href="#main" class="skip">Skip to the words</a>
     <div class="progress" aria-hidden="true"><span></span></div>
 
-    @if ($previewing = request()->attributes->get('booklet_preview'))
+    @if ($proof = request()->attributes->get('booklet_proof'))
+        <div class="preview-bar proof-bar" role="status">
+            <span class="sticker" style="--tilt: -2deg; background: var(--mint)">Proof copy</span>
+            <span>
+                {{ request()->attributes->get('booklet_preview') === 'published' ? 'This is live already.' : 'Not published yet: only people with this link can see it.' }}
+                @if ($proof['by']) Shared by {{ $proof['by'] }}@if ($proof['for']) for {{ $proof['for'] }}@endif. @endif
+                <span class="proof-bar__closes">The link closes {{ $proof['closes']->timezone(config('app.timezone'))->format('j M') }}.</span>
+            </span>
+            @if ($proof['notes'])
+                <a href="#proof-notes" class="proof-bar__note" data-proof-open>Leave a note</a>
+            @endif
+        </div>
+    @elseif ($previewing = request()->attributes->get('booklet_preview'))
         <div class="preview-bar" role="status">
             <span class="sticker" style="--tilt: -2deg; background: var(--sun)">Preview</span>
             This is how it will look. It’s {{ $previewing === 'published' ? 'live already' : 'not published yet' }}, so only signed-in people can see this page.
@@ -143,6 +155,10 @@
     <main id="main" tabindex="-1">
         {{ $slot }}
     </main>
+
+    @if (($proof ?? null) && $proof['notes'])
+        @include('site.partials.proof-notes', ['proof' => $proof])
+    @endif
 
     <footer class="colophon" id="colophon">
         <div class="wrap colophon__inner">

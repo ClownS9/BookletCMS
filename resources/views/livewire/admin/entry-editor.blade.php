@@ -360,6 +360,7 @@
 
         @if ($entryId)
             <livewire:admin.entry-notes :entry-id="$entryId" :key="'notes-'.$entryId" />
+            <livewire:admin.proof-copies :entry-id="$entryId" :key="'proofs-'.$entryId" />
         @else
             <p class="field__hint">Once saved, you can stick notes for the team on this {{ \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title())) }}.</p>
         @endif

@@ -3829,6 +3829,33 @@ body.night .sticky-note__who { color: rgba(243, 236, 220, .65); }
 body.night .sticky-note__done, body.night .sticky-note__remove { background: rgba(0, 0, 0, .25); color: #F3ECDC; }
 @keyframes note-stick { from { opacity: 0; transform: translateY(-8px) rotate(calc(var(--tilt, -1deg) * 4)) scale(.96); } }
 
+/* Proof copies: private links, and notes from the margin (paper slips with a mint edge) */
+.proofs { display: flex; flex-direction: column; gap: 12px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.proof-margin { list-style: none; margin: 0; padding: 2px; display: flex; flex-direction: column; gap: 10px; }
+.proof-margin__note {
+    position: relative; padding: 10px 12px 10px 14px;
+    border-left: 4px solid var(--mint); border-radius: 2px 8px 8px 2px;
+    background: var(--paper-3); box-shadow: 0 1px 0 var(--edge-2), 0 4px 10px rgba(30, 28, 24, .06);
+    transform: rotate(var(--tilt, -1deg)); font-size: 14px;
+}
+.proof-margin__quote { display: block; margin-bottom: 4px; font-family: var(--serif); font-style: italic; color: var(--muted); }
+.proof-margin__body { margin: 0; color: var(--ink); }
+.proof-margin__who { margin: 6px 0 6px; font-size: 12px; color: var(--faint); }
+.proof-margin__note .sticky-note__done { background: var(--hover); color: var(--ink); }
+.proof-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.proof-link { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px dashed var(--rule-2); border-radius: 10px; }
+.proof-link__head { display: flex; flex-direction: column; gap: 2px; }
+.proof-link__for { font-weight: 600; font-size: 14px; }
+.proof-link__meta { font-size: 12px; color: var(--faint); }
+.proof-link__row { display: flex; gap: 6px; }
+.proof-link__url { flex: 1 1 auto; min-width: 0; min-height: 36px; font-family: var(--mono); font-size: 12px; }
+.proof-link__stop { align-self: flex-start; font-size: 12px; min-height: 0; color: var(--danger); }
+.proof-make { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; background: var(--paper-2); }
+.proof-make__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.proof-make__row select { width: auto; min-height: 36px; }
+.proof-make__notes { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .proof-margin__note { transform: none; } }
+
 .team-notes__new textarea { width: 100%; min-height: 0; padding: 10px 12px; font-size: 14px; line-height: 1.5; resize: vertical; }
 .team-notes__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
 .team-notes__tones { display: flex; gap: 6px; }

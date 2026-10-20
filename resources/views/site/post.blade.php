@@ -88,7 +88,7 @@
 
         <livewire:site.subscribe place="post" />
 
-        @if ($site->commentsOpen())
+        @if ($site->commentsOpen() && ! request()->attributes->has('booklet_proof'))
             <livewire:site.comments :entry-id="$entry->id()" />
         @endif
     </article>

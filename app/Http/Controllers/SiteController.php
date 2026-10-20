@@ -127,6 +127,12 @@ class SiteController extends Controller
         return $model->collection()?->dated() ? $this->post($model) : $this->page($model);
     }
 
+    /** An entry shown as the site would show it (a post or a page), for proof copies. */
+    public function entry(Entry $entry)
+    {
+        return $entry->collection()?->dated() ? $this->post($entry) : $this->page($entry);
+    }
+
     /** Which language this page is in, and where its other languages are (for the page's head). */
     protected function languages(Entry $entry): void
     {

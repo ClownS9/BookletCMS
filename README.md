@@ -12,6 +12,7 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 ### Writing and publishing
 - **Posts and pages** with drafts, scheduling, autosave, and a review step for writers before an editor publishes.
+- **Proof copies:** a private link to a draft for someone without an account (a client, a friend, the person in the story). They read it exactly as the site will show it, pick out words, and leave notes that come back to the editor's margin. Links close on their own after 3 days, a week or a month, or when you stop them.
 - **Editions:** every save is kept. Compare any two side by side and put back a single field.
 - **Blocks ("cut-outs"):** quotes, pictures, galleries, buttons, two columns, videos, notes and featured posts, tucked into any page and dragged into order. Inserts can add their own.
 - **Linked entries and rows:** point a page at other posts and pages (with "linked from" on the other side), or keep small tables like ingredients and opening hours.
@@ -19,6 +20,8 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 - **Calendar, categories and tags, redirects, and a print-ready book** of your writing.
 
 ![Cut-outs in the editor: paper slips with coloured tabs](docs/screenshots/editor-cut-outs.png)
+
+![A proof copy: the draft as the site will show it, with a note being left in the margin](docs/screenshots/proof-copy.png)
 
 ### Site menus
 - **One list, drag and drop.** Rows tucked in under another drop down from it on the site, up to three levels. No mouse? Arrow keys on a row's grip do the same, and Undo takes back the last 20 moves.
@@ -192,6 +195,7 @@ By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `r
 - **Safe database access.** All queries go through Laravel's query builder and Eloquent, with bound parameters, never raw values pasted into SQL.
 - **Backups leave secrets out.** AI keys and the mail password are never put in a backup file. Everything else is, so keep backups somewhere private.
 - **Version control never commits secrets.** `.env` files, the database file, `vendor/`, logs and backups are left out even if `.gitignore` forgets them.
+- **Proof copy links are private by design.** Only a fingerprint (SHA-256) of each link's secret is looked up. The pages tell search engines to stay away, aren't cached or counted as visits, and never pass the link on to other sites. Notes are rate-limited and screened for robots, and every link closes by itself.
 - **The GitHub token is kept like a secret.** It's encrypted with `APP_KEY`, only handed to git while sending, and never written into `.git/config` or shown again. Make it a fine-grained token for that one repository, with nothing but *Contents: Read and write*.
 - **Revisions and form submissions stay on the server.** `storage/booklet/` has its own `.gitignore` (put back if it goes missing), so even a hand-typed `git add .` leaves them out. Your content's history is in git already, through `content/`.
 - **Tests can't touch your content.** They always run against an in-memory database and refuse to start otherwise.

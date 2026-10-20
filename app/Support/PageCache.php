@@ -47,7 +47,7 @@ class PageCache
         if (! $request->isMethod('GET') || $request->user() || $request->hasHeader('X-Livewire') || $request->ajax()) {
             return false;
         }
-        if (array_diff(array_keys($request->query()), ['page']) !== [] || preg_match('#^(admin|livewire|login|setup|preview|storage|subscribe|unsubscribe|up)(/|$)#', $request->path())) {
+        if (array_diff(array_keys($request->query()), ['page']) !== [] || preg_match('#^(admin|livewire|login|setup|preview|proof|storage|subscribe|unsubscribe|up)(/|$)#', $request->path())) {
             return false;
         }
         $route = $request->route();

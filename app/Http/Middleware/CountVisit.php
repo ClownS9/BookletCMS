@@ -35,7 +35,7 @@ class CountVisit
         return $request->isMethod('GET')
             && $response->getStatusCode() === 200
             && ! $request->user()
-            && ! $request->is('admin', 'admin/*', 'preview/*', 'livewire/*', 'feed.xml', 'sitemap.xml', 'login', 'setup', 'up')
+            && ! $request->is('admin', 'admin/*', 'preview/*', 'proof/*', 'livewire/*', 'feed.xml', 'sitemap.xml', 'login', 'setup', 'up')
             && str_contains((string) $response->headers->get('Content-Type'), 'text/html')
             && ! preg_match('/bot|crawl|spider|slurp|preview|monitor|curl|wget|python|headless/i', (string) $request->userAgent());
     }

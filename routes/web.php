@@ -25,6 +25,7 @@ Route::get('/robots.txt', function () {
         'User-agent: *',
         'Disallow: /admin',
         'Disallow: /preview',
+        'Disallow: /proof',
         '',
         'Sitemap: '.$site->absolute(route('site.sitemap')),
         '',
@@ -56,7 +57,7 @@ Route::get('/storage/'.\App\Support\Crops::FOLDER.'/{size}/{spec}/{path}', \App\
 // "Read most of the way": sent once per page by the site's script (no cookies, no personal data).
 Route::post('/read', function (Request $request) {
     $path = (string) $request->input('path', '');
-    if (! $request->user() && $path !== '' && strlen($path) < 300
+    if (! $request->user() && $path !== '' && strlen($path) < 300 && ! str_starts_with($path, '/proof/')
         && ! preg_match('/bot|crawl|spider|headless/i', (string) $request->userAgent())
         && $request->header('DNT') !== '1') {
         rescue(fn () => \App\Support\VisitStats::read($path), null, false);
@@ -82,6 +83,12 @@ Route::post('/logout', function (Request $request) {
 })->middleware('auth')->name('logout');
 
 Route::get('/preview/{entry}', [SiteController::class, 'preview'])->middleware('auth')->name('preview');
+
+// Proof copies: a private link to a draft for someone without an account, and their notes.
+Route::get('/proof/{secret}', [\App\Http\Controllers\ProofController::class, 'show'])
+    ->where('secret', '[A-Za-z0-9]{20,100}')->middleware('throttle:60,1')->name('proof.show');
+Route::post('/proof/{secret}/notes', [\App\Http\Controllers\ProofController::class, 'note'])
+    ->where('secret', '[A-Za-z0-9]{20,100}')->middleware('throttle:10,1')->name('proof.note');
 
 // The admin book ------------------------------------------------------------
 
