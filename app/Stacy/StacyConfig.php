@@ -67,7 +67,7 @@ class StacyConfig
     /** Which tools each switch covers. */
     public const TOOL_GROUPS = [
         'can_publish' => ['propose_publish', 'propose_schedule', 'propose_unpublish'],
-        'can_edit' => ['propose_edit', 'propose_tags', 'propose_alt'],
+        'can_edit' => ['propose_edit', 'propose_tags', 'propose_alt', 'propose_menu'],
         'can_draft' => ['propose_draft', 'propose_translation'],
         'can_comments' => ['propose_comment', 'propose_reply'],
     ];
@@ -75,7 +75,7 @@ class StacyConfig
     /** Pending actions, by switch (for a "Yes" pressed after a setting changed). */
     public const ACTION_GROUPS = [
         'can_publish' => ['publish', 'schedule', 'unpublish'],
-        'can_edit' => ['edit', 'tags', 'alt'],
+        'can_edit' => ['edit', 'tags', 'alt', 'menu'],
         'can_draft' => ['create_draft', 'translate'],
         'can_comments' => ['comment', 'reply'],
         'can_inserts' => ['insert'],

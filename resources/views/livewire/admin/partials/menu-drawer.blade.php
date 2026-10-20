@@ -1,5 +1,12 @@
 {{-- A menu row's drawer: everything about one item, opened with "Edit". --}}
 <div class="nav-drawer" id="drawer-{{ $row['key'] }}" wire:key="drawer-{{ $row['key'] }}">
+    @if ($row['problems'] !== [])
+        <ul class="nav-drawer__problems">
+            @foreach ($row['problems'] as $p)
+                <li class="nav-drawer__problem nav-drawer__problem--{{ $p['level'] }}">{{ $p['text'] }}</li>
+            @endforeach
+        </ul>
+    @endif
     <div class="nav-drawer__grid">
         <div class="field">
             <label for="label-{{ $row['key'] }}">Label</label>

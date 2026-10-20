@@ -2035,6 +2035,47 @@ html { scrollbar-color: var(--rule-2) transparent; }
 .nav-badge { padding: 2px 8px; border-radius: 999px; background: var(--chosen); font-size: 11px; color: var(--muted); white-space: nowrap; }
 .nav-badge--mega { background: var(--tone); color: #1E1C18; }
 .nav-badge--quiet { background: transparent; border: 1px dashed var(--rule-2); }
+/* Health marks, words, seasons */
+.nav-badge--warn, .nav-badge--note { min-width: 20px; padding: 2px 7px; text-align: center; font-weight: 700; }
+.nav-badge--warn { background: var(--coral); color: #1E1C18; }
+.nav-badge--note { background: var(--sky); color: #1E1C18; font-family: var(--serif); font-style: italic; }
+.nav-health { margin-top: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper-3); font-size: 13px; }
+.nav-health--warn { border-color: color-mix(in srgb, var(--coral) 55%, var(--rule)); background: color-mix(in srgb, var(--coral) 9%, var(--paper-3)); }
+.nav-health__title { margin: 0 0 4px; font-weight: 600; font-size: 14px; }
+.nav-health__line { margin: 2px 0 0; color: var(--muted); }
+.nav-drawer__problems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.nav-drawer__problem { padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.45; }
+.nav-drawer__problem--warn { background: color-mix(in srgb, var(--coral) 14%, var(--paper-3)); }
+.nav-drawer__problem--note { background: color-mix(in srgb, var(--sky) 16%, var(--paper-3)); }
+.nav-words { display: flex; gap: 8px; margin-top: 14px; }
+.nav-words .input { flex: 1 1 auto; min-width: 0; min-height: 40px; font-family: var(--serif); font-style: italic; font-size: 15px; }
+.nav-words .input:not(:placeholder-shown) { font-style: normal; }
+.nav-words .btn { flex: none; }
+.nav-words__error { margin-top: 6px; }
+.nav-seasons { display: flex; flex-direction: column; gap: 10px; }
+.nav-seasons__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.nav-season {
+    width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 0 10px; align-items: center;
+    padding: 8px 12px; border: 1px dashed var(--rule-2); border-radius: 10px; background: transparent;
+    text-align: left; cursor: pointer; font: inherit; color: var(--ink);
+}
+.nav-season:hover { background: var(--hover); }
+.nav-season--current { border-style: solid; border-color: var(--ink); background: var(--paper-3); }
+.nav-season__name { font-family: var(--serif); font-size: 16px; }
+.nav-season__when { grid-column: 1; font-size: 12px; color: var(--faint); }
+.nav-season__state { grid-column: 2; grid-row: 1 / span 2; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--edge-1); color: var(--muted); white-space: nowrap; }
+.nav-season--on .nav-season__state, .nav-season__state.nav-season--on { background: var(--mint); color: #1E1C18; }
+.nav-season--coming .nav-season__state, .nav-season__state.nav-season--coming { background: var(--sun); color: #1E1C18; }
+.nav-season--over { opacity: .7; }
+.nav-seasons__new { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; background: var(--paper-2); }
+.nav-seasons__dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nav-season-bar { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 16%, var(--paper-3)); font-size: 14px; line-height: 2; }
+.nav-season-bar p { margin: 0; }
+.nav-season-bar .input { display: inline-block; width: auto; min-height: 32px; padding: 0 8px; font-size: 13px; }
+.nav-season-bar .nav-season__state { display: inline-block; margin-right: 4px; }
+.nav-season-bar__bin { font-size: 13px; color: var(--danger); min-height: 0; }
+@media (max-width: 640px) { .nav-seasons__dates { grid-template-columns: 1fr; } }
+
 .nav-row__edit { flex: none; min-height: 34px; padding: 0 12px; font-size: 13px; }
 .nav-row--hidden .nav-row__label { color: var(--faint); text-decoration: line-through; }
 .nav-row--open { background: var(--paper-2); }

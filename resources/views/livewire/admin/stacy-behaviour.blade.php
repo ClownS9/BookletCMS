@@ -113,7 +113,7 @@
             @foreach ([
                 ['canChange', 'Make changes', 'Switch off and Stacy only finds, explains and takes you places.'],
                 ['canPublish', 'Publish and schedule', 'Publish now, schedule, or take things off the site.'],
-                ['canEdit', 'Edit details', 'Titles, standfirsts, search text, tags and alt text.'],
+                ['canEdit', 'Edit details', 'Titles, standfirsts, search text, tags, alt text and the site’s menus.'],
                 ['canDraft', 'Start drafts', 'New posts and pages (with an outline if asked), and translated copies of an entry.'],
                 ['canComments', 'Handle comments', 'Approve, mark as spam, delete, and reply to readers.'],
                 ['canInserts', 'Use inserts', $skills->isEmpty()

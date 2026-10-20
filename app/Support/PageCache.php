@@ -175,7 +175,11 @@ class PageCache
             ->filter()
             ->min(), null, false);
 
-        Cache::put(self::NEXT_KEY, $next instanceof Carbon ? $next->timestamp : now()->addYears(5)->timestamp, now()->addMinutes(self::MINUTES));
+        // A seasonal menu starting or stopping changes every page too.
+        $season = rescue(fn () => \App\Booklet\Support\Menus::nextSeasonChange(), null, false);
+        $next = collect([$next instanceof Carbon ? $next : null, $season])->filter()->min();
+
+        Cache::put(self::NEXT_KEY, $next instanceof \DateTimeInterface ? $next->getTimestamp() : now()->addYears(5)->timestamp, now()->addMinutes(self::MINUTES));
     }
 
     /** Something in the book changed. Which changes reach the public site? */

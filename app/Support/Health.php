@@ -43,7 +43,7 @@ class Health
         foreach ([
             'php', 'extensions', 'database', 'migrations', 'folders', 'storage_link', 'space', 'app_key', 'debug', 'address',
             'scheduler', 'queue', 'mail', 'log',
-            'backups', 'version_control', 'content_files',
+            'backups', 'version_control', 'content_files', 'site_menus',
             'inserts', 'stacy', 'page_cache', 'search_engines',
         ] as $check) {
             try {
@@ -381,6 +381,30 @@ class Health
             'fix' => $marked
                 ? 'They have unfinished merge marks (lines starting <<<<<<< and >>>>>>>). Keep the lines you want and delete the marks.'
                 : 'Open them and fix the YAML at the top (often a missing quote or a tab instead of spaces).'];
+    }
+
+    /** The menus readers see today: links to deleted or draft pages, addresses with nothing at them… */
+    protected static function siteMenus(): ?array
+    {
+        $lines = [];
+        foreach (array_keys(\App\Booklet\Support\Menus::all()) as $handle) {
+            $showing = \App\Booklet\Support\Menus::activeSeason($handle) ?? $handle;
+            $rows = \App\Booklet\Support\MenuOutline::fromTree(\App\Booklet\Support\Menus::items($showing));
+            if (MenuHealth::warnings($rows, $handle) > 0) {
+                $title = \App\Booklet\Support\Menus::allWithSeasons()[$showing] ?? $handle;
+                $result = MenuHealth::check($rows, $handle);
+                $first = collect($result['menu'])->where('level', 'warn')->pluck('text')
+                    ->merge(collect($result['rows'])->map(fn ($p, $i) => collect($p)->where('level', 'warn')->map(fn ($x) => '“'.MenuHealth::label($rows[$i]).'”: '.$x['text']))->flatten())
+                    ->first();
+                $lines[] = $title.': '.$first;
+            }
+        }
+        $href = route('admin.menus');
+        if ($lines === []) {
+            return ['group' => 'running', 'label' => 'Site menus', 'state' => 'ok', 'text' => 'Every link in the menus goes somewhere readers can see.', 'href' => $href];
+        }
+
+        return ['group' => 'running', 'label' => 'Site menus', 'state' => 'warn', 'text' => Str::limit(implode(' ', $lines), 260), 'fix' => 'Open Site menus: rows marked “!” say what’s up.', 'href' => $href];
     }
 
     protected static function versionControl(): ?array

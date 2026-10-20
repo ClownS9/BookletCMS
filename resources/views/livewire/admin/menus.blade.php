@@ -15,6 +15,55 @@
             @endforeach
         </div>
 
+        {{-- Seasonal versions: a Raya menu that stands in for the header between two dates --}}
+        <div class="nav-seasons">
+            <p class="field__label" style="margin: 0">Seasonal versions <span class="muted" style="font-weight: 400">of the {{ \Illuminate\Support\Str::lower($forTitle) }}</span></p>
+            @if ($seasons !== [])
+                <ul class="nav-seasons__list">
+                    @foreach ($seasons as $s)
+                        <li>
+                            <button type="button" @class(['nav-season', 'nav-season--current' => $menu === $s['handle'], 'nav-season--'.$s['state']]) wire:click="switchTo('{{ $s['handle'] }}')"
+                                    @if ($dirty && $menu !== $s['handle']) wire:confirm="Leave without saving this menu?" @endif aria-pressed="{{ $menu === $s['handle'] ? 'true' : 'false' }}">
+                                <span class="nav-season__name">{{ $s['title'] }}</span>
+                                <span class="nav-season__when">{{ \Illuminate\Support\Carbon::parse($s['from'])->format('j M') }} – {{ \Illuminate\Support\Carbon::parse($s['until'])->format('j M Y') }}</span>
+                                <span class="nav-season__state">{{ ['on' => 'On now', 'coming' => 'Coming', 'over' => 'Ended'][$s['state']] }}</span>
+                            </button>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+            @if (! $season)
+                @if ($addingSeason)
+                    <form wire:submit="addSeason" class="nav-seasons__new">
+                        <div class="field">
+                            <label for="season-name">Name</label>
+                            <input id="season-name" type="text" class="input" wire:model="seasonName" maxlength="60" placeholder="Raya menu">
+                            @error('seasonName') <p class="field__error">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="nav-seasons__dates">
+                            <div class="field">
+                                <label for="season-from">First day</label>
+                                <input id="season-from" type="date" class="input" wire:model="seasonFrom">
+                                @error('seasonFrom') <p class="field__error">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="field">
+                                <label for="season-until">Last day</label>
+                                <input id="season-until" type="date" class="input" wire:model="seasonUntil">
+                                @error('seasonUntil') <p class="field__error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <p class="field__hint" style="margin: 0">It starts as a copy of this menu, for you to change. On its first day it takes over by itself, and after its last the usual menu comes back.</p>
+                        <div style="display: flex; gap: 8px">
+                            <button type="submit" class="btn btn--ink btn--sm">Make it</button>
+                            <button type="button" class="btn btn--quiet btn--sm" wire:click="$set('addingSeason', false)">Cancel</button>
+                        </div>
+                    </form>
+                @else
+                    <button type="button" class="mini-add" style="align-self: flex-start" wire:click="$set('addingSeason', true)"><span aria-hidden="true">+</span> A seasonal version (for Raya, a sale…)</button>
+                @endif
+            @endif
+        </div>
+
         <fieldset style="margin: 0; padding: 0; border: 0">
             <legend class="field__label" style="padding: 0; margin-bottom: 10px">Add a page</legend>
             <div class="mini-list">
@@ -90,11 +139,48 @@
 
         <div class="ribbon-clear nav-list__head">
             <div>
-                <p class="eyebrow">{{ $menus[$menu] ?? $menu }}</p>
+                <p class="eyebrow">{{ $season ? $season['title'] : ($menus[$menu] ?? $menu) }}</p>
                 <h2 class="heading heading--sub" style="margin-top: 4px">Arrange</h2>
             </div>
             <button type="button" class="btn btn--quiet" wire:click="undo" @disabled($history === []) aria-keyshortcuts="Control+Z Meta+Z">↶ Undo</button>
         </div>
+
+        @if ($season)
+            <div class="nav-season-bar ribbon-clear" x-data="{ from: @js($season['from']), until: @js($season['until']) }">
+                <p>
+                    <span class="nav-season__state nav-season--{{ $season['state'] }}">{{ ['on' => 'On now', 'coming' => 'Coming', 'over' => 'Ended'][$season['state']] }}</span>
+                    Stands in for the {{ \Illuminate\Support\Str::lower($forTitle) }} from
+                    <label class="sr-only" for="sb-from">First day</label><input id="sb-from" type="date" class="input" x-model="from" x-on:change="$wire.saveSeasonDates(from, until)">
+                    to
+                    <label class="sr-only" for="sb-until">Last day</label><input id="sb-until" type="date" class="input" x-model="until" x-on:change="$wire.saveSeasonDates(from, until)">,
+                    in the site’s time ({{ config('app.timezone') }}).
+                </p>
+                @error('until') <p class="field__error">{{ $message }}</p> @enderror
+                <button type="button" class="link-button nav-season-bar__bin" wire:click="deleteSeason" wire:confirm="Throw away “{{ $season['title'] }}”? The usual {{ \Illuminate\Support\Str::lower($forTitle) }} stays as it is.">Throw away this seasonal menu</button>
+            </div>
+        @endif
+
+        {{-- In plain words --}}
+        <form wire:submit="arrange" class="nav-words ribbon-clear">
+            <label for="nav-words" class="sr-only">Arrange in words</label>
+            <input id="nav-words" type="text" class="input" wire:model="words" maxlength="500" autocomplete="off"
+                   placeholder="In words: “put Shop first and tuck Prints under it”">
+            <button type="submit" class="btn btn--sm" wire:loading.attr="disabled" wire:target="arrange">Do it</button>
+        </form>
+        @error('words') <p class="field__error nav-words__error" role="alert">{{ $message }}</p> @enderror
+
+        {{-- What's wrong with it --}}
+        @if ($menuProblems !== [] || $warnCount > 0)
+            <div @class(['nav-health', 'nav-health--warn' => $warnCount > 0]) role="status">
+                <p class="nav-health__title">
+                    @if ($warnCount > 0) {{ $warnCount }} {{ str('thing')->plural($warnCount) }} readers would notice @else Worth knowing @endif
+                </p>
+                @foreach ($menuProblems as $p) <p class="nav-health__line">{{ $p['text'] }}</p> @endforeach
+                @if ($warnCount > count(collect($menuProblems)->where('level', 'warn')))
+                    <p class="nav-health__line">Rows marked <span class="nav-badge nav-badge--warn" aria-hidden="true">!</span> below: open one with <b>Edit</b> to see what’s up.</p>
+                @endif
+            </div>
+        @endif
 
         @if ($items === [])
             <p class="empty-note">This menu is empty. Add a page on the left.</p>
@@ -124,6 +210,12 @@
                                 @if ($row['follow']) <span class="nav-badge" title="Its sub-pages fill in by themselves">+ sub-pages</span> @endif
                                 @if ($row['mega']) <span class="nav-badge nav-badge--mega">Wide panel</span> @endif
                                 @if ($row['hidden']) <span class="nav-badge nav-badge--quiet">Not published</span> @endif
+                                @php $rowWarn = collect($row['problems'])->firstWhere('level', 'warn'); @endphp
+                                @if ($row['problems'] !== [])
+                                    <span class="nav-badge {{ $rowWarn ? 'nav-badge--warn' : 'nav-badge--note' }}" title="{{ collect($row['problems'])->pluck('text')->implode(' ') }}">
+                                        {{ $rowWarn ? '!' : 'i' }}<span class="sr-only">: {{ collect($row['problems'])->pluck('text')->implode(' ') }}</span>
+                                    </span>
+                                @endif
                             </span>
                             <button type="button" class="btn btn--quiet nav-row__edit" wire:click="edit('{{ $row['key'] }}')"
                                     aria-expanded="{{ $isOpen ? 'true' : 'false' }}" aria-controls="drawer-{{ $row['key'] }}">{{ $isOpen ? 'Done' : 'Edit' }}</button>
@@ -143,20 +235,23 @@
              x-data="{
                 wide: true,
                 src: @js($previewUrl),
+                foot: @js($previewFoot),
                 stamp: 0,
-                get url() { const [base, hash] = this.src.split('#'); return base + '&v=' + this.stamp + (hash ? '#' + hash : ''); },
+                get url() { return this.src + '&v=' + this.stamp; },
                 noBar(frame) {
                     // The preview scrolls, but without a scrollbar eating into the narrow frame.
                     try {
                         const style = frame.contentDocument.createElement('style');
                         style.textContent = 'html { scrollbar-width: none } html::-webkit-scrollbar { display: none }';
                         frame.contentDocument.head.appendChild(style);
+                        // Inside the preview only (a #link would scroll this page too).
+                        if (this.foot) frame.contentWindow.scrollTo(0, frame.contentDocument.documentElement.scrollHeight);
                     } catch (e) {}
                 },
                 fit() { const box = this.$refs.box; if (! box) return; const room = this.$el.clientWidth - 2; box.style.setProperty('--fit', this.wide ? Math.min(1, room / 1280) : Math.min(.8, room / 390)); },
              }"
              x-init="fit(); new ResizeObserver(() => fit()).observe($el)"
-             x-on:menu-preview.window="stamp = Date.now()">
+             x-on:menu-preview.window="if ($event.detail?.foot !== undefined) foot = $event.detail.foot; stamp = Date.now()">
             <div class="menu-live__head">
                 <h2 class="heading heading--sub">Live preview</h2>
                 <div class="filters" role="group" aria-label="Preview width">

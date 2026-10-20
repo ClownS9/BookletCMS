@@ -28,6 +28,9 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 - **Sub-pages that follow.** Tell a menu page to bring its sub-pages along, and new pages under it in Pages show up by themselves.
 - **Wide panels (mega menus).** A top item can open a panel across the page: its links in columns, with a picture, a few words and the newest posts if you like.
 - **Live preview.** Your home page wearing the unsaved menu, wide or phone-sized, seen only by you until you save.
+- **Arrange it in words.** Type “put Shop first and tuck Prints under it”, “move Contact after About” or “rename Journal to Notes”. It works without any AI, and Undo takes it back. Stacy understands the same words (`/menu …`) and asks “Yes?” before saving.
+- **Menu check-up.** Rows that point at a deleted or draft page, at an address with nothing there, or a wide panel with nothing in it are marked in the list. A menu bar too long for smaller screens is flagged too, and so is anything readers would trip over in the check-up.
+- **Seasonal menus.** Make a version of a menu for set dates (a Raya menu, a year-end sale). It takes over by itself on its first day and steps back after its last, in the site's own time zone.
 - On the site, drop-downs work with a mouse, a keyboard (Escape closes them) and on phones, where they open in place. The footer menu shows its links in groups.
 
 ![The menu editor: one list, with a row's drawer open](docs/screenshots/site-menus.png)

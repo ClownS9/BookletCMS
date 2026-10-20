@@ -247,7 +247,9 @@ class Site
      */
     public function menu(string $handle): array
     {
-        $tree = $this->menuPreview($handle) ?? Booklet::trees()->navigation($handle)?->tree();
+        // A seasonal version (a Raya menu, say) stands in for it between its dates.
+        $source = rescue(fn () => \App\Booklet\Support\Menus::activeSeason($handle), null, false) ?? $handle;
+        $tree = $this->menuPreview($handle) ?? Booklet::trees()->navigation($source)?->tree();
 
         return $tree ? $this->resolveBranches($tree) : [];
     }

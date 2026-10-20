@@ -22,6 +22,7 @@ class Commands
         'alt' => ['Write alt text for pictures that have none', false],
         'comments' => ['Read waiting comments and help reply', false],
         'drafts' => ['Show your drafts', false],
+        'menu' => ['Arrange the menu in words: /menu put Shop first', true],
         'go' => ['Go somewhere: /go media', true],
         'help' => ['What Stacy can do', false],
     ];
@@ -66,6 +67,9 @@ class Commands
             'alt' => 'Find pictures without alt text and suggest alt text for the first one.',
             'comments' => 'Any comments waiting? Show me the newest and help me reply.',
             'drafts' => 'Show me my drafts.',
+            'menu' => $words !== ''
+                ? "Arrange the header menu: {$words}. Read the menu first, then propose it."
+                : 'Show me the header menu, and anything wrong with it.',
             'go' => $words !== '' ? "Take me to {$words}." : 'Where can you take me?',
             'help' => 'What can you help me with? Tell me in a few short sentences.',
             default => $text,

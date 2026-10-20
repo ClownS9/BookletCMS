@@ -305,6 +305,21 @@ class Tools
                 'parameters' => $none,
             ],
             [
+                'name' => 'read_menu',
+                'description' => 'Read a site menu (the header menu unless another is named): its items in order, what drops down from what, anything wrong with it (links to deleted or draft pages, addresses with nothing at them, a bar too long for smaller screens), and its seasonal versions with their dates. Use before proposing changes to a menu, and for “is my menu OK?”.',
+                'parameters' => ['type' => 'object', 'properties' => [
+                    'menu' => ['type' => 'string', 'description' => 'The menu’s handle, e.g. header or footer. Leave out for the header.'],
+                ]],
+            ],
+            [
+                'name' => 'propose_menu',
+                'description' => 'Propose arranging a site menu, described in plain words, e.g. “put Shop first and tuck Prints under it”, “move Contact after About”, “rename Journal to Notes”, “remove Blog”, “add the Our team page under About”, “bring Food up a level”. Use the names exactly as read_menu shows them. Nothing changes until the person confirms.',
+                'parameters' => ['type' => 'object', 'properties' => [
+                    'menu' => ['type' => 'string', 'description' => 'The menu’s handle, e.g. header. Leave out for the header.'],
+                    'instructions' => ['type' => 'string', 'description' => 'What to do, in short plain clauses joined by “and” or commas.'],
+                ], 'required' => ['instructions']],
+            ],
+            [
                 'name' => 'daily_brief',
                 'description' => 'A short briefing for today: visits today and yesterday, comments waiting, what is scheduled today and this week, drafts edited lately, and who is online. Use for "brief me", "good morning", "what\'s new?".',
                 'parameters' => $none,
@@ -416,6 +431,8 @@ class Tools
                 'propose_tags' => $this->proposeTags($call->arguments),
                 'propose_alt' => $this->proposeAlt((string) ($call->arguments['file'] ?? ''), (string) ($call->arguments['alt'] ?? '')),
                 'propose_reply' => $this->proposeReply((int) ($call->arguments['comment_id'] ?? 0), (string) ($call->arguments['text'] ?? '')),
+                'read_menu' => $this->readMenu((string) ($call->arguments['menu'] ?? 'header')),
+                'propose_menu' => $this->proposeMenu((string) ($call->arguments['menu'] ?? 'header'), (string) ($call->arguments['instructions'] ?? '')),
                 'propose_translation' => $this->proposeTranslation((string) ($call->arguments['entry_id'] ?? ''), (string) ($call->arguments['language'] ?? '')),
                 default => ['error' => "There is no tool called {$call->name}."],
             };
@@ -1157,6 +1174,92 @@ class Tools
 
     // Doing it, after "Yes" -------------------------------------------------
 
+    // Menus ------------------------------------------------------------------
+
+    protected function menuHandle(string $menu): ?string
+    {
+        $menu = Str::lower(trim($menu)) ?: 'header';
+        $all = \App\Booklet\Support\Menus::allWithSeasons();
+        if (isset($all[$menu])) {
+            return $menu;
+        }
+        foreach ($all as $handle => $title) {
+            if (Str::lower($title) === $menu || Str::lower($title) === $menu.' menu') {
+                return $handle;
+            }
+        }
+
+        return null;
+    }
+
+    protected function readMenu(string $menu): array
+    {
+        if (! $this->user->arranges()) {
+            return ['error' => 'Only editors and admins arrange the site’s menus. Say so kindly.'];
+        }
+        $handle = $this->menuHandle($menu);
+        if (! $handle) {
+            return ['error' => 'No menu called that. The menus are: '.implode(', ', \App\Booklet\Support\Menus::allWithSeasons()).'.'];
+        }
+        $rows = \App\Booklet\Support\MenuOutline::fromTree(\App\Booklet\Support\Menus::items($handle));
+        $season = \App\Booklet\Support\Menus::season($handle);
+        $for = $season['for'] ?? $handle;
+        $this->links[] = ['label' => \App\Booklet\Support\Menus::allWithSeasons()[$handle] ?? $handle, 'meta' => 'Open in Site menus', 'href' => route('admin.menus', ['menu' => $handle]), 'tone' => 'var(--mint)'];
+
+        return [
+            'menu' => $handle,
+            'title' => \App\Booklet\Support\Menus::allWithSeasons()[$handle] ?? $handle,
+            'items' => array_map(fn ($r) => str_repeat('  ', (int) $r['depth']).'- '.\App\Support\MenuHealth::label($r)
+                .(isset($r['entry']) ? '' : ' ('.($r['url'] ?? '').')').(! empty($r['mega']) ? ' [wide panel]' : '').(! empty($r['follow']) ? ' [brings its sub-pages]' : ''), $rows),
+            'problems' => \App\Support\MenuHealth::summary($rows, $for),
+            'stands_in_for' => $season ? ['menu' => $season['for'], 'from' => $season['from'], 'until' => $season['until'], 'state' => \App\Booklet\Support\Menus::seasonState($season)] : null,
+            'seasonal_versions' => $season ? [] : array_map(fn ($s) => ['title' => $s['title'], 'menu' => $s['handle'], 'from' => $s['from'], 'until' => $s['until'], 'state' => \App\Booklet\Support\Menus::seasonState($s)], \App\Booklet\Support\Menus::seasons($handle)),
+            'other_menus' => array_keys(\App\Booklet\Support\Menus::allWithSeasons()),
+        ];
+    }
+
+    protected function proposeMenu(string $menu, string $instructions): array
+    {
+        if (! $this->user->arranges()) {
+            return ['error' => 'Only editors and admins arrange the site’s menus. Say so kindly.'];
+        }
+        $handle = $this->menuHandle($menu);
+        if (! $handle) {
+            return ['error' => 'No menu called that. Use read_menu to see the menus.'];
+        }
+        $items = \App\Booklet\Support\Menus::items($handle);
+        $rows = \App\Booklet\Support\MenuOutline::fromTree($items);
+        $findPage = fn (string $title) => Booklet::entries()->all()
+            ->filter(fn (Entry $e) => (bool) $e->collection()?->structured() && Str::lower((string) $e->title()) === Str::lower(trim($title)))
+            ->first()?->id();
+        $result = \App\Booklet\Support\MenuWords::apply($rows, Str::limit($instructions, 500, ''), fn (array $r) => \App\Support\MenuHealth::label($r), $findPage);
+
+        if ($result['done'] === []) {
+            return ['error' => 'Nothing could be done with that. '.implode(' ', $result['problems']).' Use read_menu for the exact names, then try again with simpler clauses.'];
+        }
+        $title = \App\Booklet\Support\Menus::allWithSeasons()[$handle];
+        $season = \App\Booklet\Support\Menus::season($handle);
+        $summary = 'In the '.Str::lower($title).': '.implode('; ', $result['done']).'.';
+        $this->pending = [
+            'action' => 'menu',
+            'menu' => $handle,
+            'tree' => \App\Booklet\Support\MenuOutline::toTree($result['rows']),
+            'was' => md5((string) json_encode($items)),
+            'summary' => $summary,
+            'button' => 'Yes, arrange it',
+        ];
+        $this->links[] = ['label' => $title, 'meta' => 'Open in Site menus', 'href' => route('admin.menus', ['menu' => $handle]), 'tone' => 'var(--mint)'];
+
+        return [
+            'status' => 'waiting_for_confirmation',
+            'summary' => $summary,
+            'not_done' => $result['problems'],
+            'menu_after' => array_map(fn ($r) => str_repeat('  ', (int) $r['depth']).'- '.\App\Support\MenuHealth::label($r), $result['rows']),
+            'still_to_look_at' => \App\Support\MenuHealth::summary($result['rows'], $season['for'] ?? $handle),
+            'note' => 'Show the new order briefly, mention anything in not_done, and ask the person to confirm with the button under your message.',
+        ];
+    }
+
     /**
      * Carry out a confirmed proposal. Returns what Stacy says afterwards and
      * a link to what changed.
@@ -1173,6 +1276,21 @@ class Tools
 
         if ($pending['action'] === 'insert') {
             return static::confirmSkill($pending, $user);
+        }
+
+        if ($pending['action'] === 'menu') {
+            $handle = (string) ($pending['menu'] ?? '');
+            if (! $user->arranges() || ! array_key_exists($handle, \App\Booklet\Support\Menus::allWithSeasons())) {
+                return ['text' => 'I can’t arrange that menu, so I left it as it is.', 'link' => null];
+            }
+            if (md5((string) json_encode(\App\Booklet\Support\Menus::items($handle))) !== ($pending['was'] ?? '')) {
+                return ['text' => 'Someone changed that menu since I offered, so I left it as it is. Ask me again and I’ll start from how it is now.', 'link' => null];
+            }
+            \App\Booklet\Support\Menus::save($handle, (array) ($pending['tree'] ?? []));
+            $title = \App\Booklet\Support\Menus::allWithSeasons()[$handle];
+            ActivityLog::create(['user_id' => $user->id, 'actor' => 'stacy', 'action' => 'rearranged the', 'kind' => 'settings', 'subject_type' => 'navigation', 'subject_key' => $handle, 'subject_label' => $title, 'properties' => ['for' => $user->name]]);
+
+            return ['text' => 'Done. The '.Str::lower($title).' is arranged, and the site shows it now.', 'link' => ['label' => $title, 'meta' => 'Open in Site menus', 'href' => route('admin.menus', ['menu' => $handle]), 'tone' => 'var(--mint)']];
         }
 
         if ($pending['action'] === 'comment') {

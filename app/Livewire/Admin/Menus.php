@@ -7,11 +7,13 @@ use App\Booklet\Data\Entry;
 use App\Booklet\Facades\Booklet;
 use App\Booklet\Site;
 use App\Booklet\Support\MenuOutline;
+use App\Booklet\Support\MenuWords;
 use App\Booklet\Support\Menus as MenuStore;
 use App\Booklet\Support\PageTree;
 use App\Livewire\Concerns\Stamps;
 use App\Models\ActivityLog;
 use App\Support\Disk;
+use App\Support\MenuHealth;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -25,6 +27,10 @@ use Livewire\Component;
  * opens a row's drawer: its label and link, following the page tree, and
  * for a top item, a wide panel (mega menu). A live preview shows the real
  * site wearing the unsaved menu.
+ *
+ * Also: what's wrong with the menu (MenuHealth), arranging it in plain
+ * words (MenuWords, no AI needed), and seasonal versions that stand in for
+ * a menu between two dates (a Raya menu).
  */
 #[Layout('components.layouts.admin')]
 #[Title('Site menus')]
@@ -53,11 +59,23 @@ class Menus extends Component
     /** The row whose drawer is open (its key). */
     public ?string $open = null;
 
+    /** "Put Shop first and tuck Prints under it." */
+    public string $words = '';
+
+    // A new seasonal version
+    public bool $addingSeason = false;
+
+    public string $seasonName = '';
+
+    public string $seasonFrom = '';
+
+    public string $seasonUntil = '';
+
     public function mount(): void
     {
         abort_unless(request()->user()->arranges(), 403);
 
-        if (! array_key_exists($this->menu, MenuStore::all())) {
+        if (! array_key_exists($this->menu, MenuStore::allWithSeasons())) {
             $this->menu = 'header';
         }
 
@@ -74,11 +92,99 @@ class Menus extends Component
 
     public function switchTo(string $menu): void
     {
-        abort_unless(array_key_exists($menu, MenuStore::all()), 404);
+        abort_unless(array_key_exists($menu, MenuStore::allWithSeasons()), 404);
 
         $this->menu = $menu;
+        $this->open = null;
+        $this->addingSeason = false;
         $this->load();
-        $this->dispatch('menu-preview');
+        $this->dispatch('menu-preview', foot: $this->forHandle() !== 'header');
+    }
+
+    /** The menu this one is (or stands in for): "header" for a Raya version of the header. */
+    protected function forHandle(): string
+    {
+        return MenuStore::season($this->menu)['for'] ?? $this->menu;
+    }
+
+    // In plain words -----------------------------------------------------------
+
+    public function arrange(): void
+    {
+        $this->resetErrorBag('words');
+        if (trim($this->words) === '') {
+            return;
+        }
+        $result = MenuWords::apply($this->rows, mb_substr($this->words, 0, 500), fn (array $row) => MenuHealth::label($row), fn (string $title) => $this->pageCalled($title));
+
+        if ($result['done'] !== []) {
+            $this->change($result['rows']);
+            $this->stamp(implode('. ', $result['done']).'.'.($result['problems'] === [] ? ' (Undo takes it back.)' : ''));
+            if ($result['problems'] === []) {
+                $this->words = '';
+            }
+        }
+        if ($result['problems'] !== []) {
+            $this->addError('words', implode(' ', $result['problems']));
+        }
+    }
+
+    /** A page (in a structured collection) by its title, for "add the Our team page". */
+    protected function pageCalled(string $title): ?string
+    {
+        $title = mb_strtolower(trim($title));
+
+        return Booklet::entries()->all()
+            ->filter(fn (Entry $e) => (bool) Booklet::collections()->find($e->collectionHandle())?->structured())
+            ->first(fn (Entry $e) => mb_strtolower((string) $e->title()) === $title)?->id();
+    }
+
+    // Seasonal versions ----------------------------------------------------------
+
+    public function addSeason(): void
+    {
+        abort_if(MenuStore::season($this->menu) !== null, 403); // a season of a season: no
+        $this->validate([
+            'seasonName' => ['required', 'string', 'max:60'],
+            'seasonFrom' => ['required', 'date_format:Y-m-d'],
+            'seasonUntil' => ['required', 'date_format:Y-m-d', 'after_or_equal:seasonFrom'],
+        ], [
+            'seasonUntil.after_or_equal' => 'It has to end on or after the day it starts.',
+        ], ['seasonName' => 'name', 'seasonFrom' => 'first day', 'seasonUntil' => 'last day']);
+
+        if ($this->dirty) {
+            $this->save(); // the seasonal copy starts from what's here now
+        }
+        $handle = MenuStore::addSeason($this->menu, $this->seasonName, $this->seasonFrom, $this->seasonUntil);
+        ActivityLog::record('made a seasonal menu', 'settings', 'navigation', $handle, trim($this->seasonName));
+        $this->reset('seasonName', 'seasonFrom', 'seasonUntil', 'addingSeason');
+        $this->switchTo($handle);
+        $this->stamp('Made a copy to change for the season. It takes over by itself on its first day, and steps back after its last.');
+    }
+
+    public function saveSeasonDates(string $from, string $until): void
+    {
+        $season = MenuStore::season($this->menu);
+        abort_unless($season !== null, 404);
+        validator(['from' => $from, 'until' => $until], [
+            'from' => ['required', 'date_format:Y-m-d'],
+            'until' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ], ['until.after_or_equal' => 'It has to end on or after the day it starts.'])->validate();
+
+        MenuStore::setSeasonDates($this->menu, $from, $until);
+        \App\Support\PageCache::flush();
+        $this->stamp('Dates saved.');
+    }
+
+    public function deleteSeason(): void
+    {
+        $season = MenuStore::season($this->menu);
+        abort_unless($season !== null, 404);
+        MenuStore::deleteSeason($this->menu);
+        ActivityLog::record('threw away the seasonal menu', 'settings', 'navigation', $this->menu, $season['title']);
+        \App\Support\PageCache::flush();
+        $this->switchTo($season['for']);
+        $this->stamp('Thrown away. “'.$season['title'].'” won’t show again.');
     }
 
     // Adding -----------------------------------------------------------------
@@ -263,8 +369,9 @@ class Menus extends Component
     /** Keep the unsaved menu where the site's preview can find it, and tell the preview to reload. */
     protected function preview(): void
     {
-        Cache::put($this->previewKey(), [$this->menu => MenuOutline::toTree($this->rows)], now()->addHours(2));
-        $this->dispatch('menu-preview');
+        // A seasonal version is previewed where it would show: in place of the menu it stands in for.
+        Cache::put($this->previewKey(), [$this->forHandle() => MenuOutline::toTree($this->rows)], now()->addHours(2));
+        $this->dispatch('menu-preview', foot: $this->forHandle() !== 'header');
     }
 
     public function save(): void
@@ -272,11 +379,17 @@ class Menus extends Component
         MenuStore::save($this->menu, MenuOutline::toTree($this->rows));
         Cache::forget($this->previewKey());
 
-        ActivityLog::record('rearranged the', 'settings', 'navigation', $this->menu, MenuStore::all()[$this->menu] ?? $this->menu);
+        ActivityLog::record('rearranged the', 'settings', 'navigation', $this->menu, MenuStore::allWithSeasons()[$this->menu] ?? $this->menu);
         $this->dirty = false;
         $this->history = [];
-        $this->stamp('Menu saved. The site shows it now.');
-        $this->dispatch('menu-preview');
+        $season = MenuStore::season($this->menu);
+        $warnings = MenuHealth::warnings($this->rows, $this->forHandle());
+        $this->stamp(match ($season ? MenuStore::seasonState($season) : 'main') {
+            'coming' => 'Saved. It takes over on '.\Illuminate\Support\Carbon::parse($season['from'])->format('j F').'.',
+            'over' => 'Saved. Its dates are past, so the site doesn’t show it.',
+            default => 'Menu saved. The site shows it now.',
+        }.($warnings ? ' ('.$warnings.' '.\Illuminate\Support\Str::plural('thing', $warnings).' to look at, marked in the list.)' : ''));
+        $this->dispatch('menu-preview', foot: $this->forHandle() !== 'header');
     }
 
     /** The newest pictures in Media, for choosing one for a wide panel. */
@@ -348,18 +461,33 @@ class Menus extends Component
             ];
         }
 
-        $previewUrl = route('site.home', ['menu_preview' => 1]).($this->menu === 'header' ? '' : '#colophon');
+        $previewUrl = route('site.home', ['menu_preview' => 1]);
 
         // Pictures for a wide panel, only while one's drawer is open.
         $openRow = collect($this->rows)->firstWhere('key', $this->open);
         $pictures = $openRow && ! empty($openRow['mega']) ? $this->pictures() : [];
 
+        // What's wrong with it, row by row.
+        $health = MenuHealth::check($this->rows, $this->forHandle());
+        foreach ($rows as $n => $row) {
+            $rows[$n]['problems'] = $health['rows'][$row['index']] ?? [];
+        }
+
+        $season = MenuStore::season($this->menu);
+
         return view('livewire.admin.menus', [
             'menus' => MenuStore::all(),
             'items' => $rows,
+            'menuProblems' => $health['menu'],
+            'warnCount' => collect($health['menu'])->where('level', 'warn')->count() + collect($rows)->sum(fn ($r) => collect($r['problems'])->where('level', 'warn')->count()),
+            'season' => $season ? $season + ['state' => MenuStore::seasonState($season)] : null,
+            'seasons' => collect(MenuStore::seasons($this->forHandle()))->map(fn ($s) => $s + ['state' => MenuStore::seasonState($s)])->all(),
+            'forTitle' => MenuStore::all()[$this->forHandle()] ?? $this->forHandle(),
             'addable' => $pages->reject(fn (Entry $e) => in_array($e->id(), $used, true))->values(),
             'hasBlog' => collect($this->rows)->contains(fn ($row) => ($row['url'] ?? null) === $this->blogPath()),
             'previewUrl' => $previewUrl,
+            // Menus other than the header show at the foot of the page: the preview scrolls there.
+            'previewFoot' => $this->forHandle() !== 'header',
             'maxDepth' => MenuOutline::MAX_DEPTH,
             'tones' => ['var(--coral)', 'var(--sun)', 'var(--mint)', 'var(--sky)', 'var(--lilac)', 'var(--rose)'],
             'pictures' => $pictures,
