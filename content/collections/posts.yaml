@@ -1,0 +1,8 @@
+title: Posts
+route: '/blog/{slug}'
+dated: true
+sort_dir: desc
+taxonomies:
+  - categories
+  - tags
+sticker: '#F3C24F'

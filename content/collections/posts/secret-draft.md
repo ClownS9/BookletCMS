@@ -1,0 +1,16 @@
+---
+id: a2fedd7e-297b-4aba-8ced-90bba1d9de33
+published: true
+uri: /blog/secret-draft
+date: '2026-10-16 12:53:00'
+blueprint: post
+title: 'Secret draft'
+author: 1
+cover: []
+categories: []
+tags: []
+share_image: []
+---
+Something secretive in here...
+
+The air feels unusually still, as if the space itself is holding its breath, waiting for something to surface. Shadows cling to the corners, and every faint rustle seems to carry a hint of an untold story, urging you to look a little closer.

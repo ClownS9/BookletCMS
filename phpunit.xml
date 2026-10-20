@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_TIMEZONE" value="UTC" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <!-- Tests keep everything in a throwaway database: never the site's own content/ files. -->
+        <env name="BOOKLET_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_DB_CONNECTION" value="" force="true"/>
+        <env name="BOOKLET_COLLECTIONS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_BLUEPRINTS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_ENTRIES_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_NAVIGATIONS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_TREES_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_TAXONOMIES_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_TERMS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_GLOBALS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_ASSETS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_REVISIONS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_FORMS_DRIVER" value="database" force="true"/>
+        <env name="LOG_CHANNEL" value="null" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

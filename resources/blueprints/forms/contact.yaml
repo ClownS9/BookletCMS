@@ -1,0 +1,26 @@
+title: Contact
+tabs:
+  main:
+    sections:
+      -
+        fields:
+          -
+            handle: name
+            field:
+              type: text
+              validate:
+                - required
+          -
+            handle: email
+            field:
+              type: text
+              input_type: email
+              validate:
+                - required
+                - email
+          -
+            handle: message
+            field:
+              type: textarea
+              validate:
+                - required

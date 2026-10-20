@@ -1,0 +1,6 @@
+title: Contact
+honeypot: website
+email:
+  -
+    to: hello@example.com
+    subject: 'New message from the site'

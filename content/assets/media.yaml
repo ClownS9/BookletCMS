@@ -1,0 +1,8 @@
+title: Media
+disk: public
+allow_uploads: true
+folders:
+  - covers
+  - blog
+  - logos
+  - documents

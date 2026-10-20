@@ -1,0 +1,61 @@
+title: Page
+tabs:
+  main:
+    display: Main
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              display: Title
+              validate:
+                - required
+          -
+            handle: content
+            field:
+              type: markdown
+              display: Body
+          -
+            handle: blocks
+            field:
+              type: blocks
+              display: Cut-outs
+              instructions: 'Quotes, pictures, buttons and more, after the body.'
+  sidebar:
+    display: 'Margin notes'
+    sections:
+      -
+        fields:
+          -
+            handle: template
+            field:
+              type: select
+              display: Template
+              default: default
+              options:
+                default: Default
+                full_width: 'Full width'
+                landing: Landing
+          -
+            handle: excerpt
+            field:
+              type: textarea
+              display: Standfirst
+              instructions: 'One line on what this page is about.'
+          -
+            handle: cover
+            field:
+              type: assets
+              container: media
+              max_files: 1
+              display: 'Header image'
+          -
+            handle: show_people
+            field:
+              type: toggle
+              display: 'Show the people behind it'
+              instructions: 'Everyone in the book, with their bylines.'
+          -
+            import: seo

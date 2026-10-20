@@ -1,0 +1,4 @@
+title: Pages
+route: '{parent_uri}/{slug}'
+structured: true
+sticker: '#86CDB9'

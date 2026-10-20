@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+	xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/"
+>
+<channel>
+	<title>Kopi &amp; Kuih</title>
+	<link>https://old-kopi.example</link>
+	<wp:wxr_version>1.2</wp:wxr_version>
+	<wp:base_site_url>https://old-kopi.example</wp:base_site_url>
+	<wp:base_blog_url>https://old-kopi.example</wp:base_blog_url>
+	<wp:author><wp:author_id>1</wp:author_id><wp:author_login><![CDATA[nur]]></wp:author_login><wp:author_email><![CDATA[Nur@Example.com]]></wp:author_email><wp:author_display_name><![CDATA[Nur Aisyah]]></wp:author_display_name></wp:author>
+	<wp:author><wp:author_id>2</wp:author_id><wp:author_login><![CDATA[hana]]></wp:author_login><wp:author_email><![CDATA[hana@example.com]]></wp:author_email><wp:author_display_name><![CDATA[Hana]]></wp:author_display_name></wp:author>
+	<wp:category><wp:term_id>3</wp:term_id><wp:category_nicename><![CDATA[recipes]]></wp:category_nicename><wp:category_parent><![CDATA[]]></wp:category_parent><wp:cat_name><![CDATA[Recipes]]></wp:cat_name></wp:category>
+	<wp:tag><wp:term_id>5</wp:term_id><wp:tag_slug><![CDATA[coconut]]></wp:tag_slug><wp:tag_name><![CDATA[Coconut]]></wp:tag_name></wp:tag>
+
+	<item>
+		<title><![CDATA[kuih.jpg]]></title>
+		<link>https://old-kopi.example/kuih-jpg/</link>
+		<dc:creator><![CDATA[nur]]></dc:creator>
+		<content:encoded><![CDATA[]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>40</wp:post_id>
+		<wp:post_date><![CDATA[2023-05-01 10:00:00]]></wp:post_date>
+		<wp:post_name><![CDATA[kuih-jpg]]></wp:post_name>
+		<wp:status><![CDATA[inherit]]></wp:status>
+		<wp:post_parent>41</wp:post_parent>
+		<wp:post_type><![CDATA[attachment]]></wp:post_type>
+		<wp:attachment_url><![CDATA[https://old-kopi.example/wp-content/uploads/2023/05/kuih.jpg]]></wp:attachment_url>
+		<wp:postmeta><wp:meta_key><![CDATA[_wp_attachment_image_alt]]></wp:meta_key><wp:meta_value><![CDATA[Green kuih on a plate]]></wp:meta_value></wp:postmeta>
+	</item>
+
+	<item>
+		<title><![CDATA[Kuih &amp; coconut: a love story]]></title>
+		<link>https://old-kopi.example/2023/05/kuih-coconut/</link>
+		<dc:creator><![CDATA[nur]]></dc:creator>
+		<content:encoded><![CDATA[<!-- wp:paragraph --><p>Steamed, <strong>sweet</strong> and green. See <a href="https://old-kopi.example/about/">about us</a>.</p><!-- /wp:paragraph -->
+<!-- wp:image {"id":40} --><figure class="wp-block-image"><img src="https://old-kopi.example/wp-content/uploads/2023/05/kuih-300x200.jpg" alt="Kuih"/></figure><!-- /wp:image -->
+[gallery ids="40,41"]
+<!-- wp:list --><ul><li>Pandan</li><li>Coconut</li></ul><!-- /wp:list -->]]></content:encoded>
+		<excerpt:encoded><![CDATA[A small green treat.]]></excerpt:encoded>
+		<wp:post_id>41</wp:post_id>
+		<wp:post_date><![CDATA[2023-05-02 08:30:00]]></wp:post_date>
+		<wp:post_date_gmt><![CDATA[2023-05-02 00:30:00]]></wp:post_date_gmt>
+		<wp:post_name><![CDATA[kuih-coconut]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>0</wp:menu_order>
+		<wp:post_type><![CDATA[post]]></wp:post_type>
+		<wp:post_password><![CDATA[]]></wp:post_password>
+		<category domain="category" nicename="recipes"><![CDATA[Recipes]]></category>
+		<category domain="category" nicename="breakfast"><![CDATA[Breakfast]]></category>
+		<category domain="post_tag" nicename="coconut"><![CDATA[Coconut]]></category>
+		<wp:postmeta><wp:meta_key><![CDATA[_thumbnail_id]]></wp:meta_key><wp:meta_value><![CDATA[40]]></wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key><![CDATA[_yoast_wpseo_metadesc]]></wp:meta_key><wp:meta_value><![CDATA[How we make kuih with fresh coconut.]]></wp:meta_value></wp:postmeta>
+		<wp:postmeta><wp:meta_key><![CDATA[_yoast_wpseo_title]]></wp:meta_key><wp:meta_value><![CDATA[%%title%% %%sep%% %%sitename%%]]></wp:meta_value></wp:postmeta>
+		<wp:comment>
+			<wp:comment_id>7</wp:comment_id><wp:comment_author><![CDATA[Reader One]]></wp:comment_author><wp:comment_author_email><![CDATA[one@example.com]]></wp:comment_author_email>
+			<wp:comment_date><![CDATA[2023-05-03 09:00:00]]></wp:comment_date><wp:comment_content><![CDATA[Looks <b>lovely</b>!]]></wp:comment_content>
+			<wp:comment_approved><![CDATA[1]]></wp:comment_approved><wp:comment_type><![CDATA[comment]]></wp:comment_type><wp:comment_parent>0</wp:comment_parent><wp:comment_user_id>0</wp:comment_user_id>
+		</wp:comment>
+		<wp:comment>
+			<wp:comment_id>8</wp:comment_id><wp:comment_author><![CDATA[Nur Aisyah]]></wp:comment_author><wp:comment_author_email><![CDATA[nur@example.com]]></wp:comment_author_email>
+			<wp:comment_date><![CDATA[2023-05-03 10:00:00]]></wp:comment_date><wp:comment_content><![CDATA[Thank you!]]></wp:comment_content>
+			<wp:comment_approved><![CDATA[1]]></wp:comment_approved><wp:comment_type><![CDATA[comment]]></wp:comment_type><wp:comment_parent>7</wp:comment_parent><wp:comment_user_id>1</wp:comment_user_id>
+		</wp:comment>
+		<wp:comment>
+			<wp:comment_id>9</wp:comment_id><wp:comment_author><![CDATA[Spammer]]></wp:comment_author><wp:comment_author_email><![CDATA[]]></wp:comment_author_email>
+			<wp:comment_date><![CDATA[2023-05-04 10:00:00]]></wp:comment_date><wp:comment_content><![CDATA[cheap pills]]></wp:comment_content>
+			<wp:comment_approved><![CDATA[spam]]></wp:comment_approved><wp:comment_type><![CDATA[comment]]></wp:comment_type><wp:comment_parent>0</wp:comment_parent><wp:comment_user_id>0</wp:comment_user_id>
+		</wp:comment>
+	</item>
+
+	<item>
+		<title><![CDATA[About us]]></title>
+		<link>https://old-kopi.example/about/</link>
+		<dc:creator><![CDATA[hana]]></dc:creator>
+		<content:encoded><![CDATA[We make kopi.
+
+Every morning
+from six.]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>50</wp:post_id>
+		<wp:post_date><![CDATA[2022-01-01 08:00:00]]></wp:post_date>
+		<wp:post_name><![CDATA[about]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>1</wp:menu_order>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+		<wp:post_password><![CDATA[]]></wp:post_password>
+	</item>
+
+	<item>
+		<title><![CDATA[Our team]]></title>
+		<link>https://old-kopi.example/about/team/</link>
+		<dc:creator><![CDATA[hana]]></dc:creator>
+		<content:encoded><![CDATA[<p>Two of us.</p>]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>51</wp:post_id>
+		<wp:post_date><![CDATA[2022-01-02 08:00:00]]></wp:post_date>
+		<wp:post_name><![CDATA[team]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>50</wp:post_parent>
+		<wp:menu_order>0</wp:menu_order>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+		<wp:post_password><![CDATA[]]></wp:post_password>
+	</item>
+
+	<item>
+		<title><![CDATA[Secret recipe]]></title>
+		<link>https://old-kopi.example/?p=60</link>
+		<dc:creator><![CDATA[nur]]></dc:creator>
+		<content:encoded><![CDATA[<p>Only for members.</p>]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>60</wp:post_id>
+		<wp:post_date><![CDATA[2023-06-01 08:00:00]]></wp:post_date>
+		<wp:post_name><![CDATA[secret-recipe]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>0</wp:menu_order>
+		<wp:post_type><![CDATA[post]]></wp:post_type>
+		<wp:post_password><![CDATA[members]]></wp:post_password>
+	</item>
+
+	<item>
+		<title><![CDATA[Main menu]]></title>
+		<link>https://old-kopi.example/?p=70</link>
+		<wp:post_id>70</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[nav_menu_item]]></wp:post_type>
+	</item>
+	<item>
+		<title><![CDATA[Blue mug]]></title>
+		<link>https://old-kopi.example/product/blue-mug/</link>
+		<wp:post_id>80</wp:post_id>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_type><![CDATA[product]]></wp:post_type>
+	</item>
+</channel>
+</rss>

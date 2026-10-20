@@ -1,0 +1,5 @@
+title: 'Header menu'
+collections:
+  - pages
+  - posts
+max_depth: 2

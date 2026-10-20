@@ -1,0 +1,2 @@
+title: Categories
+route: '/blog/category/{slug}'

@@ -1,0 +1,22 @@
+# Static analysis: finds undefined methods and properties, wrong types and
+# the like (what editors such as Intelephense warn about), for the whole
+# project at once. Set up once:
+#
+#     composer require --dev larastan/larastan
+#
+# then run:
+#
+#     vendor/bin/phpstan analyse
+#
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 2
+    paths:
+        - app
+        - routes
+        - database
+        - inserts
+        - config
+    tmpDir: storage/framework/cache/phpstan

@@ -1,0 +1,160 @@
+# Inserts
+
+Extras tucked into the book. Each insert is a folder here with an `insert.php`
+that describes what it adds. Add them, switch them on and off, and update them in
+**Settings › Inserts**.
+
+Two come with Booklet: **Gallery** (albums from Media) and **Events** (a page at
+/events, calendar files, and a list for posts).
+
+## Making one
+
+    php artisan booklet:insert reading-list
+
+makes `inserts/reading-list/` with a working example. Then change it.
+
+## What an insert.php can say
+
+| Key | What it does |
+| --- | --- |
+| `name`, `about`, `version`, `author` | How it appears on the shelf (and what Stacy knows about it) |
+| `sticker` | Its colour: coral, sun, mint, sky, lilac, rose, sand or ink |
+| `needs` | The Booklet version it needs, like `'1.0'` |
+| `settings` | Fields drawn on the shelf for you: `text`, `textarea`, `number`, `toggle`, `select`, `email`, `url` |
+| `page` | Its own page in the admin book: `title`, `chapter` (Posts, Pages, Media, People, Comments…; leave out for its own), `who` (roles), `form` (starting values), `data` (a function giving the view its variables), `actions` (functions its buttons call) |
+| `slips` | Pieces for writing: `'gallery' => fn ($words, $insert) => …` makes `[[gallery: …]]` work in posts and pages |
+| `slip_help` | How to use each slip, in one line |
+| `routes` | Pages on the site: `fn ($router, $insert) => $router->get('/events', …)->name('index')` (named `site.insert.{key}.index`) |
+| `site` | Files the site loads while it's on: `['css' => [...], 'js' => [...]]`, from `assets/` |
+| `when` | Reacting to `entry.published`, `comment.received`, `message.received`, `subscriber.confirmed` |
+| `every` | Jobs run on their own: `everyFiveMinutes`, `hourly`, `daily`, `weekly` |
+| `contents` | Cards on the Contents page (see below) |
+| `stacy` | What it teaches Stacy (see below) |
+| `on`, `remove` | Run when it's switched on, or removed with its data |
+
+In its views (`views/*.blade.php`), an insert's page uses `wire:model="form.title"`
+and `wire:click="act('save')"` (or `act('delete', {{ $id }})`); an action returns a
+stamp message, or `['form' => …, 'editing' => …, 'stamp' => …]`.
+
+`$insert` gives it: `setting('name')`, `records('albums')` (`create`, `all`, `find`,
+`findBySlug`, `update`, `delete`, `reorder`, with no migration needed), `validate($form, $rules)`,
+`view('name', [...])` and `asset('file.css')`. Heavier data can bring its own
+`migrations/`, run when it's switched on.
+
+## Cards on the Contents page
+
+```php
+'contents' => [
+    'this-week' => [
+        'title' => 'Coming up this week',
+        'who' => ['admin', 'editor'],          // optional: defaults to who can open its page
+        'show' => fn (Insert $insert, User $user) => [
+            'count' => 2,                      // shown after the title
+            'text' => 'A line, if a list doesn’t fit.',
+            'items' => [['label' => 'Bake sale', 'meta' => 'Saturday, 10am', 'href' => '/admin/inserts/events?open=4']],
+            'link' => ['label' => 'All events', 'href' => route('admin.insert', $insert->key)],
+        ],
+    ],
+],
+```
+
+Return `null` (or no text and no items) when there's nothing to say, and the card
+stays hidden: the Contents page should only show what's worth a look today. Up to
+five items show. Stacy's daily brief includes them too. `?open={id}` on an insert's
+page runs its `open` action, so a link can land on one record.
+
+## Telling search engines
+
+A page an insert adds can describe what's on it for search engines (schema.org),
+alongside what Booklet says about the site:
+
+```php
+\App\Support\StructuredData::add(['@type' => 'Event', 'name' => 'Bake sale', 'startDate' => '2026-11-07T10:00:00+08:00', …]);
+```
+
+Call it while the page is being made (in the route, before returning the view).
+Events does this for every event coming up.
+
+## Teaching Stacy
+
+`'stacy'` lists skills. A **look-up** answers questions; a **change** is offered
+first and only happens after the person presses Yes.
+
+```php
+'stacy' => [
+    'upcoming' => [
+        'about' => 'List the events coming up.',           // what Stacy reads to decide when to use it
+        'label' => 'Tells you what’s coming up',            // what people see on the shelf
+        'look' => fn (array $args, Insert $insert, User $user) => ['events' => …],
+    ],
+    'add' => [
+        'about' => 'Propose adding an event.',
+        'takes' => ['title' => ['type' => 'string'], 'date' => ['type' => 'string', 'about' => 'YYYY-MM-DD']],
+        'needs' => ['title', 'date'],                       // the ones she must give
+        'propose' => fn (array $args, Insert $insert, User $user) => [
+            'summary' => 'Add “Bake sale” on Saturday.',     // shown with the Yes button
+            'button' => 'Yes, add it',
+            'data' => [...],                                // handed to 'do' after Yes
+        ],
+        'do' => fn (array $data, Insert $insert, User $user) => 'Done.',
+    ],
+],
+```
+
+- `takes` types: `string`, `integer`, `number`, `boolean`, `list` (of strings);
+  `options` limits a value to a few choices.
+- `who` says which roles get the skill. Look-ups default to everyone; changes to
+  editors and admins.
+- A look-up can return `'links' => [['label' => …, 'href' => …]]`, shown under her
+  answer. `propose` returns a sentence instead of the array when it can't be done
+  (she passes it on); validation problems from `$insert->validate()` are passed on too.
+  `do` returns a sentence, or `['text' => …, 'link' => ['label' => …, 'href' => …]]`.
+- Admins can switch every change from inserts off in **How Stacy behaves › Use inserts**.
+
+## When something goes wrong
+
+- An insert whose `insert.php` can't be read is **torn out**: kept off, with the error
+  on the shelf, until someone fixes it and presses **Try again**. The rest of the book
+  carries on.
+- A slip that fails shows nothing (the page stays whole) and notes the problem on the shelf.
+- `BOOKLET_SAFE_MODE=true` in `.env` starts the book with every insert off.
+
+- If an update breaks it, **Undo update** on the shelf puts the copy before it back.
+
+## Adding one
+
+On the shelf, **Add an insert** takes any of:
+
+- a GitHub repository: `someone/booklet-recipes` (or its github.com address)
+- a link to a `.zip`
+- a `.zip` from your computer
+
+You see what it is (name, version, who made it, where from) before anything
+changes, and it arrives switched off. Adding or updating asks for your password,
+since an insert is code that runs with the whole site's keys: only add inserts from
+people you trust. Admins only.
+
+The same from the command line:
+
+    php artisan booklet:insert-install someone/booklet-recipes
+    php artisan booklet:insert-install ~/Downloads/recipes.zip
+    php artisan booklet:insert-update          # bring in newer versions
+    php artisan booklet:insert-undo recipes    # put the copy before the last update back
+
+Inserts added from GitHub or a link are checked for newer versions every day; the
+shelf shows **Update** when there is one. `BOOKLET_INSERTS_INSTALL=false` in `.env`
+switches adding from the shelf off (inserts can still be put in this folder by hand).
+For inserts in private GitHub repositories, set `BOOKLET_GITHUB_TOKEN`.
+
+## Sharing one
+
+No GitHub needed: zip the insert's folder and send it. Anyone can add the zip.
+
+To let people add it by name and get updates, put it in a GitHub repository with
+`insert.php` at the top, and make a **release** for each version, tagged with the
+version (`1.2` or `v1.2`). Without releases, the newest code is used.
+
+The shelf reads what an insert is **without running it**, so keep these written out
+plainly at the top of the array in `insert.php` (not worked out by code):
+`'key'` (its folder name, optional), `'name'`, `'about'`, `'version'`, `'author'`,
+`'needs'`. Every PHP file is checked for mistakes before an insert is added.

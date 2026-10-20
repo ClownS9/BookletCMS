@@ -1,0 +1,19 @@
+title: SEO
+fields:
+  -
+    handle: meta_title
+    field:
+      type: text
+      display: 'Meta title'
+  -
+    handle: meta_description
+    field:
+      type: textarea
+      display: 'Meta description'
+  -
+    handle: share_image
+    field:
+      type: assets
+      container: media
+      max_files: 1
+      display: 'Share image'
