@@ -16,9 +16,20 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 - **Blocks ("cut-outs"):** quotes, pictures, galleries, buttons, two columns, videos, notes and featured posts, tucked into any page and dragged into order. Inserts can add their own.
 - **Linked entries and rows:** point a page at other posts and pages (with "linked from" on the other side), or keep small tables like ingredients and opening hours.
 - **Show this field when…:** fields that appear only when another field says so, set up by picking or by typing it in plain words.
-- **Calendar, categories and tags, menus, redirects, and a print-ready book** of your writing.
+- **Calendar, categories and tags, redirects, and a print-ready book** of your writing.
 
 ![Cut-outs in the editor: paper slips with coloured tabs](docs/screenshots/editor-cut-outs.png)
+
+### Site menus
+- **One list, drag and drop.** Rows tucked in under another drop down from it on the site, up to three levels. No mouse? Arrow keys on a row's grip do the same, and Undo takes back the last 20 moves.
+- **Sub-pages that follow.** Tell a menu page to bring its sub-pages along, and new pages under it in Pages show up by themselves.
+- **Wide panels (mega menus).** A top item can open a panel across the page: its links in columns, with a picture, a few words and the newest posts if you like.
+- **Live preview.** Your home page wearing the unsaved menu, wide or phone-sized, seen only by you until you save.
+- On the site, drop-downs work with a mouse, a keyboard (Escape closes them) and on phones, where they open in place. The footer menu shows its links in groups.
+
+![The menu editor: one list, with a row's drawer open](docs/screenshots/site-menus.png)
+
+![A wide panel on the site: links in columns, the newest posts and a picture card](docs/screenshots/wide-panel.png)
 
 ### Collections and blueprints
 - Make your own chapters (collections) with their own fields, described in blueprints: simple YAML files you can read and edit by hand.
@@ -50,11 +61,11 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 ### Keeping it safe
 See [Security](#security) for how Booklet protects your data, sign-ins and uploads.
 - **Backups:** the whole book in one file, nightly if you like, and restored with a look inside first.
-- **Version control:** with content kept as files, every change is committed to git on its own, credited to whoever made it. You can browse the history and put the whole book back to any point.
+- **Version control:** with content kept as files, every change is committed to git on its own, credited to whoever made it. You can browse the history and put the whole book back to any point. **Send it to GitHub in three steps** from the same page, no commands needed. Booklet won't commit files with unfinished merge marks, and it offers to take private files out of git if any were committed before.
 - **Check-up:** a page (and `php artisan booklet:doctor`) that tells you what the server is missing and how to fix it.
 - A bin that keeps deleted things for 30 days.
 
-![Version control: every change as a stitch in the binding](docs/screenshots/version-control.png)
+![Version control: the three steps to GitHub on the left, every change as a stitch in the binding on the right](docs/screenshots/version-control.png)
 
 ### Inserts
 Small add-ons that live in `inserts/`: they can add pages to the admin, cards on Contents, `[[slips]]` in writing, cut-outs, scheduled jobs and new skills for Stacy. **Events** and **Gallery** come with Booklet. Add more from a .zip, a link or a GitHub repository in Settings › Inserts. See [`inserts/README.md`](inserts/README.md).
@@ -181,6 +192,7 @@ By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `r
 - **Safe database access.** All queries go through Laravel's query builder and Eloquent, with bound parameters, never raw values pasted into SQL.
 - **Backups leave secrets out.** AI keys and the mail password are never put in a backup file. Everything else is, so keep backups somewhere private.
 - **Version control never commits secrets.** `.env` files, the database file, `vendor/`, logs and backups are left out even if `.gitignore` forgets them.
+- **The GitHub token is kept like a secret.** It's encrypted with `APP_KEY`, only handed to git while sending, and never written into `.git/config` or shown again. Make it a fine-grained token for that one repository, with nothing but *Contents: Read and write*.
 - **Revisions and form submissions stay on the server.** `storage/booklet/` has its own `.gitignore` (put back if it goes missing), so even a hand-typed `git add .` leaves them out. Your content's history is in git already, through `content/`.
 - **Tests can't touch your content.** They always run against an in-memory database and refuse to start otherwise.
 
@@ -247,7 +259,7 @@ Tests always run against an in-memory database and never touch your real content
 ## Project layout
 
 ```
-app/Booklet/      content repositories, stores and the Booklet facade
+app/Booklet/      content repositories, stores, the page tree and menus, and the Booklet facade
 app/Livewire/     the admin (Admin/) and the site's interactive parts (Site/)
 app/Stacy/        the assistant: chat, tools, providers, voice
 app/Support/      blocks, links, rows, crops, version control, backups, health…
