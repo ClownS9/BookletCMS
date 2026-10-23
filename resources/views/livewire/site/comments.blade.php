@@ -72,6 +72,8 @@
             <p class="leave-note__thanks" role="status">Thanks — your {{ $postedReply ? 'reply' : 'note' }} is up.@if ($notify) We’ll email you when someone replies.@endif</p>
         @endif
 
+        <x-guard form="comment" />
+
         <button type="submit" class="button button--ink">
             <span wire:loading.remove wire:target="post">{{ $replyingTo ? 'Post reply' : 'Post note' }}</span>
             <span wire:loading wire:target="post">Posting…</span>

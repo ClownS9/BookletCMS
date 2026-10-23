@@ -28,6 +28,8 @@
                 <button type="button" class="link-button" style="font-size: 14px; color: var(--muted)" wire:click="showForgot">Forgot password?</button>
             </div>
 
+            <x-guard form="login" />
+
             <button type="submit" class="btn btn--ink btn--wide">
                 <span wire:loading.remove wire:target="login">Sign in</span>
                 <span wire:loading wire:target="login">Opening…</span>
@@ -82,6 +84,8 @@
             @if ($sent)
                 <p class="notice" role="status">If that email belongs to someone in this book, the link is on its way. Check your inbox.</p>
             @endif
+
+            <x-guard form="reset" />
 
             <button type="submit" class="btn btn--ink btn--wide">
                 <span wire:loading.remove wire:target="sendResetLink">Send reset link</span>

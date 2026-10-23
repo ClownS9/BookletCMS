@@ -47,6 +47,8 @@
 
             <p class="letter__small">Your email is only used to write back to you.</p>
 
+            <x-guard form="contact" />
+
             <button type="submit" class="button button--ink" wire:loading.attr="disabled" wire:target="send">
                 <span wire:loading.remove wire:target="send">Send message</span>
                 <span wire:loading wire:target="send">Sending…</span>

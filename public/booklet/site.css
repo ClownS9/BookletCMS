@@ -1154,3 +1154,9 @@ html { overflow-x: clip; } /* edge-to-edge pictures don't leave a sideways scrol
     .look-header--banner .brand__name { font-size: 24px; }
 }
 
+
+/* A guarding insert's box in a form (a "prove you're human" check) */
+.guard { margin: 4px 0 14px; min-height: 0; }
+.guard:empty { display: none; }
+.guard-note { margin: 6px 0 0; font-size: 12px; color: var(--faint); }
+.guard-note a { color: inherit; }

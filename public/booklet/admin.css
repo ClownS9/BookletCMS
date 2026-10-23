@@ -5622,3 +5622,7 @@ body.night .size-print small { color: var(--faint); }
 .cover-find__head > .btn { flex: none; white-space: nowrap; }
 #cover-right { scroll-margin-top: 72px; }
 @media (max-width: 560px) { .cover-find__head { flex-direction: column; } }
+
+/* A guarding insert's box on the sign-in page */
+.guard { margin: 2px 0 12px; }
+.guard-note { margin: 6px 0 0; font-size: 12px; color: var(--faint); }

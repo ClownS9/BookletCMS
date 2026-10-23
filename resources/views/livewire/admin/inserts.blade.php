@@ -268,6 +268,10 @@
                                             <option value="{{ $value }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
+                                @elseif ($f['type'] === 'secret')
+                                    @php $hasSecret = ($insert->settings()[$handle] ?? '') !== ''; @endphp
+                                    <input id="set-{{ $handle }}" type="password" wire:model="values.{{ $handle }}" autocomplete="off" spellcheck="false"
+                                           placeholder="{{ $hasSecret ? 'Saved · type to replace' : '' }}">
                                 @else
                                     <input id="set-{{ $handle }}" type="{{ $f['type'] === 'number' ? 'number' : $f['type'] }}" wire:model="values.{{ $handle }}"
                                            @if ($f['min'] !== null) min="{{ $f['min'] }}" @endif @if ($f['max'] !== null) max="{{ $f['max'] }}" @endif>

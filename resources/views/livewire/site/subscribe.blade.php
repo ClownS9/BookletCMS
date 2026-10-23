@@ -24,6 +24,7 @@
                     </button>
                 </form>
                 @error('email') <p class="field__error">{{ $message }}</p> @enderror
+                <x-guard form="subscribe" />
             @endif
         </section>
     @endif
