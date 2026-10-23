@@ -85,6 +85,24 @@ class PageCache
         foreach (['booklet/site.css', 'booklet/site.js'] as $file) {
             $times[] = (int) @filemtime(public_path($file));
         }
+        // The theme the site wears and the inserts that are on: an edit to their files shows at once too.
+        $folders = [];
+        if ($theme = rescue(fn () => \App\Themes\ThemeManager::forLook(\App\Support\Look::current()), null, false)) {
+            $folders[] = $theme->path;
+        }
+        foreach (rescue(fn () => app(\App\Inserts\InsertManager::class)->active(), collect(), false) as $insert) {
+            foreach (['views', 'assets'] as $sub) {
+                $folders[] = $insert->path.'/'.$sub;
+            }
+            $times[] = (int) @filemtime($insert->path.'/insert.php');
+        }
+        foreach ($folders as $dir) {
+            if (is_dir($dir)) {
+                foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)) as $file) {
+                    $times[] = $file->getMTime();
+                }
+            }
+        }
 
         $print = substr(md5(count($times).'|'.max($times ?: [0]).'|'.array_sum($times)), 0, 8);
         request()->attributes->set('booklet.pagecache.print', $print);

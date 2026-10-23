@@ -82,6 +82,13 @@ class CoverDesigner extends Component
     public function wear(string $key): void
     {
         abort_unless($key === 'booklet' || ThemeManager::find($key) !== null, 404);
+        $theme = ThemeManager::find($key);
+        if ($theme && ! $theme->fits()) {
+            // Said, rather than quietly showing Booklet's own instead.
+            $this->stamp($theme->name().' needs Booklet '.$theme->needs().' or newer; this is '.config('booklet.version').'. An update of Booklet lets the site wear it.');
+
+            return;
+        }
         $this->look = Look::clean(['theme' => $key]);
         $this->changed();
     }
@@ -213,10 +220,17 @@ class CoverDesigner extends Component
         ActivityLog::record($done['updated'] ? 'updated the theme' : 'added the theme', 'settings', 'settings', 'look',
             $done['name'].($done['updated'] ? ' ('.$done['from'].' → '.$done['version'].')' : ' '.$done['version']));
 
-        if (($this->look['theme'] ?? 'booklet') === $done['key'] && ! $this->dirty) {
-            $this->look = Look::current(); // the one the site wears, updated
-            $this->dispatch('look-preview');
-            $this->stamp($done['name'].' is updated to '.$done['version'].'. The site wears it already.');
+        if (($this->look['theme'] ?? 'booklet') === $done['key']) {
+            // The one being looked at was updated: keep the person's choices (what the update still has of them).
+            if ($this->dirty) {
+                $this->look = Look::clean($this->look);
+                $this->changed();
+                $this->stamp($done['name'].' is updated to '.$done['version'].'. Your changes in the preview are kept.');
+            } else {
+                $this->look = Look::current();
+                $this->dispatch('look-preview');
+                $this->stamp($done['name'].' is updated to '.$done['version'].(Look::current()['theme'] === $done['key'] ? '. The site wears it already.' : '.'));
+            }
 
             return;
         }

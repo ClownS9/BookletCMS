@@ -66,7 +66,7 @@ class ThemeManager
     /** The theme a look wears (null: Booklet's own). */
     public static function forLook(array $look): ?Theme
     {
-        $theme = self::find($look['theme'] ?? null);
+        $theme = is_string($look['theme'] ?? null) ? self::find($look['theme']) : null;
 
         return $theme && $theme->fits() ? $theme : null;
     }

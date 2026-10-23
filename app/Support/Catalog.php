@@ -52,16 +52,16 @@ class Catalog
             $response = Http::withHeaders(self::headers())->timeout(12)->connectTimeout(6)
                 ->get('https://api.github.com/search/repositories', ['q' => $query, 'sort' => $sort, 'order' => 'desc', 'per_page' => self::PER_PAGE, 'page' => $page]);
         } catch (Throwable) {
-            return self::failed('GitHub didn’t answer. Check the server can reach github.com, then try again.');
+            return self::failed('GitHub didn’t answer. Check the server can reach github.com, then try again.', $key);
         }
         if (in_array($response->status(), [403, 429], true)) {
             $reset = (int) $response->header('X-RateLimit-Reset');
             $when = $reset > 0 ? ' Try again '.Carbon::createFromTimestamp($reset)->diffForHumans().'.' : ' Try again in a while.';
 
-            return self::failed('GitHub has had enough searches from this server for now.'.$when.(config('booklet.github_token') ? '' : ' A GitHub token (BOOKLET_GITHUB_TOKEN in .env) allows many more.'));
+            return self::failed('GitHub has had enough searches from this server for now.'.$when.(config('booklet.github_token') ? '' : ' A GitHub token (BOOKLET_GITHUB_TOKEN in .env) allows many more.'), $key);
         }
         if (! $response->successful()) {
-            return self::failed('GitHub said '.$response->status().'. Try again in a minute.');
+            return self::failed('GitHub said '.$response->status().'. Try again in a minute.', $key);
         }
 
         $repos = collect((array) $response->json('items', []))
@@ -209,8 +209,14 @@ class Catalog
         return $headers;
     }
 
-    protected static function failed(string $why): array
+    /** Not found this time: said plainly, and remembered briefly so each click doesn't wait for GitHub again. */
+    protected static function failed(string $why, ?string $key = null): array
     {
-        return ['items' => [], 'total' => 0, 'page' => 1, 'more' => false, 'error' => $why, 'at' => now()->toIso8601String()];
+        $result = ['items' => [], 'total' => 0, 'page' => 1, 'more' => false, 'error' => $why, 'at' => now()->toIso8601String()];
+        if ($key) {
+            Cache::put($key, $result, now()->addMinutes(2));
+        }
+
+        return $result;
     }
 }

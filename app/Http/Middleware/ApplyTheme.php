@@ -18,7 +18,7 @@ class ApplyTheme
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->is('admin', 'admin/*', 'livewire*', 'api/*')) {
+        if ($request->is('admin', 'admin/*', 'livewire*', 'api/*', 'themes/*/assets/*', 'inserts/*/assets/*')) {
             ThemeManager::apply(null);
 
             return $next($request);
@@ -30,8 +30,13 @@ class ApplyTheme
         $response = $next($request);
 
         $failed = $response->exception ?? null;
-        if ($theme && ThemeManager::applied() === $theme->key && $failed instanceof \Throwable && ThemeManager::causedBy($theme, $failed)) {
-            ThemeManager::noteError($theme, $failed, $request->path());
+        if (! $theme || ThemeManager::applied() !== $theme->key || ! $failed instanceof \Throwable || ! ThemeManager::causedBy($theme, $failed)) {
+            return $response;
+        }
+        ThemeManager::noteError($theme, $failed, $request->path());
+
+        // Only a page being looked at is made again: never something sent (a note, a form), which would be sent twice.
+        if (in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
             ThemeManager::apply(null);
             StructuredData::reset();
             $response = $next($request);

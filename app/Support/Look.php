@@ -134,6 +134,9 @@ class Look
     /** Anything missing or unknown becomes the preset's (and an unknown preset, the first one). */
     public static function clean(array $look): array
     {
+        // Only plain values count (a hand-edited settings file or a tampered request can send anything).
+        $look = array_map(fn ($v) => is_scalar($v) || $v === null ? $v : null, array_diff_key($look, ['options' => 1]))
+            + ['options' => is_array($look['options'] ?? null) ? array_filter($look['options'], fn ($v) => is_scalar($v)) : []];
         $theme = self::theme($look);
         $presets = self::presets($theme);
         $preset = array_key_exists((string) ($look['preset'] ?? ''), $presets) ? (string) $look['preset'] : (string) array_key_first($presets);

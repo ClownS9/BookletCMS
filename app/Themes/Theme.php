@@ -35,8 +35,8 @@ class Theme
             // The folder's name is the key (a theme.json saying otherwise was copied from another).
             $manifest['key'] = basename($path);
         }
-        if (! preg_match(ThemeManifest::KEY, $manifest['key'])) {
-            return null;
+        if (! preg_match(ThemeManifest::KEY, $manifest['key']) || $manifest['key'] === 'booklet') {
+            return null; // "booklet" is Booklet's own cover
         }
         $theme = new self($manifest['key'], $path, $manifest);
         $theme->problems = $problems;
