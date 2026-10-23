@@ -227,14 +227,14 @@ class InsertInstaller
      *
      * @return string a token for staged() / install()
      */
-    public function stage(string $file, array $source, string $label = ''): string
+    public function stage(string $file, array $source, string $label = '', ?string $sameAs = null): string
     {
         if (filesize($file) > self::MAX_ZIP) {
             throw new RuntimeException('It’s bigger than '.(self::MAX_ZIP / 1048576).' MB, which is more than an insert should be.');
         }
         $this->tidy();
         ['zip' => $zip, 'root' => $root, 'manifest' => $manifest] = $this->open($file);
-        $key = $this->keyFor($manifest, $root, $label ?: $file);
+        $key = isset($manifest['key']) || $sameAs === null ? $this->keyFor($manifest, $root, $label ?: $file) : $sameAs;
 
         $token = Str::lower(Str::random(32));
         $into = $this->stagingRoot().'/'.$token.'/files';
@@ -327,8 +327,11 @@ class InsertInstaller
     public function stageFrom(array $source): string
     {
         $file = $this->download($source);
+        // Already on the shelf from this same place: it's that insert, whatever it's called now.
+        $same = $this->manager->all()->first(fn (Insert $i) => ($s = $i->source()) && ($s['type'] ?? null) === $source['type']
+            && strcasecmp((string) ($s['repo'] ?? $s['url'] ?? ''), (string) ($source['repo'] ?? $source['url'] ?? '')) === 0);
         try {
-            return $this->stage($file, $source, $source['repo'] ?? basename((string) parse_url((string) ($source['url'] ?? ''), PHP_URL_PATH)));
+            return $this->stage($file, $source, $source['repo'] ?? basename((string) parse_url((string) ($source['url'] ?? ''), PHP_URL_PATH)), $same?->key);
         } finally {
             @unlink($file);
         }
@@ -507,6 +510,15 @@ class InsertInstaller
         if (! in_array($source['type'], ['github', 'url'], true)) {
             return null;
         }
+        if ($source['type'] === 'github') {
+            // No releases: the version in insert.php on the default branch, read as text
+            // (raw.githubusercontent.com doesn't count against GitHub's limits, and nothing is downloaded).
+            $raw = rescue(fn () => Http::withHeaders(['User-Agent' => 'Booklet'])->timeout(10)->connectTimeout(6)
+                ->get('https://raw.githubusercontent.com/'.$source['repo'].'/HEAD/insert.php'), null, false);
+            if ($raw && $raw->successful()) {
+                return ManifestReader::read($raw->body())['version'] ?? null;
+            }
+        }
 
         $file = $this->download($source);
         try {
@@ -525,9 +537,13 @@ class InsertInstaller
      *
      * @return array<string, string> inserts with an update => its version
      */
+    /** Inserts whose source couldn't be reached by the last check(). */
+    public array $unreached = [];
+
     public function check(?string $only = null): array
     {
         $ready = [];
+        $this->unreached = [];
         foreach ($this->manager->all() as $insert) {
             $source = $insert->source();
             if (($only && $insert->key !== $only) || ! in_array($source['type'] ?? null, ['github', 'url'], true)) {
@@ -537,7 +553,9 @@ class InsertInstaller
                 $latest = $this->latest($source);
             } catch (Throwable $e) {
                 report($e);
-                $latest = null;
+                $this->unreached[] = $insert->key;
+
+                continue; // couldn't ask: what was found before (an update waiting, say) stays as it was
             }
             $this->manager->record($insert->key, ['latest_version' => $latest, 'latest_checked_at' => now()]);
             if ($latest && version_compare($latest, $insert->version(), '>')) {

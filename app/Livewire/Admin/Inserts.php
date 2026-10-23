@@ -148,13 +148,13 @@ class Inserts extends Component
         if (! $insert?->source()) {
             return;
         }
-        $found = $this->installer()->check($insert->key);
+        $installer = $this->installer();
+        $found = $installer->check($insert->key);
         $this->manager()->forget();
-        $reached = \Illuminate\Support\Facades\DB::table('inserts')->where('key', $insert->key)->value('latest_version') !== null;
         $this->stamp(match (true) {
             isset($found[$insert->key]) => 'Version '.$found[$insert->key].' is ready.',
-            $reached => 'It’s up to date.',
-            default => 'Booklet couldn’t reach where it came from. It’ll try again tomorrow.',
+            in_array($insert->key, $installer->unreached, true) => 'Booklet couldn’t reach where it came from. It’ll try again tomorrow.',
+            default => 'It’s up to date ('.$insert->version().').',
         });
     }
 

@@ -258,12 +258,24 @@ class CoverDesigner extends Component
     /** Fetch the theme again from where it came from (a link or GitHub), to update it. */
     public function lookForUpdate(string $key): void
     {
-        $source = $this->installer()->sourceOf($key);
+        $installer = $this->installer();
+        $source = $installer->sourceOf($key);
         if (! $source) {
             return;
         }
+        // Ask first (cheap): only fetch the whole theme when there's something newer.
+        if (! $installer->updateReady($key)) {
+            $ready = $installer->check($key);
+            if (! isset($ready[$key])) {
+                $this->stamp(in_array($key, $installer->unreached, true)
+                    ? 'Booklet couldn’t reach where it came from. Try again in a while.'
+                    : 'It’s up to date ('.ThemeManager::find($key)?->version().').');
+
+                return;
+            }
+        }
         try {
-            $this->staged = $this->installer()->stageFrom($source);
+            $this->staged = $installer->stageFrom($source);
             $this->password = '';
             $this->resetErrorBag();
         } catch (\RuntimeException $e) {
@@ -343,6 +355,7 @@ class CoverDesigner extends Component
             'error' => $theme ? ThemeManager::error($theme) : null,
             'previous' => $theme ? $this->installer()->previousVersion($theme->key) : null,
             'origin' => $theme ? $this->installer()->sourceOf($theme->key) : null,
+            'updates' => ThemeManager::all()->keys()->mapWithKeys(fn ($k) => [$k => $this->installer()->updateReady($k)])->filter()->all(),
         ]), 'The cover');
     }
 }
