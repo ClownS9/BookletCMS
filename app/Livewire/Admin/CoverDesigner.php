@@ -224,10 +224,12 @@ class CoverDesigner extends Component
         $this->stamp($done['name'].' is on the shelf, and in the preview. Press Use this cover to put it on the site.');
     }
 
+    /** Not now: back to finding one (where they came from), with the preview a click away. */
     public function cancelStaged(): void
     {
         $this->dropStaged();
         $this->resetErrorBag();
+        $this->adding = true;
     }
 
     protected function dropStaged(): void

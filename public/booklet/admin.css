@@ -5612,3 +5612,13 @@ body.night .size-print small { color: var(--faint); }
   .catalog-item__do { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; }
 }
 .catalog-item__do .btn, .catalog-item__github { white-space: nowrap; }
+.cover-find__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cover-facing__narrow { display: none; }
+@media (max-width: 760px) { .cover-facing__wide { display: none; } .cover-facing__narrow { display: inline; } }
+@media (max-width: 560px) {
+  .catalog__tools { flex-wrap: wrap; }
+  .catalog__tools .input[type="search"] { flex: 1 1 100%; }
+}
+.cover-find__head > .btn { flex: none; white-space: nowrap; }
+#cover-right { scroll-margin-top: 72px; }
+@media (max-width: 560px) { .cover-find__head { flex-direction: column; } }

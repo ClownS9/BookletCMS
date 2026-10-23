@@ -16,9 +16,13 @@
         <section class="cover-themes" aria-labelledby="cover-themes-title">
             <div class="cover-themes__head">
                 <h2 id="cover-themes-title" class="field__label" style="margin: 0">Theme</h2>
-                @unless ($adding || $waiting)
-                    <button type="button" class="btn btn--quiet btn--sm" wire:click="startAdding">+ Add a theme</button>
-                @endunless
+                @if ($adding || $waiting)
+                    <span class="field__hint cover-facing" style="margin: 0">Adding one <span class="cover-facing__wide">on the facing page →</span><span class="cover-facing__narrow">below ↓</span></span>
+                @else
+                    {{-- On a phone the facing page is underneath: go to it. --}}
+                    <button type="button" class="btn btn--quiet btn--sm" wire:click="startAdding"
+                            x-on:click="if (matchMedia('(max-width: 760px)').matches) setTimeout(() => document.getElementById('cover-right')?.scrollIntoView({ behavior: 'smooth' }), 400)">+ Add a theme</button>
+                @endif
             </div>
             <div class="cover-themes__list">
                 @php
@@ -41,90 +45,6 @@
                     </button>
                 @endforeach
             </div>
-
-            @if ($adding)
-                <div class="cover-add">
-                    <div class="cover-add__head">
-                        <p style="margin: 0"><strong>Add a theme</strong></p>
-                        <button type="button" class="btn btn--quiet btn--sm" wire:click="stopAdding">Close</button>
-                    </div>
-                    @if ($blocked)
-                        <p class="vc-note vc-note--warn" style="margin: 0">{{ $blocked }}</p>
-                    @else
-                        @include('livewire.admin.partials.catalog', ['kind' => 'theme'])
-                        <p class="cover-add__or">Or, if you were given one</p>
-                        <form wire:submit="fetch" class="field" style="margin: 0">
-                            <label for="theme-source">From a link or GitHub</label>
-                            <p class="field__hint" style="margin: 0 0 6px">Paste what you were given: a name like <code>someone/booklet-harbour</code>, its github.com address, or a link to a .zip.</p>
-                            <div class="cover-add__row">
-                                <input id="theme-source" type="text" class="input" wire:model="source" placeholder="someone/booklet-harbour" spellcheck="false">
-                                <button type="submit" class="btn" wire:loading.attr="disabled" wire:target="fetch">
-                                    <span wire:loading.remove wire:target="fetch">Look inside</span>
-                                    <span wire:loading wire:target="fetch">Fetching…</span>
-                                </button>
-                            </div>
-                            @error('source') <p class="field__error">{{ $message }}</p> @enderror
-                        </form>
-                        <form method="POST" action="{{ route('admin.settings.themes.upload') }}" enctype="multipart/form-data" class="field" style="margin: 0">
-                            @csrf
-                            <label for="theme-file">From a .zip on your computer</label>
-                            <div class="cover-add__row">
-                                <input id="theme-file" type="file" name="theme" accept=".zip,application/zip" required>
-                                <button type="submit" class="btn btn--sm">Upload and look inside</button>
-                            </div>
-                            @error('upload') <p class="field__error">{{ $message }}</p> @enderror
-                            @error('theme') <p class="field__error">{{ $message }}</p> @enderror
-                        </form>
-                    @endif
-                    <p class="field__hint" style="margin: 0">You’ll see what it is before anything changes. Then it shows in the preview, and the site only changes when you press <b>Use this cover</b>.</p>
-                    <p class="field__hint" style="margin: 0"><b>Cover packs</b> bring fonts, colours, presets and styles, and are safe to add from anyone: Booklet reads them through first. <b>Themes with templates</b> change the pages themselves; they’re code, so only add ones from people you trust. <a href="https://github.com/search?q=booklet+theme&type=repositories" target="_blank" rel="noopener">Find themes <span aria-hidden="true">↗</span></a></p>
-                </div>
-            @endif
-
-            @if ($waiting)
-                <div @class(['cover-staged', 'cover-staged--code' => $waiting['code']])>
-                    <p class="eyebrow" style="margin: 0">{{ $waiting['replaces'] ? 'Update, waiting for a yes' : 'Waiting for a yes' }}</p>
-                    <p class="cover-staged__name">{{ $waiting['name'] }} <span class="muted">{{ $waiting['version'] }}</span></p>
-                    @if ($waiting['about']) <p style="margin: 0">{{ $waiting['about'] }}</p> @endif
-                    <p class="field__hint" style="margin: 0">
-                        {{ $waiting['code'] ? 'With its own templates' : 'A cover pack' }}@if ($waiting['author']) · by {{ $waiting['author'] }}@endif
-                        · {{ $waiting['files'] }} {{ str('file')->plural($waiting['files']) }}, {{ number_format($waiting['bytes'] / 1024) }} KB
-                        @if ($waiting['replaces']) · replaces {{ $waiting['replaces']['version'] }}@endif
-                    </p>
-                    <ul class="cover-staged__brings">
-                        @if ($waiting['presets']) <li>Presets: {{ implode(', ', $waiting['presets']) }}</li> @endif
-                        @if ($waiting['fonts']) <li>Fonts: {{ implode(', ', $waiting['fonts']) }}</li> @endif
-                        @if ($waiting['options']) <li>Its own settings: {{ implode(', ', $waiting['options']) }}</li> @endif
-                        @if ($waiting['templates']) <li>Templates: {{ implode(', ', array_map(fn ($v) => str_replace(['components.site.', 'site.', 'errors.'], ['', '', 'error '], $v), $waiting['templates'])) }}</li> @endif
-                        @if ($waiting['scripts']) <li>Scripts: {{ implode(', ', $waiting['scripts']) }}</li> @endif
-                    </ul>
-                    @foreach ($waiting['problems'] as $problem) <p class="field__hint" style="margin: 0; color: var(--danger)">{{ $problem }}</p> @endforeach
-                    @if (! $waiting['fits'])
-                        <p class="vc-note vc-note--warn" style="margin: 0">It needs Booklet {{ $waiting['needs'] }} or newer; this is {{ config('booklet.version') }}.</p>
-                    @elseif ($waitingBlocked)
-                        <p class="vc-note vc-note--warn" style="margin: 0">{{ $waitingBlocked }}</p>
-                    @else
-                        @if ($waiting['code'])
-                            <p class="vc-note vc-note--warn" style="margin: 0">This theme has templates{{ $waiting['scripts'] ? ' and scripts' : '' }}: code that runs with the whole site’s keys. Only add it if you trust who made it.</p>
-                            @if ($this->needsPassword())
-                                <div class="field" style="margin: 0">
-                                    <label for="theme-password">Your password, to say yes</label>
-                                    <input id="theme-password" type="password" class="input" wire:model="password" autocomplete="current-password" wire:keydown.enter="install">
-                                    @error('password') <p class="field__error">{{ $message }}</p> @enderror
-                                </div>
-                            @endif
-                        @endif
-                        @error('install') <p class="field__error">{{ $message }}</p> @enderror
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap">
-                            <button type="button" class="btn btn--ink" wire:click="install">{{ $waiting['replaces'] ? 'Update it' : 'Add it' }}</button>
-                            <button type="button" class="btn btn--quiet" wire:click="cancelStaged">Not now</button>
-                        </div>
-                    @endif
-                    @if (! $waiting['fits'] || $waitingBlocked)
-                        <button type="button" class="btn btn--quiet btn--sm" style="align-self: flex-start" wire:click="cancelStaged">Put it away</button>
-                    @endif
-                </div>
-            @endif
 
             @if ($theme)
                 <div class="cover-theme-about">
@@ -282,9 +202,100 @@
     </section>
 
     {{-- Right page: the site, wearing it --}}
-    <section class="page page--right page--stack" style="--ribbon: {{ $look['accent'] }}">
+    <section class="page page--right page--stack" id="cover-right" style="--ribbon: {{ $look['accent'] }}">
         <div class="ribbon" aria-hidden="true"></div>
 
+        {{-- Each of these is its own keyed block, so switching between them swaps the whole thing (the preview is wire:ignore). --}}
+        @if ($waiting)
+            <div wire:key="right-waiting" style="display: contents">
+            {{-- A theme unpacked to one side: what it is, and a yes --}}
+            <div @class(['ribbon-clear', 'cover-staged', 'cover-staged--code' => $waiting['code']])>
+                <p class="eyebrow" style="margin: 0">{{ $waiting['replaces'] ? 'Update, waiting for a yes' : 'Waiting for a yes' }}</p>
+                <p class="cover-staged__name">{{ $waiting['name'] }} <span class="muted">{{ $waiting['version'] }}</span></p>
+                @if ($waiting['about']) <p style="margin: 0">{{ $waiting['about'] }}</p> @endif
+                <p class="field__hint" style="margin: 0">
+                    {{ $waiting['code'] ? 'With its own templates' : 'A cover pack' }}@if ($waiting['author']) · by {{ $waiting['author'] }}@endif
+                    · {{ $waiting['files'] }} {{ str('file')->plural($waiting['files']) }}, {{ number_format($waiting['bytes'] / 1024) }} KB
+                    @if ($waiting['replaces']) · replaces {{ $waiting['replaces']['version'] }}@endif
+                </p>
+                <ul class="cover-staged__brings">
+                    @if ($waiting['presets']) <li>Presets: {{ implode(', ', $waiting['presets']) }}</li> @endif
+                    @if ($waiting['fonts']) <li>Fonts: {{ implode(', ', $waiting['fonts']) }}</li> @endif
+                    @if ($waiting['options']) <li>Its own settings: {{ implode(', ', $waiting['options']) }}</li> @endif
+                    @if ($waiting['templates']) <li>Templates: {{ implode(', ', array_map(fn ($v) => str_replace(['components.site.', 'site.', 'errors.'], ['', '', 'error '], $v), $waiting['templates'])) }}</li> @endif
+                    @if ($waiting['scripts']) <li>Scripts: {{ implode(', ', $waiting['scripts']) }}</li> @endif
+                </ul>
+                @foreach ($waiting['problems'] as $problem) <p class="field__hint" style="margin: 0; color: var(--danger)">{{ $problem }}</p> @endforeach
+                @if (! $waiting['fits'])
+                    <p class="vc-note vc-note--warn" style="margin: 0">It needs Booklet {{ $waiting['needs'] }} or newer; this is {{ config('booklet.version') }}.</p>
+                @elseif ($waitingBlocked)
+                    <p class="vc-note vc-note--warn" style="margin: 0">{{ $waitingBlocked }}</p>
+                @else
+                    @if ($waiting['code'])
+                        <p class="vc-note vc-note--warn" style="margin: 0">This theme has templates{{ $waiting['scripts'] ? ' and scripts' : '' }}: code that runs with the whole site’s keys. Only add it if you trust who made it.</p>
+                        @if ($this->needsPassword())
+                            <div class="field" style="margin: 0">
+                                <label for="theme-password">Your password, to say yes</label>
+                                <input id="theme-password" type="password" class="input" wire:model="password" autocomplete="current-password" wire:keydown.enter="install">
+                                @error('password') <p class="field__error">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
+                    @endif
+                    @error('install') <p class="field__error">{{ $message }}</p> @enderror
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                        <button type="button" class="btn btn--ink" wire:click="install">{{ $waiting['replaces'] ? 'Update it' : 'Add it' }}</button>
+                        <button type="button" class="btn btn--quiet" wire:click="cancelStaged">Not now</button>
+                    </div>
+                @endif
+                @if (! $waiting['fits'] || $waitingBlocked)
+                    <button type="button" class="btn btn--quiet btn--sm" style="align-self: flex-start" wire:click="cancelStaged">Put it away</button>
+                @endif
+            </div>
+            </div>
+        @elseif ($adding)
+            <div wire:key="right-adding" style="display: contents">
+            {{-- Adding a theme: what's on GitHub, or one you were given, where the preview usually is --}}
+            <div class="ribbon-clear cover-find__head">
+                <div>
+                    <h2 class="heading heading--sub">Add a theme</h2>
+                    <p class="field__hint" style="margin: 6px 0 0">Nothing changes until you’ve looked inside and said yes. Then it shows in the preview, and the site only changes when you press <b>Use this cover</b>.</p>
+                </div>
+                <button type="button" class="btn btn--quiet btn--sm" wire:click="stopAdding">Back to the preview</button>
+            </div>
+            @if ($blocked)
+                <p class="vc-note vc-note--warn" style="margin: 0">{{ $blocked }}</p>
+            @else
+                @include('livewire.admin.partials.catalog', ['kind' => 'theme'])
+                <div class="cover-add">
+                    <p class="cover-add__or" style="margin: 0; padding: 0; border: 0">Or, if you were given one</p>
+                    <form wire:submit="fetch" class="field" style="margin: 0">
+                        <label for="theme-source">From a link or GitHub</label>
+                        <p class="field__hint" style="margin: 0 0 6px">Paste what you were given: a name like <code>someone/booklet-harbour</code>, its github.com address, or a link to a .zip.</p>
+                        <div class="cover-add__row">
+                            <input id="theme-source" type="text" class="input" wire:model="source" placeholder="someone/booklet-harbour" spellcheck="false">
+                            <button type="submit" class="btn" wire:loading.attr="disabled" wire:target="fetch">
+                                <span wire:loading.remove wire:target="fetch">Look inside</span>
+                                <span wire:loading wire:target="fetch">Fetching…</span>
+                            </button>
+                        </div>
+                        @error('source') <p class="field__error">{{ $message }}</p> @enderror
+                    </form>
+                    <form method="POST" action="{{ route('admin.settings.themes.upload') }}" enctype="multipart/form-data" class="field" style="margin: 0">
+                        @csrf
+                        <label for="theme-file">From a .zip on your computer</label>
+                        <div class="cover-add__row">
+                            <input id="theme-file" type="file" name="theme" accept=".zip,application/zip" required>
+                            <button type="submit" class="btn btn--sm">Upload and look inside</button>
+                        </div>
+                        @error('upload') <p class="field__error">{{ $message }}</p> @enderror
+                        @error('theme') <p class="field__error">{{ $message }}</p> @enderror
+                    </form>
+                </div>
+            @endif
+            <p class="field__hint" style="margin: 0"><b>Cover packs</b> bring fonts, colours, presets and styles, and are safe to add from anyone: Booklet reads them through first. <b>Themes with templates</b> change the pages themselves; they’re code, so only add ones from people you trust.</p>
+            </div>
+        @else
+        <div wire:key="right-preview" style="display: contents">
         <div class="menu-live" style="margin-top: 0; padding-top: 0; border-top: 0" wire:ignore
              x-data="{
                 wide: true,
@@ -314,7 +325,10 @@
                 <iframe :src="url" x-on:load="noBar($event.target)" :title="'Preview of the site at ' + (wide ? 'full' : 'phone') + ' width'"></iframe>
             </div>
         </div>
+        </div>
+        @endif
 
+        @unless ($adding || $waiting)
         <div class="cover-actions">
             <button type="button" class="btn btn--ink btn--lg" wire:click="save" @disabled(! $dirty)>Use this cover</button>
             @if ($dirty)
@@ -322,6 +336,7 @@
                 <span class="saved-note">Not on the site yet</span>
             @endif
         </div>
+        @endunless
 
         <x-admin.folio side="right" />
     </section>
