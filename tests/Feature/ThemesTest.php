@@ -12,6 +12,7 @@ use App\Themes\ThemeManager;
 use Database\Seeders\BookletStarterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
 use ZipArchive;
@@ -39,6 +40,8 @@ class ThemesTest extends TestCase
         File::deleteDirectory(StaticSite::privatePath('theme-staging'));
         File::deleteDirectory(StaticSite::privatePath('theme-previous'));
         @unlink(StaticSite::privatePath('theme-errors.json'));
+        @unlink(StaticSite::privatePath('theme-sources.json'));
+        @unlink(StaticSite::privatePath('theme-updates.json'));
         ThemeManager::forget();
     }
 
@@ -52,6 +55,7 @@ class ThemesTest extends TestCase
         File::deleteDirectory(StaticSite::privatePath('theme-previous'));
         @unlink(StaticSite::privatePath('theme-errors.json'));
         @unlink(StaticSite::privatePath('theme-sources.json'));
+        @unlink(StaticSite::privatePath('theme-updates.json'));
         parent::tearDown();
     }
 
@@ -466,6 +470,32 @@ class ThemesTest extends TestCase
 
         Livewire::actingAs($this->admin)->test(CoverDesigner::class)->call('wear', 'tide')
             ->assertSee('This came from GitHub')->assertSee('hana/booklet-tide')->assertDontSee('Open GitHub: new repository');
+    }
+
+    public function test_themes_from_github_are_checked_for_updates(): void
+    {
+        $this->installPack(['version' => '1.0']);
+        file_put_contents(StaticSite::privatePath('theme-sources.json'), json_encode(['tide' => ['type' => 'github', 'repo' => 'hana/booklet-tide']]));
+        Http::fake([
+            'api.github.com/repos/hana/booklet-tide/releases/latest' => Http::sequence()
+                ->push(['tag_name' => 'v1.0'])
+                ->push(['tag_name' => 'v1.2'])
+                ->push(['message' => 'Slow down'], 403),
+        ]);
+        $installer = app(ThemeInstaller::class);
+
+        // Up to date: said so, and nothing fetched.
+        Livewire::actingAs($this->admin)->test(CoverDesigner::class)->call('wear', 'tide')
+            ->call('lookForUpdate', 'tide')->assertDispatched('stamp', text: 'It’s up to date (1.0).')->assertSet('staged', '');
+
+        // The daily check finds 1.2: the shelf says Update.
+        $this->assertSame(['tide' => '1.2'], $installer->check());
+        Livewire::actingAs($this->admin)->test(CoverDesigner::class)->call('wear', 'tide')->assertSee('Look at version 1.2');
+
+        // GitHub busy next time: what was found stays.
+        $this->assertSame([], $installer->check());
+        $this->assertSame(['tide'], $installer->unreached);
+        $this->assertSame('1.2', $installer->updateReady('tide'));
     }
 
     public function test_plain_files_carry_the_theme(): void

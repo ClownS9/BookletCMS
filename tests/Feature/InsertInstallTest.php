@@ -220,6 +220,41 @@ class InsertInstallTest extends TestCase
         $this->installer()->parseSource('just some words');
     }
 
+    public function test_updates_from_github_hold_on_cost_little_and_keep_their_folder(): void
+    {
+        $v1 = file_get_contents($this->zip(['hana-booklet-recipes-aaa/insert.php' => $this->manifest('1.0')]));
+        $renamed = file_get_contents($this->zip(['hana-booklet-recipes-bbb/insert.php' => str_replace("'name' => 'Recipes'", "'name' => 'Recipe box'", $this->manifest('1.3'))]));
+        Http::fake([
+            'api.github.com/repos/hana/booklet-recipes/releases/latest' => Http::sequence()
+                ->push(['message' => 'Not Found'], 404)      // adding it: no releases yet
+                ->push(['message' => 'Not Found'], 404)      // the first check
+                ->push(['message' => 'Slow down'], 403)      // the second: GitHub's busy
+                ->push(['message' => 'Not Found'], 404),     // fetching the update
+            'api.github.com/repos/hana/booklet-recipes' => Http::response(['default_branch' => 'main']),
+            'codeload.github.com/*' => Http::sequence()->push($v1)->push($renamed),
+            'raw.githubusercontent.com/hana/booklet-recipes/HEAD/insert.php' => Http::response(str_replace("'name' => 'Recipes'", "'name' => 'Recipe box'", $this->manifest('1.3'))),
+        ]);
+        $source = ['type' => 'github', 'repo' => 'hana/booklet-recipes'];
+        $this->installer()->install($this->installer()->stageFrom($source));
+
+        // No releases: the version is read from insert.php, without downloading the insert.
+        $this->assertSame(['recipes' => '1.3'], $this->installer()->check());
+        Http::assertSentCount(5); // adding: release, repository, zip; checking: release, insert.php
+
+        // GitHub busy: the update found before is still there, and Check now says it couldn't reach it.
+        $installer = $this->installer();
+        $this->assertSame([], $installer->check());
+        $this->assertSame(['recipes'], $installer->unreached);
+        app(InsertManager::class)->forget();
+        $this->assertSame('1.3', app(InsertManager::class)->find('recipes')->updateReady());
+
+        // Renamed since (and no 'key' of its own): it's still the same insert, so it replaces it.
+        $meta = $this->installer()->staged($this->installer()->stageFrom($source));
+        $this->assertSame('recipes', $meta['key']);
+        $this->assertSame('Recipe box', $meta['name']);
+        $this->assertSame('1.0', $meta['replaces']['version']);
+    }
+
     public function test_the_shelf_asks_for_a_password_then_adds_it(): void
     {
         Http::fake(['example.com/*' => Http::response(file_get_contents($this->zip(['insert.php' => $this->manifest()])))]);
