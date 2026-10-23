@@ -39,8 +39,8 @@ To let people add it by name and get updates, put it on GitHub:
 
 1. Make a repository (`booklet-lighthouse`, say) with what's in the .zip at its top:
    `theme.json`, `assets/`, and `views/` if it has templates.
-2. Give it the topic **`booklet-theme`** (the gear next to *About* on its page), so
-   it can be found when Booklet searches for themes.
+2. Give it the topic **`booklet-theme`** (the gear next to *About* on its page). Every
+   Booklet then finds it under **+ Add a theme › Find themes on GitHub**.
 3. Make a **release** for each version, tagged with the version (`1.2` or `v1.2`).
    Without releases, the newest code is used.
 

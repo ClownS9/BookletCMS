@@ -12,6 +12,13 @@ abstract class TestCase extends BaseTestCase
      * database, and a test refuses to start if anything still points at
      * content/ files or a real database.
      */
+    /** Tests never reach the internet: any request that isn't faked fails at once. */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+    }
+
     public function createApplication()
     {
         $app = parent::createApplication();
