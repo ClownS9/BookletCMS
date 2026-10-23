@@ -36,7 +36,8 @@ class SiteController extends Controller
         $posts = $this->site()->posts($category !== '' ? 'categories' : null, $category ?: null);
 
         $paginator = $this->paginate($posts, $request);
-        $featured = $paginator->currentPage() === 1 && $category === '' ? $posts->first() : null;
+        // The cover's home layout: one big featured story, or every post the same.
+        $featured = $paginator->currentPage() === 1 && $category === '' && \App\Support\Look::current()['home'] === 'feature' ? $posts->first() : null;
 
         return view('site.blog', [
             'site' => $this->site(),
@@ -50,6 +51,11 @@ class SiteController extends Controller
 
     public function search(Request $request)
     {
+        // Published as plain files: search runs in the reader's browser instead.
+        if ($request->attributes->get('booklet_static')) {
+            return view('site.static-search', ['site' => $this->site()]);
+        }
+
         $q = trim((string) $request->query('q', ''));
         $type = (string) $request->query('type', 'all');
         $needle = Str::lower($q);
@@ -100,7 +106,7 @@ class SiteController extends Controller
         }
 
         // The blog index lives where the dated collection's addresses start, e.g. /blog.
-        $blogPath = '/'.trim((string) parse_url($this->site()->blogUrl(), PHP_URL_PATH), '/');
+        $blogPath = $this->site()->blogPath();
 
         if ($uri !== '/' && $uri === $blogPath) {
             return $this->blog($request);
@@ -191,7 +197,7 @@ class SiteController extends Controller
             $items->count(),
             $perPage,
             $page,
-            ['path' => $request->url(), 'query' => $request->query()],
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'query' => $request->query()],
         ));
     }
 }

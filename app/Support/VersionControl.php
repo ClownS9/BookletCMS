@@ -90,7 +90,7 @@ class VersionControl
     // Running git ---------------------------------------------------------------------------------
 
     /** @param  list<string>  $args */
-    public static function git(array $args, ?User $author = null, int $timeout = 60): ProcessResult
+    public static function git(array $args, ?User $author = null, int $timeout = 60, ?string $in = null): ProcessResult
     {
         $committer = (array) config('booklet.git.committer', []);
         $env = [
@@ -113,7 +113,7 @@ class VersionControl
             $args = ['-c', 'credential.helper=', ...$args];
         }
 
-        return Process::path(self::root())->env($env)->timeout($timeout)
+        return Process::path($in ?? self::root())->env($env)->timeout($timeout)
             ->run([(string) config('booklet.git.binary', 'git'), ...$args]);
     }
 

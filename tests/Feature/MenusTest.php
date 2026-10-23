@@ -235,4 +235,14 @@ class MenusTest extends TestCase
         ]]]);
         $this->get('/')->assertDontSee('Hello panel')->assertDontSee('menu__item--mega', false);
     }
+
+    public function test_a_link_to_another_website_is_never_the_current_page(): void
+    {
+        $this->book();
+        Menus::save('header', [['url' => 'https://shop.example.com', 'title' => 'Shop'], ['url' => '/', 'title' => 'Home']]);
+
+        $menu = app(\App\Booklet\Site::class)->menu('header');
+        $this->assertFalse($menu[0]['active'], 'shop.example.com has no path, but it isn’t our home page');
+        $this->assertTrue($menu[1]['active']);
+    }
 }

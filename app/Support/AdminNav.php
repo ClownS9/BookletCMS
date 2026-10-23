@@ -76,6 +76,9 @@ class AdminNav
             ['settings', 'Settings', 'Site, look & Stacy', route('admin.settings'), 'settings', 'sand', $r->routeIs('admin.settings', 'admin.settings.*'), null, 'you'],
             $user?->isAdmin() ? ['backups', 'Backups', 'The whole book in one file', route('admin.backups'), 'book', 'sand', $r->routeIs('admin.backups'), null, 'you'] : null,
             $user?->isAdmin() ? ['version-control', 'Version control', 'Every change kept in git', route('admin.settings.version-control'), 'history', 'sand', $r->routeIs('admin.settings.version-control'), null, 'you'] : null,
+            $user?->isAdmin() ? ['look', 'The cover', 'Fonts, colours & layout', route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,
+            $user?->isAdmin() ? ['static', 'Publish as plain files', 'For GitHub Pages or any host', route('admin.settings.static'), 'printer', 'sand', $r->routeIs('admin.settings.static'), null, 'you'] : null,
+            $user?->isAdmin() ? ['api', 'Content API', 'Your posts as JSON for apps', route('admin.settings.api'), 'code', 'sand', $r->routeIs('admin.settings.api'), null, 'you'] : null,
             $user?->isAdmin() ? ['import', 'Move in from WordPress', 'Bring an old site across', route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,
             ['account', 'Your account', 'Profile & password', route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account'), null, 'you'],
         ];
@@ -218,6 +221,9 @@ class AdminNav
         $add('backups', 'back', 'Appendix C', 'Settings', 'Backups', route('admin.backups'), 'sand');
         $add('health', 'back', 'Appendix C', 'Settings', 'Check-up', route('admin.settings.health'), 'sand');
         $add('version-control', 'back', 'Appendix C', 'Settings', 'Version control', route('admin.settings.version-control'), 'sand');
+        $add('static', 'back', 'Appendix C', 'Settings', 'Publish as plain files', route('admin.settings.static'), 'sand');
+        $add('look', 'back', 'Appendix C', 'Settings', 'The cover', route('admin.settings.look'), 'sand');
+        $add('api', 'back', 'Appendix C', 'Settings', 'Content API', route('admin.settings.api'), 'sand');
         $add('import', 'back', 'Appendix C', 'Settings', 'Move in from WordPress', route('admin.import'), 'sand');
         $add('inserts', 'back', 'Appendix C', 'Settings', 'Inserts', route('admin.settings.inserts'), 'sand');
         $add('stacy-settings', 'back', 'Appendix D', 'Stacy’s brain', 'Stacy’s brain', route('admin.settings.stacy'), 'ink');
@@ -323,6 +329,9 @@ class AdminNav
             $r->routeIs('admin.settings.email') => 'email',
             $r->routeIs('admin.settings.health') => 'health',
             $r->routeIs('admin.settings.version-control') => 'version-control',
+            $r->routeIs('admin.settings.static', 'admin.settings.static.*') => 'static',
+            $r->routeIs('admin.settings.look') => 'look',
+            $r->routeIs('admin.settings.api') => 'api',
             $r->routeIs('admin.settings.inserts') => 'inserts',
             $r->routeIs('admin.insert') => 'insert:'.$r->route('insert'),
             $r->routeIs('admin.settings.stacy') => 'stacy-settings',

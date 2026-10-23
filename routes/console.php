@@ -53,6 +53,10 @@ rescue(fn () => app(\App\Inserts\InsertManager::class)->schedule(app(\Illuminate
 \Illuminate\Support\Facades\Schedule::command('booklet:git-commit --when-due')->everyMinute()->name('version-control')->withoutOverlapping(10)
     ->when(fn () => \App\Support\VersionControl::on());
 
+// Plain-file publishing: made again (and sent) once things have been quiet for a couple of minutes.
+\Illuminate\Support\Facades\Schedule::command('booklet:publish-static --when-due')->everyMinute()->name('static-site')->withoutOverlapping(20)
+    ->when(fn () => \App\Support\StaticSite::settings()['auto']);
+
 // The check-up: the scheduler leaves a mark every minute, so the book can tell it's running.
 \Illuminate\Support\Facades\Schedule::call(fn () => \Illuminate\Support\Facades\Cache::forever(\App\Support\Health::BEAT, now()->timestamp))->everyMinute()->name('scheduler-beat');
 

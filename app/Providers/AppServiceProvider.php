@@ -25,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->make(\App\Inserts\InsertManager::class)->boot();
 
+        // The read-only content API (Settings › Content API), outside the web pages' middleware.
+        if (! $this->app->routesAreCached()) {
+            \Illuminate\Support\Facades\Route::middleware(\App\Http\Middleware\ContentApiAccess::class)
+                ->prefix('api/v1')->name('api.')
+                ->group(base_path('routes/api.php'));
+        }
+
         // The scheduler and commands keep the site's time too (web pages set it per request).
         if ($this->app->runningInConsole() && ! $this->app->runningUnitTests()) {
             rescue(fn () => \App\Http\Middleware\ApplySiteSettings::applyTimezone(), null, false);
@@ -51,6 +58,9 @@ class AppServiceProvider extends ServiceProvider
         };
         \Illuminate\Support\Facades\Event::listen('booklet.changed', function (string $what): void {
             \App\Support\PageCache::changed($what);
+            if (! in_array($what, ['revisions', 'form_submissions'], true)) {
+                rescue(fn () => \App\Support\StaticSite::changed(), null, false); // published as plain files: due again
+            }
         });
         \App\Models\Comment::saved(function ($c) use ($flush): void {
             if ($c->status === 'approved' || $c->wasChanged('status')) {

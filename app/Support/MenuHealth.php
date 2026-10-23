@@ -146,7 +146,7 @@ class MenuHealth
         if ($site->findByUri($path) || $site->findTermByUri($path)) {
             return true;
         }
-        $blog = '/'.trim((string) parse_url($site->blogUrl(), PHP_URL_PATH), '/');
+        $blog = $site->blogPath();
         if ($path === $blog || str_starts_with($path, $blog.'/')) {
             return true;
         }

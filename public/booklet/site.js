@@ -165,7 +165,7 @@
     let sentRead = false;
     const sendRead = () => {
         sentRead = true;
-        if (navigator.doNotTrack === '1' || root.hasAttribute('data-proof')) return; // proof copies aren't visits
+        if (navigator.doNotTrack === '1' || root.hasAttribute('data-proof') || root.hasAttribute('data-static')) return; // proof copies and plain-file copies aren't counted
         const body = new Blob([JSON.stringify({ path: location.pathname })], { type: 'application/json' });
         try { navigator.sendBeacon?.('/read', body) || fetch('/read', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }); } catch (e) { /* not counted */ }
     };

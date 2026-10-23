@@ -115,6 +115,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::get('/inbox', Admin\Inbox::class)->name('inbox');
     Route::get('/settings/health', Admin\Health::class)->name('settings.health');
     Route::get('/settings/version-control', Admin\VersionControl::class)->name('settings.version-control');
+    Route::get('/settings/plain-files', Admin\StaticPublishing::class)->name('settings.static');
+    Route::get('/settings/cover', Admin\CoverDesigner::class)->name('settings.look');
+    Route::get('/settings/content-api', Admin\ContentApiSettings::class)->name('settings.api');
+    Route::get('/settings/plain-files/download', function () {
+        abort_unless(request()->user()->isAdmin(), 403);
+        try {
+            $zip = \App\Support\StaticSite::zip();
+        } catch (\RuntimeException $e) {
+            abort(404, $e->getMessage());
+        }
+
+        return response()->download($zip, \Illuminate\Support\Str::slug(app(\App\Booklet\Site::class)->name()).'-site-'.now()->format('Y-m-d').'.zip');
+    })->name('settings.static.download');
     Route::get('/settings/inserts', Admin\Inserts::class)->name('settings.inserts');
     Route::post('/settings/inserts/upload', \App\Http\Controllers\Admin\InsertUploadController::class)->name('settings.inserts.upload');
     Route::get('/inserts/{insert}', Admin\InsertPage::class)->where('insert', '[a-z][a-z0-9-]*')->name('insert');

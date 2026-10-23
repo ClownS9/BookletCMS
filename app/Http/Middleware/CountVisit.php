@@ -33,6 +33,7 @@ class CountVisit
     protected function counts(Request $request, Response $response): bool
     {
         return $request->isMethod('GET')
+            && ! $request->attributes->get('booklet_static')
             && $response->getStatusCode() === 200
             && ! $request->user()
             && ! $request->is('admin', 'admin/*', 'preview/*', 'proof/*', 'livewire/*', 'feed.xml', 'sitemap.xml', 'login', 'setup', 'up')

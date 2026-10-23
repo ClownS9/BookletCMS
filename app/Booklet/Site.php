@@ -44,9 +44,8 @@ class Site
 
     public function accent(): string
     {
-        $accent = (string) $this->setting('accent', '#F4876A');
-
-        return preg_match('/^#[0-9a-f]{6}$/i', $accent) ? $accent : '#F4876A';
+        // From the cover (Settings › The cover), the unsaved one on its preview included.
+        return \App\Support\Look::current()['accent'];
     }
 
     public function logoUrl(): ?string
@@ -178,6 +177,14 @@ class Site
     /**
      * The address of the blog index: where the first dated collection lives.
      */
+    /** The blog's path on the site ("/blog"), whatever address the site is reached at. */
+    public function blogPath(): string
+    {
+        $route = (string) Booklet::collections()->all()->first(fn ($c) => $c->dated())?->route();
+
+        return '/'.trim(Str::before($route, '{') ?: '/blog', '/');
+    }
+
     public function blogUrl(): string
     {
         $route = (string) Booklet::collections()->all()->first(fn ($c) => $c->dated())?->route();
@@ -366,7 +373,10 @@ class Site
     {
         $current = '/'.trim(request()->path(), '/');
         $path = '/'.trim((string) parse_url($url, PHP_URL_PATH), '/');
-        $active = $path === $current || ($path !== '/' && str_starts_with($current, $path.'/'));
+        // A link to another website is never "the page you're on" (its empty path isn't our home page).
+        $host = parse_url($url, PHP_URL_HOST);
+        $elsewhere = is_string($host) && $host !== '' && strcasecmp($host, (string) parse_url(url('/'), PHP_URL_HOST)) !== 0;
+        $active = ! $elsewhere && ($path === $current || ($path !== '/' && str_starts_with($current, $path.'/')));
 
         return [
             'label' => $label,

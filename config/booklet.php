@@ -91,6 +91,8 @@ return [
         'content' => base_path('content'),
         'resources' => resource_path(),
         'storage' => storage_path('booklet'),
+        // Booklet's own working files: plain-file builds, API settings (tests use a folder of their own).
+        'private' => storage_path('app/private'),
     ],
 
     /*

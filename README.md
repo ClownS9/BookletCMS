@@ -44,6 +44,17 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 ![A wide panel on the site: links in columns, the newest posts and a picture card](docs/screenshots/wide-panel.png)
 
+### Your site, your way
+- **The cover:** the site's look chosen from five presets (Notebook, Broadsheet, Kopitiam, Botanic, Studio), then changed bit by bit: fonts for titles and for menus, the accent colour, the paper, how the header and the home page are laid out, corners and tilted stickers. A live preview, wide or phone-sized, shows it before anyone else sees it. No CSS needed.
+- **Publish as plain files:** one button turns the public site into ordinary web pages, pictures and styles, for GitHub Pages, Netlify or any host that serves files (no PHP needed there). With GitHub connected, they go to the `gh-pages` branch, and Booklet can publish again by itself a couple of minutes after you stop making changes. Search still works, in the reader's browser.
+- **Content API:** your published posts and pages as JSON, for an app or another website. Keys are made in Settings and can be switched off one at a time, or the API can be opened to everyone. Read-only, and drafts never leave.
+
+![The cover: five presets on the left, the home page in Broadsheet on the right](docs/screenshots/the-cover.png)
+
+![Publish as plain files: where it goes on the left, the last printing on the right](docs/screenshots/plain-files.png)
+
+![Content API: keys for an app and a website on the left, addresses to try on the right](docs/screenshots/content-api.png)
+
 ### Collections and blueprints
 - Make your own chapters (collections) with their own fields, described in blueprints: simple YAML files you can read and edit by hand.
 - Field types: text, rich text, long text, number, date, image, toggle, select, tags, link, blocks, linked entries and rows.
@@ -131,7 +142,7 @@ Each kind of content can also be set on its own (`BOOKLET_ENTRIES_DRIVER`, `BOOK
 
 ### Let it run on its own
 
-Scheduled posts, nightly backups, emails to subscribers, link checks and version control all need Laravel's scheduler. Run it every minute, for example with cron:
+Scheduled posts, nightly backups, emails to subscribers, link checks, version control and publishing plain files again after changes all need Laravel's scheduler. Run it every minute, for example with cron:
 
 ```cron
 * * * * * cd /path/to/booklet && php artisan schedule:run >> /dev/null 2>&1
@@ -161,6 +172,28 @@ In **Settings › Stacy's brain**, pick an AI service and paste its key, or poin
 | `php artisan booklet:pages-clear` | Make every cached page fresh |
 | `php artisan booklet:insert-install` / `insert-update` / `insert-undo` | Add, update or roll back an insert |
 | `php artisan booklet:send-posts` | Send new posts to subscribers now |
+| `php artisan booklet:publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |
+
+## Content API
+
+Turn it on in **Settings › Content API** and make a key. Then:
+
+```bash
+curl https://yoursite.com/api/v1/collections/posts/entries?limit=3 \
+  -H "Authorization: Bearer bk_your_key"
+```
+
+| Address | What comes back |
+| --- | --- |
+| `/api/v1/site` | The site's name, tagline, language, logo and accent colour |
+| `/api/v1/collections` | Each collection, and how many published entries it has |
+| `/api/v1/collections/{collection}/entries` | Published entries, 20 at a time. `?tag=`, `?category=`, `?search=`, `?sort=title` (or `date`, `-date`, `order`), `?limit=` (up to 100), `?page=`, `?language=`, `?content=1` for the whole text |
+| `/api/v1/entries/{id}` | One entry in full: the text as Markdown and HTML, its cover, terms, other fields and translations |
+| `/api/v1/find?uri=/about` | Whatever is at an address on the site |
+| `/api/v1/menus/{handle}` | A menu with its drop-downs (the seasonal one, when it's on) |
+| `/api/v1/taxonomies/{taxonomy}/terms` | Every category or tag, with how many posts have it |
+
+Lists carry `meta` (total, page, last page) and `links.next`. Each key gets 120 requests a minute (`X-RateLimit-Remaining` says how many are left), and asking for the same thing twice with `If-None-Match` gets a `304`.
 
 ## Version control settings
 
@@ -208,7 +241,9 @@ By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `r
 - **Proof copy links are private by design.** Only a fingerprint (SHA-256) of each link's secret is looked up. The pages tell search engines to stay away, aren't cached or counted as visits, and never pass the link on to other sites. Notes are rate-limited and screened for robots, and every link closes by itself.
 - **The GitHub token is kept like a secret.** It's encrypted with `APP_KEY`, only handed to git while sending, and never written into `.git/config` or shown again. Make it a fine-grained token for that one repository, with nothing but *Contents: Read and write*.
 - **Revisions and form submissions stay on the server.** `storage/booklet/` has its own `.gitignore` (put back if it goes missing), so even a hand-typed `git add .` leaves them out. Your content's history is in git already, through `content/`.
-- **Tests can't touch your content.** They always run against an in-memory database and refuse to start otherwise.
+- **Content API keys are kept as fingerprints.** A key is shown once when it's made; after that Booklet keeps only its SHA-256 fingerprint and last four letters. The API is off until an admin turns it on, only ever reads, and only answers with what readers can already see. Browsers on other websites can read it only if their website is listed in Settings (Laravel's own CORS default, which would let any site read `/api/*`, is turned off).
+- **Plain files carry nothing private.** Only pages a visitor could open are made; forms that need a server are left out.
+- **Tests can't touch your content.** They always run against an in-memory database and refuse to start otherwise, and keep their working files (plain-file builds, API settings) in a folder of their own.
 
 ### Signing in
 

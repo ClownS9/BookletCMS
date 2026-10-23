@@ -86,9 +86,9 @@
             </nav>
         @endif
 
-        <livewire:site.subscribe place="post" />
+        @unless (request()->attributes->get('booklet_static')) <livewire:site.subscribe place="post" /> @endunless
 
-        @if ($site->commentsOpen() && ! request()->attributes->has('booklet_proof'))
+        @if ($site->commentsOpen() && ! request()->attributes->has('booklet_proof') && ! request()->attributes->get('booklet_static'))
             <livewire:site.comments :entry-id="$entry->id()" />
         @endif
     </article>

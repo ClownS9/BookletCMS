@@ -6,9 +6,11 @@
     $drawn = $image && str_contains($image, '/'.\App\Support\ShareImage::FOLDER.'/');
     // Previews of unpublished pages are never for search engines.
     $robots ??= request()->attributes->get('booklet_preview') ? 'noindex, nofollow' : null;
+    // The cover: fonts, colours and layouts chosen in Settings › The cover.
+    $look = \App\Support\Look::current();
 @endphp
 <!DOCTYPE html>
-<html lang="{{ request()->attributes->get('booklet_lang') ?: str_replace('_', '-', app()->getLocale()) }}" class="no-js"@if (request()->attributes->has('booklet_proof')) data-proof @endif>
+<html lang="{{ request()->attributes->get('booklet_lang') ?: str_replace('_', '-', app()->getLocale()) }}" class="no-js"@if (request()->attributes->has('booklet_proof')) data-proof @endif @if (request()->attributes->get('booklet_static')) data-static @endif>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -52,10 +54,10 @@
     @if ($site->logoUrl()) <link rel="icon" href="{{ $site->logoUrl() }}"> @endif
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="{{ \App\Support\Look::fontsUrl($look) }}">
     <link rel="stylesheet" href="{{ asset('booklet/site.css') }}?v={{ filemtime(public_path('booklet/site.css')) }}">
     <script src="{{ asset('booklet/site.js') }}?v={{ filemtime(public_path('booklet/site.js')) }}" defer></script>
-    <style>:root { --accent: {{ $site->accent() }}; }</style>
+    <style>{!! \App\Support\Look::css($look) !!}</style>
     {{-- Inserts that are switched on bring their own styles and scripts --}}
     @foreach (rescue(fn () => app(\App\Inserts\InsertManager::class)->active(), collect(), false) as $insert)
         @foreach ($insert->siteAssets()['css'] as $file) <link rel="stylesheet" href="{{ $insert->asset($file) }}"> @endforeach
@@ -65,7 +67,7 @@
     {{ \App\Support\StructuredData::render() }}
     @livewireStyles
 </head>
-<body>
+<body class="{{ \App\Support\Look::bodyClasses($look) }}">
     <a href="#main" class="skip">Skip to the words</a>
     <div class="progress" aria-hidden="true"><span></span></div>
 
@@ -97,6 +99,7 @@
                     <span class="brand__mark" aria-hidden="true"></span>
                 @endif
                 <span class="brand__name">{{ $site->name() }}</span>
+                @if ($look['header'] === 'banner' && $site->tagline()) <span class="brand__tagline">{{ $site->tagline() }}</span> @endif
             </a>
 
             @php $menu = $site->menu('header'); @endphp

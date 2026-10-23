@@ -159,7 +159,6 @@ class Settings extends Component
             'siteUrl' => ['nullable', 'url:http,https', 'max:255'],
             'timezone' => ['required', 'timezone:all'],
             'language' => ['required', Rule::in(array_keys(self::LANGUAGES))],
-            'accent' => ['required', Rule::in(array_keys(self::ACCENTS))],
             'homepage' => ['required', 'string'],
             'perPage' => ['required', 'integer', 'min:1', 'max:100'],
         ], [], ['siteName' => 'site name', 'perPage' => 'posts per page', 'siteUrl' => 'site address']);
@@ -173,7 +172,6 @@ class Settings extends Component
             'site_url' => $this->siteUrl !== '' ? rtrim($this->siteUrl, '/') : null,
             'timezone' => $this->timezone,
             'language' => $this->language,
-            'accent' => $this->accent,
             'homepage' => $this->homepage,
             'per_page' => $this->perPage,
             'comments' => $this->comments,

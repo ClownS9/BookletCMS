@@ -33,7 +33,7 @@
             <nav class="chips" aria-label="Categories">
                 <a href="{{ $site->blogUrl() }}" @class(['chip', 'chip--all']) @if ($category === '') aria-current="page" @endif>All</a>
                 @foreach ($categories as $i => $term)
-                    <a href="{{ $site->blogUrl() }}?category={{ $term->slug() }}" class="chip" style="--tilt: {{ $i % 2 ? '2deg' : '-2deg' }}" @if ($category === $term->slug()) aria-current="page" @endif>{{ $term->title() }}</a>
+                    <a href="{{ request()->attributes->get('booklet_static') && $term->attribute('uri') ? url($term->attribute('uri')) : $site->blogUrl().'?category='.$term->slug() }}" class="chip" style="--tilt: {{ $i % 2 ? '2deg' : '-2deg' }}" @if ($category === $term->slug()) aria-current="page" @endif>{{ $term->title() }}</a>
                 @endforeach
             </nav>
         @endif
@@ -52,7 +52,7 @@
 
                 @include('site.partials.pager', ['paginator' => $paginator])
 
-                <livewire:site.subscribe place="blog" />
+                @unless (request()->attributes->get('booklet_static')) <livewire:site.subscribe place="blog" /> @endunless
             </div>
 
             <aside class="with-aside__side">

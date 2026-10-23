@@ -94,18 +94,23 @@
                 @error('logoUpload') <p class="field__error">{{ $message }}</p> @enderror
             </div>
 
-            <fieldset style="margin: 0; padding: 0; border: 0">
-                <legend class="field__label" style="padding: 0; margin-bottom: 10px">Accent sticker</legend>
-                <div role="radiogroup" aria-label="Accent sticker" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
-                    @foreach ($accents as $hex => $name)
-                        <button type="button" role="radio" class="swatch" aria-label="{{ $name }}"
-                                aria-checked="{{ $accent === $hex ? 'true' : 'false' }}"
-                                wire:click="$set('accent', '{{ $hex }}')"
-                                style="--swatch: {{ $hex }}; --tilt: {{ $loop->even ? '-4deg' : '4deg' }}"></button>
-                    @endforeach
-                    <span style="font-size: 14px; color: var(--muted)">{{ $accents[$accent] ?? '' }}</span>
-                </div>
-            </fieldset>
+            {{-- Colours, fonts and layouts live in the cover designer now. --}}
+            @php $cover = \App\Support\Look::current(); @endphp
+            <div>
+                <p class="field__label" style="margin: 0 0 10px">The cover</p>
+                @if (request()->user()->isAdmin())
+                    <a href="{{ route('admin.settings.look') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
+                        <span class="stacy-badge" style="width: 40px; height: 40px; background: {{ $cover['accent'] }}; color: {{ \App\Support\Look::onAccent($cover['accent']) }}; font-family: var(--serif); font-size: 18px" aria-hidden="true">Aa</span>
+                        <span style="min-width: 0">
+                            <span style="display: block; font-size: 15px; font-weight: 500">{{ \App\Support\Look::PRESETS[$cover['preset']]['name'] }}</span>
+                            <span style="display: block; font-size: 13px; color: var(--faint)">Fonts, colours, the header and home page, with a live preview</span>
+                        </span>
+                        <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
+                    </a>
+                @else
+                    <p class="field__hint" style="margin: 0">{{ \App\Support\Look::PRESETS[$cover['preset']]['name'] }}. An admin can change it.</p>
+                @endif
+            </div>
         </fieldset>
 
         <x-admin.folio side="left" />
@@ -177,6 +182,30 @@
                 <span style="min-width: 0">
                     <span style="display: block; font-size: 15px; font-weight: 500">Version control</span>
                     <span style="display: block; font-size: 13px; color: {{ ! empty($vcStatus['error']) && $vc['on'] ? 'var(--danger)' : 'var(--faint)' }}">{{ ! $vc['on'] ? 'Off. Keep every change in git, on its own' : (! empty($vcStatus['error']) ? 'The last commit didn’t work' : (! empty($vcStatus['at']) ? 'On. Last commit '.\Illuminate\Support\Carbon::parse($vcStatus['at'])->diffForHumans() : 'On')) }}</span>
+                </span>
+                <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
+            </a>
+        @endif
+
+        @if (request()->user()->isAdmin())
+            @php $static = \App\Support\StaticSite::last(); $staticOn = \App\Support\StaticSite::settings(); @endphp
+            <a href="{{ route('admin.settings.static') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
+                <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ ! empty($static['error']) ? 'coral' : (! empty($static['at']) ? 'sky' : 'sand') }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="printer" size="18" /></span>
+                <span style="min-width: 0">
+                    <span style="display: block; font-size: 15px; font-weight: 500">Publish as plain files</span>
+                    <span style="display: block; font-size: 13px; color: {{ ! empty($static['error']) ? 'var(--danger)' : 'var(--faint)' }}">{{ ! empty($static['error']) ? 'The last send to GitHub didn’t work' : (! empty($static['at']) ? 'Made '.\Illuminate\Support\Carbon::parse($static['at'])->diffForHumans().($staticOn['github'] ? ', for GitHub Pages' : '') : 'For GitHub Pages, Netlify or any host') }}</span>
+                </span>
+                <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
+            </a>
+        @endif
+
+        @if (request()->user()->isAdmin())
+            @php $api = \App\Support\ContentApi::settings(); $apiKeys = rescue(fn () => \App\Models\ApiKey::whereNull('revoked_at')->count(), 0, false); @endphp
+            <a href="{{ route('admin.settings.api') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
+                <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ $api['on'] ? 'lilac' : 'sand' }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="code" size="18" /></span>
+                <span style="min-width: 0">
+                    <span style="display: block; font-size: 15px; font-weight: 500">Content API</span>
+                    <span style="display: block; font-size: 13px; color: var(--faint)">{{ $api['on'] ? 'On'.($api['open'] ? ', open to everyone' : '').' · '.$apiKeys.' '.str('key')->plural($apiKeys) : 'Off. Your posts as JSON, for an app or another site' }}</span>
                 </span>
                 <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
             </a>
