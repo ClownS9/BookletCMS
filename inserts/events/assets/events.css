@@ -1,0 +1,24 @@
+/* Events insert: the /events page and the [[events]] list in posts */
+.events__list { list-style: none; margin: 24px 0; padding: 0; display: flex; flex-direction: column; }
+.prose .events__list { padding: 0; }
+.events__list .event { display: flex; gap: 18px; padding: 18px 0; border-top: 1px solid var(--rule); margin: 0; }
+.events__list .event:first-child { border-top: 0; }
+.events__list .event::marker { content: none; }
+.event__date { flex: none; width: 62px; padding: 6px 0 8px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 22%, var(--paper, #fff)); text-align: center; line-height: 1.1; }
+.event__date span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.event__date b { display: block; font-family: var(--serif); font-size: 28px; font-weight: 500; color: var(--ink); }
+.event__words { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.prose .event__title, .event__title { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 22px; line-height: 1.25; }
+.event__when, .event__where { margin: 0; font-size: 15px; color: var(--muted); }
+.event__about { margin: 4px 0 0; font-size: 16px; line-height: 1.55; }
+.event__links { margin: 4px 0 0; font-size: 14px; }
+.events__list--past .event__title { color: var(--muted); }
+.events__list--past .event__date { background: var(--rule); }
+.events__subscribe { font-size: 15px; color: var(--muted); }
+.events__past { margin-top: 48px; font-family: var(--serif); font-weight: 400; font-size: 26px; }
+.events__empty { color: var(--muted); font-style: italic; }
+.events-slip { margin: 32px 0; padding: 20px 24px 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--white, #fff); }
+.prose .events-slip__head, .events-slip__head { margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.events-slip .events__list { margin: 8px 0; }
+.prose .events-slip__all, .events-slip__all { margin: 0; font-size: 14px; }
+@media (max-width: 640px) { .events__list .event { gap: 12px; } .event__date { width: 54px; } .event__title { font-size: 19px; } }
