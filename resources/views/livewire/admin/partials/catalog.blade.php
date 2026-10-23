@@ -4,7 +4,7 @@
     "Look inside" unpacks one to one side, as pasting its name would.
 --}}
 @php
-    $found = \App\Support\Catalog::search($kind, $this->find, $this->findSort, $this->findPage);
+    $found = $this->findResults($kind);
     $topic = \App\Support\Sharing::TOPICS[$kind];
 @endphp
 <section class="catalog" aria-labelledby="catalog-title-{{ $kind }}">
@@ -21,13 +21,15 @@
         </select>
     </div>
 
-    <div class="catalog__results" wire:loading.class="is-loading" wire:target="find, findSort, findPageTo">
+    <div class="catalog__results" wire:loading.class="is-loading" wire:target="find, findSort, findPageTo, findAgain">
         @if ($found['error'])
             <p class="vc-note vc-note--warn" style="margin: 0">{{ $found['error'] }}</p>
         @elseif ($found['items'] === [])
             <p class="empty-note" style="margin: 0">
                 {{ $this->find !== '' ? 'Nothing found for “'.$this->find.'”.' : 'None yet.' }}
-                {{ $kind === 'theme' ? 'Themes' : 'Inserts' }} show up here when their GitHub repository has the topic <code>{{ $topic }}</code>.
+                {{ $kind === 'theme' ? 'Themes' : 'Inserts' }} show up here when their GitHub repository is public and has the topic <code>{{ $topic }}</code>
+                (GitHub can take a few minutes to notice a new one).
+                <button type="button" class="link-button" wire:click="findAgain" wire:loading.attr="disabled" wire:target="findAgain">Look again</button>
             </p>
         @else
             <ul class="catalog__list">
@@ -68,6 +70,10 @@
                     </li>
                 @endforeach
             </ul>
+            <p class="catalog__when">
+                Found {{ \Illuminate\Support\Carbon::parse($found['at'])->diffForHumans() }}.
+                <button type="button" class="link-button" wire:click="findAgain" wire:loading.attr="disabled" wire:target="findAgain">Look again</button>
+            </p>
             @if ($found['page'] > 1 || $found['more'])
                 <div class="catalog__pager">
                     <button type="button" class="btn btn--quiet btn--sm" wire:click="findPageTo({{ $found['page'] - 1 }})" @disabled($found['page'] <= 1)>← Back</button>

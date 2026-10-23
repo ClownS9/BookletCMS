@@ -115,6 +115,28 @@ class CatalogTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_look_again_shows_one_just_shared(): void
+    {
+        Http::fake([
+            'api.github.com/search/repositories*' => Http::sequence()
+                ->push(['total_count' => 1, 'items' => [$this->repo('ClownS9/booklet-gallery')]])
+                ->push(['total_count' => 2, 'items' => [$this->repo('ClownS9/booklet-gallery'), $this->repo('ClownS9/booklet-events')]])
+                ->push(['total_count' => 2, 'items' => [$this->repo('ClownS9/booklet-gallery'), $this->repo('ClownS9/booklet-events')]]),
+            'raw.githubusercontent.com/*' => Http::response('Not Found', 404),
+        ]);
+
+        $shelf = Livewire::actingAs($this->admin)->test(Inserts::class)->call('startAdding')
+            ->assertSee("lookAt('ClownS9/booklet-gallery')", false)->assertDontSee("lookAt('ClownS9/booklet-events')", false)->assertSee('Look again');
+        $shelf->call('startAdding')->assertDontSee("lookAt('ClownS9/booklet-events')", false); // remembered for a few minutes
+
+        $shelf->call('findAgain')->assertSee("lookAt('ClownS9/booklet-events')", false);
+        $shelf->call('findAgain')->assertDispatched('stamp'); // not twice in 20 seconds
+        Http::assertSentCount(4); // two searches, two insert.php files looked for
+
+        $this->travel(6)->minutes();
+        $this->assertCount(2, Catalog::search('insert')['items'], 'kept for minutes, not half an hour');
+    }
+
     public function test_the_cover_shows_them_and_looks_inside_one(): void
     {
         $this->fakeGithub();
