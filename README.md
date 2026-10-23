@@ -97,7 +97,7 @@ See [Security](#security) for how Booklet protects your data, sign-ins and uploa
 ![Version control: the three steps to GitHub on the left, every change as a stitch in the binding on the right](docs/screenshots/version-control.png)
 
 ### Inserts
-Find them on GitHub from Settings › Inserts › Add, the same way as themes. Small add-ons that live in `inserts/`: they can add pages to the admin, cards on Contents, `[[slips]]` in writing, cut-outs, scheduled jobs and new skills for Stacy. **Events** and **Gallery** come with Booklet. Add more from a .zip, a link or a GitHub repository in Settings › Inserts. See [`inserts/README.md`](inserts/README.md).
+Find them on GitHub from Settings › Inserts › Add, the same way as themes. Small add-ons that live in `inserts/`: they can add pages to the admin, cards on Contents, `[[slips]]` in writing, cut-outs, scheduled jobs, new skills for Stacy, and checks on the site's forms. **Events**, **Gallery** and **Guard** come with Booklet. **Guard** keeps robots out of the comment, contact and new-posts forms (and sign-in, if you like) with Cloudflare Turnstile, Google reCAPTCHA or hCaptcha, turns away words and addresses you list, and keeps a log of what it stopped. Add more from a .zip, a link or a GitHub repository in Settings › Inserts. See [`inserts/README.md`](inserts/README.md).
 
 ---
 
@@ -287,6 +287,8 @@ Inserts are code, and they run with the same access as Booklet itself. Booklet:
 - keeps the previous version, so an update can be undone.
 
 **Only add inserts from people you trust.**
+
+An insert's secret settings (another service's key, like Guard's CAPTCHA secret) are encrypted with `APP_KEY`, never sent to the browser, and left out of backups. Guard's sign-in protection only starts once its keys have worked on its own page, and a wrong key never locks anyone out; if anything goes wrong, `BOOKLET_SAFE_MODE=true` switches every insert off.
 
 ### Themes
 
