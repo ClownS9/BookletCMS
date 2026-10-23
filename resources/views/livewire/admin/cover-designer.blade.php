@@ -42,6 +42,7 @@
                         <span class="cover-theme__name">{{ $t['name'] }}</span>
                         <span class="cover-theme__kind">{{ $t['kind'] }}</span>
                         @if ($wearing === $t['key']) <span class="cover-theme__worn">On the site</span> @endif
+                        @if (isset($updates[$t['key']])) <span class="cover-theme__update">Update</span> @endif
                     </button>
                 @endforeach
             </div>
@@ -64,7 +65,11 @@
                     @foreach ($theme->problems as $problem) <p class="field__hint" style="margin: 0; color: var(--danger)">{{ $problem }}</p> @endforeach
                     @if (! $theme->fits()) <p class="vc-note vc-note--warn" style="margin: 0">It needs Booklet {{ $theme->needs() }} or newer, so the site can’t wear it.</p> @endif
                     <div class="cover-theme-about__actions">
-                        @if ($origin) <button type="button" class="btn btn--sm" wire:click="lookForUpdate('{{ $theme->key }}')" wire:loading.attr="disabled" wire:target="lookForUpdate">Look for an update</button> @endif
+                        @if ($origin)
+                            <button type="button" @class(['btn btn--sm', 'btn--ink' => isset($updates[$theme->key])]) wire:click="lookForUpdate('{{ $theme->key }}')" wire:loading.attr="disabled" wire:target="lookForUpdate">
+                                {{ isset($updates[$theme->key]) ? 'Look at version '.$updates[$theme->key] : 'Look for an update' }}
+                            </button>
+                        @endif
                         @if ($previous) <button type="button" class="btn btn--quiet btn--sm" wire:click="undoUpdate('{{ $theme->key }}')" wire:confirm="Put back version {{ $previous }}?">Back to {{ $previous }}</button> @endif
                         @if ($wearing !== $theme->key)
                             <button type="button" class="btn btn--quiet btn--sm" wire:click="remove('{{ $theme->key }}')" wire:confirm="Take {{ $theme->name() }} off the shelf? Its files are deleted.">Take off the shelf</button>

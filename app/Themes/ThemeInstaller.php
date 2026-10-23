@@ -82,8 +82,11 @@ class ThemeInstaller
     public function stageFrom(array $source): string
     {
         $file = app(InsertInstaller::class)->download($source);
+        // Already on the shelf from this same place: it's that theme, whatever it's called now.
+        $same = ThemeManager::all()->keys()->first(fn ($key) => ($s = $this->sourceOf($key)) && $s['type'] === $source['type']
+            && strcasecmp((string) ($s['repo'] ?? $s['url'] ?? ''), (string) ($source['repo'] ?? $source['url'] ?? '')) === 0);
         try {
-            return $this->stage($file, $source, $source['repo'] ?? basename((string) parse_url((string) ($source['url'] ?? ''), PHP_URL_PATH)));
+            return $this->stage($file, $source, $source['repo'] ?? basename((string) parse_url((string) ($source['url'] ?? ''), PHP_URL_PATH)), $same);
         } finally {
             @unlink($file);
         }
@@ -97,7 +100,7 @@ class ThemeInstaller
      *
      * @return string a token for staged() / install()
      */
-    public function stage(string $file, array $source, string $label = ''): string
+    public function stage(string $file, array $source, string $label = '', ?string $sameAs = null): string
     {
         if (! class_exists(ZipArchive::class)) {
             throw new RuntimeException('This server’s PHP can’t open .zip files (the zip extension is missing).');
@@ -118,7 +121,11 @@ class ThemeInstaller
         }
 
         $fallback = preg_replace(['/^booklet-(theme-)?/', '/-(main|master|v?\d[\w.-]*)$/'], '', Str::slug(rtrim($root, '/') ?: pathinfo($label ?: $file, PATHINFO_FILENAME)));
-        ['manifest' => $manifest, 'problems' => $problems] = ThemeManifest::read((string) $zip->getFromName($root.'theme.json'), (string) $fallback);
+        $json = (string) $zip->getFromName($root.'theme.json');
+        ['manifest' => $manifest, 'problems' => $problems] = ThemeManifest::read($json, (string) $fallback);
+        if ($sameAs !== null && ! isset((json_decode($json, true) ?: [])['key'])) {
+            $manifest['key'] = $sameAs; // no key of its own: it keeps the folder it has
+        }
         if (($manifest['key'] ?? '') === '' || ! preg_match(ThemeManifest::KEY, $manifest['key'])) {
             $zip->close();
             throw new RuntimeException(isset($manifest['key']) ? 'Booklet couldn’t tell what to call it. Its theme.json should say "key": "my-theme".' : $problems[0]);
@@ -515,7 +522,104 @@ class ThemeInstaller
         @unlink($this->previousRoot().'/'.$key.'.json');
         ThemeManager::clearError($key);
         $this->remember($key, null);
+        $found = json_decode((string) @file_get_contents($this->updatesFile()), true);
+        if (is_array($found) && isset($found[$key])) {
+            unset($found[$key]); // gone from the shelf: nothing to update
+            file_put_contents($this->updatesFile(), json_encode($found, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
         ThemeManager::forget();
+    }
+
+    // Newer versions ---------------------------------------------------------------------------
+
+    /** Themes whose source couldn't be reached by the last check(). */
+    public array $unreached = [];
+
+    protected function updatesFile(): string
+    {
+        return StaticSite::privatePath('theme-updates.json');
+    }
+
+    /** The newest version a source has (its latest release, or theme.json on its default branch), read without unpacking. */
+    public function latest(array $source): ?string
+    {
+        if ($source['type'] === 'github') {
+            $headers = ['User-Agent' => 'Booklet', 'Accept' => 'application/vnd.github+json'] + (config('booklet.github_token') ? ['Authorization' => 'Bearer '.config('booklet.github_token')] : []);
+            $release = \Illuminate\Support\Facades\Http::withHeaders($headers)->timeout(10)->connectTimeout(6)->get('https://api.github.com/repos/'.$source['repo'].'/releases/latest');
+            if ($release->successful() && ! empty($release->json('tag_name'))) {
+                return ltrim((string) $release->json('tag_name'), 'vV');
+            }
+            if (in_array($release->status(), [403, 429], true)) {
+                throw new RuntimeException('GitHub is asking Booklet to slow down.');
+            }
+            $raw = \Illuminate\Support\Facades\Http::withHeaders(['User-Agent' => 'Booklet'])->timeout(10)->connectTimeout(6)
+                ->get('https://raw.githubusercontent.com/'.$source['repo'].'/HEAD/theme.json');
+            if ($raw->successful()) {
+                return ThemeManifest::read($raw->body())['manifest']['version'] ?? null;
+            }
+            throw new RuntimeException('GitHub said '.$raw->status().'.');
+        }
+        if ($source['type'] !== 'url') {
+            return null;
+        }
+        $file = app(InsertInstaller::class)->download($source);
+        try {
+            $zip = new ZipArchive;
+            if ($zip->open($file, ZipArchive::RDONLY) !== true || ($root = $this->rootOf($zip)) === null) {
+                return null;
+            }
+            $version = ThemeManifest::read((string) $zip->getFromName($root.'theme.json'))['manifest']['version'] ?? null;
+            $zip->close();
+
+            return $version;
+        } finally {
+            @unlink($file);
+        }
+    }
+
+    /**
+     * Ask where each theme came from whether there's a newer version (daily,
+     * and from The cover). One that can't be reached keeps what was found before.
+     *
+     * @return array<string, string> key => the newer version
+     */
+    public function check(?string $only = null): array
+    {
+        $this->unreached = [];
+        $found = json_decode((string) @file_get_contents($this->updatesFile()), true);
+        $found = is_array($found) ? $found : [];
+        $ready = [];
+        foreach (ThemeManager::all() as $key => $theme) {
+            $source = $this->sourceOf($key);
+            if (($only && $key !== $only) || ! $source) {
+                continue;
+            }
+            try {
+                $latest = $this->latest($source);
+            } catch (Throwable $e) {
+                $this->unreached[] = $key;
+
+                continue;
+            }
+            $found[$key] = ['latest' => $latest, 'checked_at' => now()->toIso8601String()];
+            if ($latest && version_compare($latest, $theme->version(), '>')) {
+                $ready[$key] = $latest;
+            }
+        }
+        File::ensureDirectoryExists(dirname($this->updatesFile()));
+        file_put_contents($this->updatesFile(), json_encode($found, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        return $ready;
+    }
+
+    /** A newer version waiting for this theme (from the last check), or null. */
+    public function updateReady(string $key): ?string
+    {
+        $found = json_decode((string) @file_get_contents($this->updatesFile()), true);
+        $latest = is_array($found) ? ($found[$key]['latest'] ?? null) : null;
+        $theme = ThemeManager::find($key);
+
+        return $theme && is_string($latest) && version_compare($latest, $theme->version(), '>') ? $latest : null;
     }
 
     // Where each came from (a link or GitHub), to fetch it again for an update ---------------
