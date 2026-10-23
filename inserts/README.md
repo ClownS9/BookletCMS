@@ -148,6 +148,10 @@ For inserts in private GitHub repositories, set `BOOKLET_GITHUB_TOKEN`.
 
 ## Sharing one
 
+In Booklet: pick the insert in Settings › Inserts and open **Share it with other
+Booklet sites**, a step-by-step guide with a download button and the names filled in.
+From the command line:
+
     php artisan booklet:share recipes
 
 packs it into a .zip, checked the same way the shelf checks an insert being added.
