@@ -29,6 +29,7 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class CoverDesigner extends Component
 {
+    use \App\Livewire\Concerns\BrowsesCatalog;
     use PageTitle;
     use Stamps;
 

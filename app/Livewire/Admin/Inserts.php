@@ -24,6 +24,7 @@ use Throwable;
 #[Title('Inserts')]
 class Inserts extends Component
 {
+    use \App\Livewire\Concerns\BrowsesCatalog;
     use Stamps;
 
     #[Url(as: 'insert', except: '')]
