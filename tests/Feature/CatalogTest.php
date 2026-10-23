@@ -103,6 +103,18 @@ class CatalogTest extends TestCase
         $this->assertStringContainsString('BOOKLET_GITHUB_TOKEN', $found['error']);
     }
 
+    public function test_github_not_answering_isnt_asked_again_on_every_click(): void
+    {
+        Http::fake(['api.github.com/*' => Http::response('', 502)]);
+        $this->assertStringContainsString('GitHub said 502', Catalog::search('theme')['error']);
+        Catalog::search('theme');
+        Http::assertSentCount(1);
+
+        $this->travel(3)->minutes();
+        Catalog::search('theme');
+        Http::assertSentCount(2);
+    }
+
     public function test_the_cover_shows_them_and_looks_inside_one(): void
     {
         $this->fakeGithub();

@@ -282,7 +282,7 @@
             @endif
 
             @unless ($insert->manifest('broken'))
-                @include('livewire.admin.partials.share-guide', ['kind' => 'insert', 'key' => $insert->key, 'name' => $insert->name(), 'version' => $insert->version(), 'about' => $insert->about(), 'code' => true])
+                @include('livewire.admin.partials.share-guide', ['kind' => 'insert', 'key' => $insert->key, 'name' => $insert->name(), 'version' => $insert->version(), 'about' => $insert->about(), 'code' => true, 'from' => $insert->source()])
             @endunless
 
             <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 18px">

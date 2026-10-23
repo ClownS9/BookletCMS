@@ -16,6 +16,8 @@
     $dirs = $top->filter(fn ($f) => is_dir($folder.'/'.$f))->values();
     $inside = $files->implode(', ').($dirs->isNotEmpty() ? ($files->isNotEmpty() ? ', and ' : '').($dirs->count() > 1 ? 'the folders ' : 'the folder ').$dirs->implode(' and ') : '');
     $inside = $inside !== '' ? $inside : $manifest;
+    // Added from GitHub already (someone else's, often): share where it came from, not a copy of your own.
+    $from = isset($from) && ($from['type'] ?? null) === 'github' ? (string) $from['repo'] : null;
 @endphp
 <details class="share-guide" wire:key="share-{{ $kind }}-{{ $key }}" wire:ignore.self
          x-data="{ copied: null, copy(text, id) { navigator.clipboard?.writeText(text).then(() => { this.copied = id; setTimeout(() => this.copied = null, 1600) }) } }">
@@ -25,6 +27,12 @@
     </summary>
 
     <div class="share-guide__body">
+        @if ($from)
+            <p style="margin: 0">This came from GitHub, so it’s already there to share: others add it in <b>{{ $where }}</b> with this name, and get its updates from whoever made it.</p>
+            <span class="share-guide__value"><code>{{ $from }}</code>
+                <button type="button" class="link-button" x-on:click="copy(@js($from), 'from')"><span x-text="copied === 'from' ? 'Copied' : 'Copy'">Copy</span></button>
+                <a href="https://github.com/{{ $from }}" target="_blank" rel="noopener" class="field__hint" style="margin: 0">Open it on GitHub <span aria-hidden="true">↗</span></a></span>
+        @else
         <p style="margin: 0">There are two ways. Sending the .zip is quickest. Putting it on GitHub lets anyone add it by name and get your updates.</p>
 
         <section class="share-guide__way">
@@ -73,5 +81,6 @@
                 <p class="field__hint" style="margin: 0">{{ $kind === 'theme' ? 'It has templates, so' : 'It’s code, so' }} the people adding it are asked for their password, and told to only add it if they trust you.</p>
             @endif
         </section>
+        @endif
     </div>
 </details>

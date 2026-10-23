@@ -27,7 +27,7 @@
             <div class="cover-themes__list">
                 @php
                     $shelf = collect([['key' => 'booklet', 'name' => 'Booklet', 'kind' => 'Booklet’s own', 'pic' => null, 'code' => false, 'first' => \App\Support\Look::PRESETS['notebook'], 'papers' => \App\Support\Look::PAPERS]])
-                        ->merge($themes->map(fn ($t) => ['key' => $t->key, 'name' => $t->name(), 'kind' => $t->hasCode() ? 'With templates' : 'Cover pack', 'pic' => $t->previewUrl(), 'code' => $t->hasCode(), 'first' => collect($t->presets())->first(), 'papers' => \App\Support\Look::papers($t)]));
+                        ->merge($themes->map(fn ($t) => ['key' => $t->key, 'name' => $t->name(), 'kind' => ! $t->fits() ? 'Needs Booklet '.$t->needs() : ($t->hasCode() ? 'With templates' : 'Cover pack'), 'pic' => $t->previewUrl(), 'code' => $t->hasCode(), 'first' => collect($t->presets())->first(), 'papers' => \App\Support\Look::papers($t)]));
                 @endphp
                 @foreach ($shelf as $t)
                     @php [, $tp, , $tr] = $t['papers'][$t['first']['paper']] ?? \App\Support\Look::PAPERS['warm']; @endphp
@@ -70,7 +70,7 @@
                             <button type="button" class="btn btn--quiet btn--sm" wire:click="remove('{{ $theme->key }}')" wire:confirm="Take {{ $theme->name() }} off the shelf? Its files are deleted.">Take off the shelf</button>
                         @endif
                     </div>
-                    @include('livewire.admin.partials.share-guide', ['kind' => 'theme', 'key' => $theme->key, 'name' => $theme->name(), 'version' => $theme->version(), 'about' => $theme->about(), 'code' => $theme->hasCode()])
+                    @include('livewire.admin.partials.share-guide', ['kind' => 'theme', 'key' => $theme->key, 'name' => $theme->name(), 'version' => $theme->version(), 'about' => $theme->about(), 'code' => $theme->hasCode(), 'from' => $origin])
                 </div>
             @endif
         </section>
@@ -300,7 +300,7 @@
              x-data="{
                 wide: true,
                 src: @js($previewUrl),
-                stamp: 0,
+                stamp: Date.now(),
                 get url() { return this.src + '&v=' + this.stamp; },
                 noBar(frame) {
                     try {

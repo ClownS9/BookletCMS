@@ -373,6 +373,95 @@ class ThemesTest extends TestCase
         $this->actingAs($writer)->get(route('admin.share.download', ['theme', 'tide']))->assertForbidden();
     }
 
+    public function test_something_sent_is_never_made_twice_when_a_template_breaks(): void
+    {
+        $this->installPack(['key' => 'tide'], ['views/site/sent.blade.php' => '<p>{{ $nothing->here() }}</p>']);
+        $this->wear(['theme' => 'tide']);
+        $made = 0;
+        \Illuminate\Support\Facades\Route::middleware('web')->match(['GET', 'POST'], '/test-sent', function () use (&$made) {
+            $made++;
+
+            $theirs = implode('.', ['site', 'sent']); // only the theme has it
+
+            // @phpstan-ignore method.impossibleType, argument.type (a view only the theme brings, so Larastan can't know it)
+            return \App\Themes\ThemeManager::applied() && app('view')->exists($theirs) ? app('view')->make($theirs) : 'Booklet’s own';
+        });
+
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)->post('/test-sent')->assertStatus(500);
+        $this->assertSame(1, $made, 'a form sent is never sent again');
+        $this->assertNotNull(ThemeManager::error(ThemeManager::find('tide')), 'still noted for The cover');
+
+        $made = 0;
+        $this->get('/test-sent')->assertOk()->assertSee('Booklet’s own')->assertHeader('X-Booklet-Theme');
+        $this->assertSame(2, $made, 'a page is made again without the theme');
+    }
+
+    public function test_odd_looks_and_reserved_names(): void
+    {
+        // A folder called "booklet" isn't a theme: that's Booklet's own cover.
+        File::ensureDirectoryExists(ThemeManager::path().'/booklet');
+        file_put_contents(ThemeManager::path().'/booklet/theme.json', json_encode(['name' => 'Not Booklet']));
+        ThemeManager::forget();
+        $this->assertNull(ThemeManager::find('booklet'));
+
+        // Whatever arrives, only plain values are read.
+        $look = Look::clean(['theme' => ['x'], 'preset' => ['y'], 'accent' => ['z'], 'options' => 'nope', 'tilt' => ['a']]);
+        $this->assertSame('booklet', $look['theme']);
+        $this->assertSame('notebook', $look['preset']);
+        $this->installPack();
+        $this->assertSame('round', Look::clean(['theme' => 'tide', 'options' => ['shape' => ['round']]])['options']['shape']);
+    }
+
+    public function test_a_theme_for_a_newer_booklet_says_so(): void
+    {
+        // Put in by hand (adding one from The cover refuses it), or Booklet went back a version.
+        $this->installPack();
+        $json = ThemeManager::path().'/tide/theme.json';
+        file_put_contents($json, json_encode(['needs' => '9.0'] + json_decode((string) file_get_contents($json), true)));
+        ThemeManager::forget();
+        Livewire::actingAs($this->admin)->test(CoverDesigner::class)
+            ->assertSee('Needs Booklet 9.0')
+            ->call('wear', 'tide')->assertDispatched('stamp', text: 'Tide needs Booklet 9.0 or newer; this is '.config('booklet.version').'. An update of Booklet lets the site wear it.')
+            ->assertSet('look.theme', 'booklet')->assertSet('dirty', false);
+    }
+
+    public function test_updating_the_theme_in_the_preview_keeps_your_changes(): void
+    {
+        $this->installPack(['version' => '1.0']);
+        $page = Livewire::actingAs($this->admin)->test(CoverDesigner::class)->call('wear', 'tide')
+            ->set('look.accent', '#AA3300')->set('look.options.waves', false);
+
+        $installer = app(ThemeInstaller::class);
+        $token = $installer->stage($this->zip($this->pack(['version' => '1.1'])), ['type' => 'upload']);
+        $page->set('staged', $token)->call('install')->assertHasNoErrors();
+
+        $this->assertSame('#AA3300', $page->get('look')['accent']);
+        $this->assertFalse($page->get('look')['options']['waves']);
+        $this->assertTrue($page->get('dirty'));
+        $this->assertSame('1.1', ThemeManager::find('tide')->version());
+    }
+
+    public function test_an_edit_to_the_worn_themes_files_reaches_visitors(): void
+    {
+        $this->installPack();
+        $this->wear(['theme' => 'tide']);
+        $before = \App\Support\PageCache::fingerprint();
+
+        touch(ThemeManager::path().'/tide/assets/tide.css', time() + 60);
+        request()->attributes->remove('booklet.pagecache.print');
+        $this->assertNotSame($before, \App\Support\PageCache::fingerprint(), 'kept pages are made again with the new styles');
+    }
+
+    public function test_one_added_from_github_is_shared_by_where_it_came_from(): void
+    {
+        $this->installPack();
+        $sources = StaticSite::privatePath('theme-sources.json');
+        file_put_contents($sources, json_encode(['tide' => ['type' => 'github', 'repo' => 'hana/booklet-tide']]));
+
+        Livewire::actingAs($this->admin)->test(CoverDesigner::class)->call('wear', 'tide')
+            ->assertSee('This came from GitHub')->assertSee('hana/booklet-tide')->assertDontSee('Open GitHub: new repository');
+    }
+
     public function test_plain_files_carry_the_theme(): void
     {
         $this->installPack();
