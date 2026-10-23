@@ -352,6 +352,27 @@ class ThemesTest extends TestCase
         }
     }
 
+    public function test_the_share_guide_in_the_cover_and_on_the_shelf(): void
+    {
+        $this->installPack();
+        Livewire::actingAs($this->admin)->test(CoverDesigner::class)->call('wear', 'tide')
+            ->assertSee('Share Tide')->assertSee('booklet-theme')->assertSee('github.com/new?name=booklet-tide', false)
+            ->assertSee(route('admin.share.download', ['theme', 'tide']), false);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.share.download', ['theme', 'tide']))->assertOk();
+        $this->assertStringContainsString('booklet-tide-1.0.zip', (string) $response->headers->get('Content-Disposition'));
+
+        config(['booklet.inserts_path' => base_path('inserts')]);
+        app(\App\Inserts\InsertManager::class)->forget();
+        $this->actingAs($this->admin)->get(route('admin.settings.inserts', ['insert' => 'events']))->assertOk()
+            ->assertSee('Share Events')->assertSee('booklet-insert');
+        $this->actingAs($this->admin)->get(route('admin.share.download', ['insert', 'events']))->assertOk();
+
+        $this->actingAs($this->admin)->from('/admin/settings/cover')->get(route('admin.share.download', ['theme', 'nope']))->assertRedirect('/admin/settings/cover');
+        $writer = User::factory()->create(['role' => 'writer']);
+        $this->actingAs($writer)->get(route('admin.share.download', ['theme', 'tide']))->assertForbidden();
+    }
+
     public function test_plain_files_carry_the_theme(): void
     {
         $this->installPack();

@@ -53,6 +53,7 @@
                     @else
                         <form wire:submit="fetch" class="field" style="margin: 0">
                             <label for="theme-source">From a link or GitHub</label>
+                            <p class="field__hint" style="margin: 0 0 6px">Paste what you were given: a name like <code>someone/booklet-harbour</code>, its github.com address, or a link to a .zip.</p>
                             <div class="cover-add__row">
                                 <input id="theme-source" type="text" class="input" wire:model="source" placeholder="someone/booklet-harbour" spellcheck="false">
                                 <button type="submit" class="btn" wire:loading.attr="disabled" wire:target="fetch">
@@ -73,6 +74,7 @@
                             @error('theme') <p class="field__error">{{ $message }}</p> @enderror
                         </form>
                     @endif
+                    <p class="field__hint" style="margin: 0">You’ll see what it is before anything changes. Then it shows in the preview, and the site only changes when you press <b>Use this cover</b>.</p>
                     <p class="field__hint" style="margin: 0"><b>Cover packs</b> bring fonts, colours, presets and styles, and are safe to add from anyone: Booklet reads them through first. <b>Themes with templates</b> change the pages themselves; they’re code, so only add ones from people you trust. <a href="https://github.com/search?q=booklet+theme&type=repositories" target="_blank" rel="noopener">Find themes <span aria-hidden="true">↗</span></a></p>
                 </div>
             @endif
@@ -146,6 +148,7 @@
                             <button type="button" class="btn btn--quiet btn--sm" wire:click="remove('{{ $theme->key }}')" wire:confirm="Take {{ $theme->name() }} off the shelf? Its files are deleted.">Take off the shelf</button>
                         @endif
                     </div>
+                    @include('livewire.admin.partials.share-guide', ['kind' => 'theme', 'key' => $theme->key, 'name' => $theme->name(), 'version' => $theme->version(), 'about' => $theme->about(), 'code' => $theme->hasCode()])
                 </div>
             @endif
         </section>

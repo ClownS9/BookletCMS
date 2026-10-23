@@ -118,6 +118,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::get('/settings/plain-files', Admin\StaticPublishing::class)->name('settings.static');
     Route::get('/settings/cover', Admin\CoverDesigner::class)->name('settings.look');
     Route::post('/settings/cover/themes', \App\Http\Controllers\Admin\ThemeUploadController::class)->name('settings.themes.upload');
+    // A theme or insert packed into a .zip to share (checked as another site would check it).
+    Route::get('/share/{kind}/{key}', function (string $kind, string $key) {
+        abort_unless(request()->user()->isAdmin(), 403);
+        try {
+            $packed = \App\Support\Sharing::pack($key, $kind);
+        } catch (\RuntimeException $e) {
+            return back()->with('stamp', \Illuminate\Support\Str::limit($e->getMessage(), 240));
+        }
+
+        return response()->download($packed['path'], $packed['file'])->deleteFileAfterSend();
+    })->where(['kind' => 'theme|insert', 'key' => '[a-z][a-z0-9-]{0,59}'])->name('share.download');
     Route::get('/settings/content-api', Admin\ContentApiSettings::class)->name('settings.api');
     Route::get('/settings/plain-files/download', function () {
         abort_unless(request()->user()->isAdmin(), 403);

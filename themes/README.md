@@ -25,6 +25,11 @@ GitHub: people can add it from there, and look for updates later).
 
 ## Sharing one
 
+In Booklet: pick the theme in The cover and open **Share it with other Booklet
+sites**. It has a download button for a checked .zip, and the GitHub steps below with
+the names already filled in and a button that opens GitHub's new-repository page.
+From the command line:
+
     php artisan booklet:share lighthouse
 
 packs it into a .zip, checked the same way Booklet checks a theme being added, so
