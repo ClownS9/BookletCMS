@@ -158,8 +158,8 @@ packs it into a .zip, checked the same way the shelf checks an insert being adde
 No GitHub needed: send the .zip, and anyone can add it.
 
 To let people add it by name and get updates, put it in a GitHub repository with
-`insert.php` at the top, give the repository the topic **`booklet-insert`** (so it
-can be found when Booklet searches for inserts), and make a **release** for each
+`insert.php` at the top, give the repository the topic **`booklet-insert`** (every
+Booklet then finds it under **Add an insert › Find inserts on GitHub**), and make a **release** for each
 version, tagged with the version (`1.2` or `v1.2`). Without releases, the newest
 code is used.
 

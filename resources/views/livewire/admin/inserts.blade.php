@@ -123,6 +123,8 @@
                 <p class="field__hint">To add one by hand, put its folder in <code>{{ $folder }}/</code> on the server; it shows up here.</p>
                 @error('upload') <p class="field__error">{{ $message }}</p> @enderror
             @else
+                @include('livewire.admin.partials.catalog', ['kind' => 'insert'])
+                <p class="cover-add__or">Or, if you were given one</p>
                 <form wire:submit="fetch" class="insert-add">
                     <div class="field">
                         <label for="insert-source">From a link</label>

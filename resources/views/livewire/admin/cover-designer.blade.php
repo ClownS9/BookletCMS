@@ -51,6 +51,8 @@
                     @if ($blocked)
                         <p class="vc-note vc-note--warn" style="margin: 0">{{ $blocked }}</p>
                     @else
+                        @include('livewire.admin.partials.catalog', ['kind' => 'theme'])
+                        <p class="cover-add__or">Or, if you were given one</p>
                         <form wire:submit="fetch" class="field" style="margin: 0">
                             <label for="theme-source">From a link or GitHub</label>
                             <p class="field__hint" style="margin: 0 0 6px">Paste what you were given: a name like <code>someone/booklet-harbour</code>, its github.com address, or a link to a .zip.</p>
