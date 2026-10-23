@@ -26,6 +26,28 @@ trait BrowsesCatalog
         $this->findPage = 1;
     }
 
+    /** Asked for this time: GitHub now, not what was found a few minutes ago. */
+    protected bool $findFresh = false;
+
+    /** What GitHub has, for the panel (see Catalog). */
+    public function findResults(string $kind): array
+    {
+        return \App\Support\Catalog::search($kind, $this->find, $this->findSort, $this->findPage, $this->findFresh);
+    }
+
+    /** Look again: ask GitHub now (something just shared, say). At most every 20 seconds, so GitHub doesn't say slow down. */
+    public function findAgain(): void
+    {
+        $limit = 'catalog-again:'.request()->user()->id;
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($limit, 1)) {
+            $this->stamp('Just looked. Try again in '.\Illuminate\Support\Facades\RateLimiter::availableIn($limit).' seconds.');
+
+            return;
+        }
+        \Illuminate\Support\Facades\RateLimiter::hit($limit, 20);
+        $this->findFresh = true;
+    }
+
     public function findPageTo(int $page): void
     {
         $this->findPage = max(1, min(20, $page));

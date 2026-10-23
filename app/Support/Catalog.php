@@ -29,13 +29,18 @@ class Catalog
 
     public const SORTS = ['stars' => 'Most stars', 'updated' => 'Recently updated'];
 
-    /** How long a search and a repository's details are kept. */
-    protected const KEEP_MINUTES = 30;
+    /**
+     * How long a search is kept: long enough that clicking about doesn't ask
+     * GitHub again each time (it answers ten searches a minute without a
+     * token), short enough that something just shared shows up soon. "Look
+     * again" asks straight away.
+     */
+    protected const KEEP_MINUTES = 5;
 
     /**
      * @return array{items: list<array>, total: int, page: int, more: bool, error: ?string, at: string}
      */
-    public static function search(string $kind, string $words = '', string $sort = 'stars', int $page = 1): array
+    public static function search(string $kind, string $words = '', string $sort = 'stars', int $page = 1, bool $fresh = false): array
     {
         $kind = $kind === 'insert' ? 'insert' : 'theme';
         $words = trim((string) preg_replace('/[^\p{L}\p{N} _.-]+/u', ' ', Str::limit($words, 60, '')));
@@ -43,7 +48,7 @@ class Catalog
         $page = max(1, min(20, $page));
         $key = 'booklet.catalog.'.md5(implode('|', [$kind, mb_strtolower($words), $sort, $page]));
 
-        if (is_array($kept = Cache::get($key))) {
+        if (! $fresh && is_array($kept = Cache::get($key))) {
             return $kept;
         }
 
