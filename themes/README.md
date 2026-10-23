@@ -23,6 +23,25 @@ There are two kinds:
 Then pick it in Settings › The cover. To share it, zip the folder (or put it on
 GitHub: people can add it from there, and look for updates later).
 
+## Sharing one
+
+    php artisan booklet:share lighthouse
+
+packs it into a .zip, checked the same way Booklet checks a theme being added, so
+what you send is what others can add. Anyone can add that .zip in The cover.
+
+To let people add it by name and get updates, put it on GitHub:
+
+1. Make a repository (`booklet-lighthouse`, say) with what's in the .zip at its top:
+   `theme.json`, `assets/`, and `views/` if it has templates.
+2. Give it the topic **`booklet-theme`** (the gear next to *About* on its page), so
+   it can be found when Booklet searches for themes.
+3. Make a **release** for each version, tagged with the version (`1.2` or `v1.2`).
+   Without releases, the newest code is used.
+
+People then add it in The cover with `you/booklet-lighthouse`, and **Look for an
+update** fetches the newest release.
+
 ## The folder
 
     themes/lighthouse/
