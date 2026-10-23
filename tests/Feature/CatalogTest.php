@@ -174,6 +174,6 @@ class CatalogTest extends TestCase
 
         Livewire::actingAs($this->admin)->test(Inserts::class)->call('startAdding')
             ->assertSee('Find inserts on GitHub')->assertSee('Things happening.')
-            ->assertSee('Newer than yours (1.0)')->assertSee('Look at the update')->assertSee('Code: asks for your password');
+            ->assertSee('Newer than yours (1.0)')->assertSee('Look at the update')->assertSee('Code: needs your password');
     }
 }

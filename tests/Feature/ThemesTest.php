@@ -212,6 +212,12 @@ class ThemesTest extends TestCase
         $this->assertNull(ThemeManager::find('tide'));
         $page->set('password', 'password')->call('install')->assertHasNoErrors();
         $this->assertNotNull(ThemeManager::find('tide'));
+
+        // Given a moment ago: not asked again, and it says why.
+        $again = $installer->stage($this->zip($this->pack(['key' => 'tide', 'version' => '1.1'], $files)), ['type' => 'upload']);
+        $page->set('staged', $again)->assertSee('No password needed this time')->assertDontSee('Your password, to say yes');
+        $installer->discard($again);
+        $page->set('staged', '');
         $this->assertSame('tide', $page->get('look')['theme'], 'shown in the preview straight away');
 
         $page->call('save');
