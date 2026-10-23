@@ -44,7 +44,7 @@ class Health
             'php', 'extensions', 'database', 'migrations', 'folders', 'storage_link', 'space', 'app_key', 'debug', 'address',
             'scheduler', 'queue', 'mail', 'log',
             'backups', 'version_control', 'content_files', 'site_menus',
-            'inserts', 'stacy', 'page_cache', 'search_engines',
+            'inserts', 'theme', 'stacy', 'page_cache', 'search_engines',
         ] as $check) {
             try {
                 $result = self::{Str::camel($check)}($url);
@@ -467,6 +467,31 @@ class Health
             $updates->isNotEmpty() => ['group' => 'extras', 'label' => 'Inserts', 'state' => 'info', 'text' => 'Updates ready: '.$updates->implode(', ').'.', 'href' => $href],
             default => ['group' => 'extras', 'label' => 'Inserts', 'state' => 'ok', 'text' => $manager->active()->count().' of '.$all->count().' switched on, all well.', 'href' => $href],
         };
+    }
+
+    /** The theme the site wears: there, fitting this Booklet, and its templates working. */
+    protected static function theme(): ?array
+    {
+        $saved = Look::clean(rescue(fn () => (array) (\App\Booklet\Facades\Booklet::globals('site')?->get('look') ?? []), [], false));
+        $wanted = (string) (rescue(fn () => \App\Booklet\Facades\Booklet::globals('site')?->get('look')['theme'] ?? null, null, false) ?? 'booklet');
+        $href = route('admin.settings.look');
+        $theme = \App\Themes\ThemeManager::forLook($saved);
+
+        if ($wanted !== 'booklet' && ! $theme) {
+            return ['group' => 'extras', 'label' => 'Theme', 'state' => 'warn', 'text' => 'The site was set to wear the theme “'.$wanted.'”, but it isn’t in themes/ (or needs a newer Booklet), so it wears Booklet’s own.', 'fix' => 'Put its folder back in themes/, or choose a cover in Settings › The cover.', 'href' => $href];
+        }
+        if (! $theme) {
+            return null;
+        }
+        $error = \App\Themes\ThemeManager::error($theme);
+        if ($error && Carbon::parse($error['at'])->gt(now()->subDay())) {
+            return ['group' => 'extras', 'label' => 'Theme', 'state' => 'warn', 'text' => $theme->name().'’s template '.($error['file'] ? '('.$error['file'].') ' : '').'broke on '.$error['where'].': '.Str::limit($error['message'], 140).' Readers get Booklet’s own page there instead.', 'fix' => 'An update of the theme from whoever made it should fix it.', 'href' => $href];
+        }
+        if ($theme->hasCode() && config('booklet.safe_mode')) {
+            return ['group' => 'extras', 'label' => 'Theme', 'state' => 'warn', 'text' => 'Safe mode is on, so '.$theme->name().' is worn as a cover pack: its styles, without its templates or scripts.', 'href' => $href];
+        }
+
+        return ['group' => 'extras', 'label' => 'Theme', 'state' => 'ok', 'text' => $theme->name().' '.$theme->version().', '.($theme->hasCode() ? 'with its own templates' : 'a cover pack').', all well.', 'href' => $href];
     }
 
     protected static function stacy(): array

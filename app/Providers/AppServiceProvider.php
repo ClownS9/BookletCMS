@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->make(\App\Inserts\InsertManager::class)->boot();
 
+        // Public pages wear the chosen theme (Settings › The cover); last in the web group, after the session.
+        $this->app['router']->pushMiddlewareToGroup('web', \App\Http\Middleware\ApplyTheme::class);
+
         // The read-only content API (Settings › Content API), outside the web pages' middleware.
         if (! $this->app->routesAreCached()) {
             \Illuminate\Support\Facades\Route::middleware(\App\Http\Middleware\ContentApiAccess::class)

@@ -24,6 +24,7 @@ abstract class TestCase extends BaseTestCase
         $app['config']->set('booklet.paths.content', storage_path('framework/testing/content'));
         $app['config']->set('booklet.paths.storage', storage_path('framework/testing/booklet'));
         $app['config']->set('booklet.paths.private', storage_path('framework/testing/private'));
+        $app['config']->set('booklet.themes_path', storage_path('framework/testing/themes'));
 
         // Anything already opened while the app started is opened again with the test settings.
         if ($app->resolved(\App\Booklet\BookletManager::class)) {

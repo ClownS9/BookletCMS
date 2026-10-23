@@ -53,7 +53,7 @@
         {{ $site->extras($entry) }}
 
         @if ($contact && $contact->id() === $entry->id() && \App\Support\Inbox::open())
-            @unless (request()->attributes->get('booklet_static')) <livewire:site.contact-form :page="$entry->uri() ?? ''" /> @endunless
+            <x-site.contact-form :entry="$entry" />
         @endif
 
         @if ($people->isNotEmpty())

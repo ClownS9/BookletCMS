@@ -117,6 +117,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::get('/settings/version-control', Admin\VersionControl::class)->name('settings.version-control');
     Route::get('/settings/plain-files', Admin\StaticPublishing::class)->name('settings.static');
     Route::get('/settings/cover', Admin\CoverDesigner::class)->name('settings.look');
+    Route::post('/settings/cover/themes', \App\Http\Controllers\Admin\ThemeUploadController::class)->name('settings.themes.upload');
     Route::get('/settings/content-api', Admin\ContentApiSettings::class)->name('settings.api');
     Route::get('/settings/plain-files/download', function () {
         abort_unless(request()->user()->isAdmin(), 403);
@@ -159,6 +160,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
 
 // The blog index and every entry or term address, Statamic-style. Last, so
 // the admin and sign-in routes above always win.
+// Themes' own files (styles, fonts, pictures) from themes/{theme}/assets/.
+Route::get('/themes/{theme}/assets/{path}', \App\Http\Controllers\ThemeAssetController::class)
+    ->where(['theme' => '[a-z][a-z0-9-]*', 'path' => '[A-Za-z0-9._/-]+'])->name('themes.asset');
+
 // Inserts' own files (CSS, scripts, pictures) from inserts/{insert}/assets/.
 Route::get('/inserts/{insert}/assets/{path}', \App\Http\Controllers\InsertAssetController::class)
     ->where(['insert' => '[a-z][a-z0-9-]*', 'path' => '.+'])->name('inserts.asset');

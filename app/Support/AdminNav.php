@@ -76,7 +76,7 @@ class AdminNav
             ['settings', 'Settings', 'Site, look & Stacy', route('admin.settings'), 'settings', 'sand', $r->routeIs('admin.settings', 'admin.settings.*'), null, 'you'],
             $user?->isAdmin() ? ['backups', 'Backups', 'The whole book in one file', route('admin.backups'), 'book', 'sand', $r->routeIs('admin.backups'), null, 'you'] : null,
             $user?->isAdmin() ? ['version-control', 'Version control', 'Every change kept in git', route('admin.settings.version-control'), 'history', 'sand', $r->routeIs('admin.settings.version-control'), null, 'you'] : null,
-            $user?->isAdmin() ? ['look', 'The cover', 'Fonts, colours & layout', route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,
+            $user?->isAdmin() ? ['look', 'The cover', 'Themes, fonts & colours', route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,
             $user?->isAdmin() ? ['static', 'Publish as plain files', 'For GitHub Pages or any host', route('admin.settings.static'), 'printer', 'sand', $r->routeIs('admin.settings.static'), null, 'you'] : null,
             $user?->isAdmin() ? ['api', 'Content API', 'Your posts as JSON for apps', route('admin.settings.api'), 'code', 'sand', $r->routeIs('admin.settings.api'), null, 'you'] : null,
             $user?->isAdmin() ? ['import', 'Move in from WordPress', 'Bring an old site across', route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,

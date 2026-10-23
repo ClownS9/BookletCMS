@@ -1,0 +1,34 @@
+/*
+ * Harbour: a cover pack for Booklet. Only styles: Booklet's own templates
+ * stay as they are, so everything new in Booklet keeps working.
+ * Its fonts come from Google Fonts (named in theme.json); its colours
+ * come from the cover (var(--accent), var(--paper)…).
+ */
+
+/* Links in the words take the link colour chosen in The cover (--harbour-link). */
+.theme-harbour .prose a { color: var(--harbour-link); text-decoration-color: color-mix(in srgb, var(--harbour-link) 45%, transparent); }
+.theme-harbour .prose a:hover { text-decoration-color: var(--harbour-link); }
+
+/* Titles a touch tighter, as the serif is wide. */
+.theme-harbour .post-head__title, .theme-harbour .feature__title { letter-spacing: -0.01em; }
+
+/* A wave under the masthead. */
+.theme-harbour.harbour-waves .masthead { position: relative; border-bottom-color: transparent; }
+.theme-harbour.harbour-waves .masthead::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 12px;
+  background: url("wave.svg") repeat-x center / 120px 12px;
+  pointer-events: none;
+}
+
+/* Pictures: round like a porthole, if chosen. */
+.theme-harbour.harbour-pictures-porthole .card__picture img,
+.theme-harbour.harbour-pictures-porthole .card__blank {
+  aspect-ratio: 1; border-radius: 50%;
+}
+.theme-harbour.harbour-pictures-porthole .feature__picture img { border-radius: 999px 999px 12px 12px; }
+
+/* Stickers sit a little softer on the mist. */
+.theme-harbour .sticker { box-shadow: 0 1px 0 rgba(22, 35, 42, .12); }
+
+/* Dark reading: the link colour, lighter. */
+[data-theme="dark"] .theme-harbour .prose a { color: color-mix(in srgb, var(--harbour-link) 55%, white); }

@@ -102,13 +102,13 @@
                     <a href="{{ route('admin.settings.look') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
                         <span class="stacy-badge" style="width: 40px; height: 40px; background: {{ $cover['accent'] }}; color: {{ \App\Support\Look::onAccent($cover['accent']) }}; font-family: var(--serif); font-size: 18px" aria-hidden="true">Aa</span>
                         <span style="min-width: 0">
-                            <span style="display: block; font-size: 15px; font-weight: 500">{{ \App\Support\Look::PRESETS[$cover['preset']]['name'] }}</span>
-                            <span style="display: block; font-size: 13px; color: var(--faint)">Fonts, colours, the header and home page, with a live preview</span>
+                            <span style="display: block; font-size: 15px; font-weight: 500">{{ \App\Support\Look::presetName($cover) }}</span>
+                            <span style="display: block; font-size: 13px; color: var(--faint)">Themes, fonts, colours and layouts, with a live preview</span>
                         </span>
                         <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
                     </a>
                 @else
-                    <p class="field__hint" style="margin: 0">{{ \App\Support\Look::PRESETS[$cover['preset']]['name'] }}. An admin can change it.</p>
+                    <p class="field__hint" style="margin: 0">{{ \App\Support\Look::presetName($cover) }}. An admin can change it.</p>
                 @endif
             </div>
         </fieldset>

@@ -52,7 +52,7 @@
 
                 @include('site.partials.pager', ['paginator' => $paginator])
 
-                @unless (request()->attributes->get('booklet_static')) <livewire:site.subscribe place="blog" /> @endunless
+                <x-site.subscribe place="blog" />
             </div>
 
             <aside class="with-aside__side">

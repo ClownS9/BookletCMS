@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Booklet\Facades\Booklet;
 use App\Models\User;
+use App\Themes\Theme;
+use App\Themes\ThemeManager;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -82,22 +84,92 @@ class Look
         return self::clean($saved + ['accent' => (string) (Booklet::globals('site')?->get('accent') ?? self::PRESETS['notebook']['accent'])]);
     }
 
-    /** Anything missing or unknown becomes the Notebook's. */
+    // With a theme: its presets, fonts, papers and options beside Booklet's -----------------
+
+    /** The theme a look wears (null: Booklet's own). */
+    public static function theme(array $look): ?Theme
+    {
+        return ThemeManager::forLook($look);
+    }
+
+    /** The presets to start from: Booklet's five, or the theme's own. */
+    public static function presets(?Theme $theme): array
+    {
+        return $theme ? $theme->presets() : self::PRESETS;
+    }
+
+    /** handle => [name, Google Fonts family (or null: the theme brings it), CSS stack] */
+    public static function fonts(?Theme $theme): array
+    {
+        $theirs = array_map(fn ($f) => [$f[0], $f[1], $f[2]], $theme?->fonts() ?? []);
+
+        return $theirs + self::FONTS;
+    }
+
+    public static function titleFonts(?Theme $theme): array
+    {
+        return array_merge(array_keys(array_filter($theme?->fonts() ?? [], fn ($f) => in_array('titles', $f[3], true))), self::TITLE_FONTS);
+    }
+
+    public static function labelFonts(?Theme $theme): array
+    {
+        return array_merge(array_keys(array_filter($theme?->fonts() ?? [], fn ($f) => in_array('labels', $f[3], true))), self::LABEL_FONTS);
+    }
+
+    public static function papers(?Theme $theme): array
+    {
+        return ($theme?->papers() ?? []) + self::PAPERS;
+    }
+
+    /** What to call a look: its preset's name (and its theme's, when it isn't Booklet's). */
+    public static function presetName(array $look): string
+    {
+        $theme = self::theme($look);
+        $preset = self::presets($theme)[$look['preset'] ?? ''] ?? null;
+        $name = (string) ($preset['name'] ?? 'Notebook');
+
+        return $theme && $name !== $theme->name() ? $theme->name().' · '.$name : $name;
+    }
+
+    /** Anything missing or unknown becomes the preset's (and an unknown preset, the first one). */
     public static function clean(array $look): array
     {
-        $base = self::PRESETS[$look['preset'] ?? ''] ?? self::PRESETS['notebook'];
-        $pick = fn (string $key, array $allowed) => in_array($look[$key] ?? null, $allowed, true) ? $look[$key] : $base[$key];
+        $theme = self::theme($look);
+        $presets = self::presets($theme);
+        $preset = array_key_exists((string) ($look['preset'] ?? ''), $presets) ? (string) $look['preset'] : (string) array_key_first($presets);
+        $base = $presets[$preset];
+        $pick = function (string $key, array $allowed) use ($look, $base) {
+            if (in_array($look[$key] ?? null, $allowed, true)) {
+                return $look[$key];
+            }
+
+            return in_array($base[$key] ?? null, $allowed, true) ? $base[$key] : self::PRESETS['notebook'][$key];
+        };
+        $hex = fn ($v) => is_string($v) && preg_match('/^#[0-9a-f]{6}$/i', $v) ? strtoupper($v) : null;
+
+        // A theme's options: what the person chose, or the preset's, or the theme's default.
+        $options = [];
+        foreach ($theme?->options() ?? [] as $handle => $option) {
+            $value = $look['options'][$handle] ?? $base['options'][$handle] ?? $option['default'];
+            $options[$handle] = match ($option['type']) {
+                'toggle' => (bool) $value,
+                'select' => array_key_exists((string) $value, $option['options']) ? (string) $value : $option['default'],
+                default => $hex($value) ?? $option['default'],
+            };
+        }
 
         return [
-            'preset' => array_key_exists($look['preset'] ?? '', self::PRESETS) ? $look['preset'] : 'notebook',
-            'title_font' => $pick('title_font', self::TITLE_FONTS),
-            'label_font' => $pick('label_font', self::LABEL_FONTS),
-            'accent' => preg_match('/^#[0-9a-f]{6}$/i', (string) ($look['accent'] ?? '')) ? strtoupper((string) $look['accent']) : $base['accent'],
-            'paper' => $pick('paper', array_keys(self::PAPERS)),
+            'theme' => $theme ? $theme->key : 'booklet',
+            'preset' => $preset,
+            'title_font' => $pick('title_font', self::titleFonts($theme)),
+            'label_font' => $pick('label_font', self::labelFonts($theme)),
+            'accent' => $hex($look['accent'] ?? null) ?? $hex($base['accent'] ?? null) ?? self::PRESETS['notebook']['accent'],
+            'paper' => $pick('paper', array_keys(self::papers($theme))),
             'header' => $pick('header', array_keys(self::HEADERS)),
             'home' => $pick('home', array_keys(self::HOMES)),
             'corners' => $pick('corners', array_keys(self::CORNERS)),
-            'tilt' => isset($look['tilt']) ? (bool) $look['tilt'] : $base['tilt'],
+            'tilt' => isset($look['tilt']) ? (bool) $look['tilt'] : (bool) ($base['tilt'] ?? true),
+            'options' => $options,
         ];
     }
 
@@ -138,7 +210,9 @@ class Look
     /** The Google Fonts address for the chosen fonts (and the mono one for code). */
     public static function fontsUrl(array $look): string
     {
-        $families = array_unique([self::FONTS[$look['title_font']][1], self::FONTS[$look['label_font']][1], 'JetBrains+Mono:wght@400;500']);
+        $fonts = self::fonts(self::theme($look));
+        // A theme's own fonts come with its styles; only Google's are asked for here.
+        $families = array_values(array_unique(array_filter([$fonts[$look['title_font']][1] ?? null, $fonts[$look['label_font']][1] ?? null, 'JetBrains+Mono:wght@400;500'])));
 
         return 'https://fonts.googleapis.com/css2?family='.implode('&family=', $families).'&display=swap';
     }
@@ -146,13 +220,21 @@ class Look
     /** CSS custom properties for the page: fonts, accent (and the text that sits on it), paper. */
     public static function css(array $look): string
     {
-        [, $paper, $paper2, $rule, $rule2, $ink] = self::PAPERS[$look['paper']];
+        $theme = self::theme($look);
+        $fonts = self::fonts($theme);
+        [, $paper, $paper2, $rule, $rule2, $ink] = self::papers($theme)[$look['paper']] ?? self::PAPERS['warm'];
         $vars = [
-            '--serif' => self::FONTS[$look['title_font']][2],
-            '--sans' => self::FONTS[$look['label_font']][2],
+            '--serif' => $fonts[$look['title_font']][2] ?? self::FONTS['newsreader'][2],
+            '--sans' => $fonts[$look['label_font']][2] ?? self::FONTS['instrument'][2],
             '--accent' => $look['accent'],
             '--on-accent' => self::onAccent($look['accent']),
         ];
+        // A theme's colour options, as the variables its styles use.
+        foreach ($theme?->options() ?? [] as $handle => $option) {
+            if ($option['type'] === 'color' && isset($look['options'][$handle])) {
+                $vars[$option['variable']] = $look['options'][$handle];
+            }
+        }
         $light = ['--paper' => $paper, '--paper-2' => $paper2, '--rule' => $rule, '--rule-2' => $rule2, '--ink' => $ink];
 
         $line = fn (array $props) => implode(' ', array_map(fn ($k, $v) => $k.': '.$v.';', array_keys($props), $props));
@@ -164,12 +246,26 @@ class Look
     /** Classes for <body>: the header and home layouts, corners, stickers. */
     public static function bodyClasses(array $look): string
     {
-        return implode(' ', [
+        $classes = [
             'look-header--'.$look['header'],
             'look-home--'.$look['home'],
             'look-corners--'.$look['corners'],
             $look['tilt'] ? 'look-tilt' : 'look-flat',
-        ]);
+        ];
+        // A theme's name, and its options as the classes its styles look for.
+        if ($theme = self::theme($look)) {
+            $classes[] = 'theme-'.$theme->key;
+            foreach ($theme->options() as $handle => $option) {
+                $value = $look['options'][$handle] ?? $option['default'];
+                if ($option['type'] === 'toggle' && $value) {
+                    $classes[] = $option['class'];
+                } elseif ($option['type'] === 'select') {
+                    $classes[] = str_replace('{value}', (string) $value, $option['class']);
+                }
+            }
+        }
+
+        return implode(' ', $classes);
     }
 
     /** Dark text on a light accent, white on a dark one (so stickers stay readable). */

@@ -33,6 +33,12 @@ class StructuredData
         request()->attributes->set(self::KEY, $nodes);
     }
 
+    /** Start this page's again (when it's drawn a second time, without a broken theme). */
+    public static function reset(): void
+    {
+        request()->attributes->remove(self::KEY);
+    }
+
     /** The one <script> for the page's <head>. */
     public static function render(): HtmlString
     {

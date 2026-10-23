@@ -49,6 +49,12 @@ return [
     // repository). false: only by putting their folder in inserts/ by hand.
     'inserts_install' => (bool) env('BOOKLET_INSERTS_INSTALL', true),
 
+    // Themes (Settings › The cover): cover packs (styles, fonts, colours) and
+    // themes with their own templates, each a folder in themes/. Adding a
+    // theme with templates is code, so it follows inserts_install too; and
+    // safe mode wears every theme as a plain cover pack (no templates, no scripts).
+    'themes_path' => env('BOOKLET_THEMES_PATH', base_path('themes')),
+
     // Only needed for inserts kept in private GitHub repositories (or if
     // GitHub says to slow down): a token that can read them.
     'github_token' => env('BOOKLET_GITHUB_TOKEN'),

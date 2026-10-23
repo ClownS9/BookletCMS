@@ -1,5 +1,6 @@
 <div style="display: contents">
     <link rel="stylesheet" href="{{ $allFonts }}">
+    @if ($fontFaces) <style>{!! $fontFaces !!}</style> @endif
 
     {{-- Left page: presets, then each choice --}}
     <section class="page page--left page--stack" style="flex-basis: 420px">
@@ -10,19 +11,158 @@
             <p class="lede" style="margin-top: 10px; font-size: 15px">How the site looks to readers. Start from a cover, then change anything. The preview shows it at once; the site changes only when you press <b>Use this cover</b>.</p>
         </div>
 
+
+        {{-- Themes: Booklet's own, cover packs, and themes with their own templates --}}
+        <section class="cover-themes" aria-labelledby="cover-themes-title">
+            <div class="cover-themes__head">
+                <h2 id="cover-themes-title" class="field__label" style="margin: 0">Theme</h2>
+                @unless ($adding || $waiting)
+                    <button type="button" class="btn btn--quiet btn--sm" wire:click="startAdding">+ Add a theme</button>
+                @endunless
+            </div>
+            <div class="cover-themes__list">
+                @php
+                    $shelf = collect([['key' => 'booklet', 'name' => 'Booklet', 'kind' => 'Booklet’s own', 'pic' => null, 'code' => false, 'first' => \App\Support\Look::PRESETS['notebook'], 'papers' => \App\Support\Look::PAPERS]])
+                        ->merge($themes->map(fn ($t) => ['key' => $t->key, 'name' => $t->name(), 'kind' => $t->hasCode() ? 'With templates' : 'Cover pack', 'pic' => $t->previewUrl(), 'code' => $t->hasCode(), 'first' => collect($t->presets())->first(), 'papers' => \App\Support\Look::papers($t)]));
+                @endphp
+                @foreach ($shelf as $t)
+                    @php [, $tp, , $tr] = $t['papers'][$t['first']['paper']] ?? \App\Support\Look::PAPERS['warm']; @endphp
+                    <button type="button" wire:key="theme-{{ $t['key'] }}" @class(['cover-theme', 'is-on' => $look['theme'] === $t['key']]) wire:click="wear('{{ $t['key'] }}')" aria-pressed="{{ $look['theme'] === $t['key'] ? 'true' : 'false' }}">
+                        <span class="cover-theme__pic" style="--c-paper: {{ $tp }}; --c-rule: {{ $tr }}; --c-accent: {{ $t['first']['accent'] }}">
+                            @if ($t['pic'])
+                                <img src="{{ $t['pic'] }}" alt="" loading="lazy">
+                            @else
+                                <span class="cover-theme__mark"></span><i></i><i></i>
+                            @endif
+                        </span>
+                        <span class="cover-theme__name">{{ $t['name'] }}</span>
+                        <span class="cover-theme__kind">{{ $t['kind'] }}</span>
+                        @if ($wearing === $t['key']) <span class="cover-theme__worn">On the site</span> @endif
+                    </button>
+                @endforeach
+            </div>
+
+            @if ($adding)
+                <div class="cover-add">
+                    <div class="cover-add__head">
+                        <p style="margin: 0"><strong>Add a theme</strong></p>
+                        <button type="button" class="btn btn--quiet btn--sm" wire:click="stopAdding">Close</button>
+                    </div>
+                    @if ($blocked)
+                        <p class="vc-note vc-note--warn" style="margin: 0">{{ $blocked }}</p>
+                    @else
+                        <form wire:submit="fetch" class="field" style="margin: 0">
+                            <label for="theme-source">From a link or GitHub</label>
+                            <div class="cover-add__row">
+                                <input id="theme-source" type="text" class="input" wire:model="source" placeholder="someone/booklet-harbour" spellcheck="false">
+                                <button type="submit" class="btn" wire:loading.attr="disabled" wire:target="fetch">
+                                    <span wire:loading.remove wire:target="fetch">Look inside</span>
+                                    <span wire:loading wire:target="fetch">Fetching…</span>
+                                </button>
+                            </div>
+                            @error('source') <p class="field__error">{{ $message }}</p> @enderror
+                        </form>
+                        <form method="POST" action="{{ route('admin.settings.themes.upload') }}" enctype="multipart/form-data" class="field" style="margin: 0">
+                            @csrf
+                            <label for="theme-file">From a .zip on your computer</label>
+                            <div class="cover-add__row">
+                                <input id="theme-file" type="file" name="theme" accept=".zip,application/zip" required>
+                                <button type="submit" class="btn btn--sm">Upload and look inside</button>
+                            </div>
+                            @error('upload') <p class="field__error">{{ $message }}</p> @enderror
+                            @error('theme') <p class="field__error">{{ $message }}</p> @enderror
+                        </form>
+                    @endif
+                    <p class="field__hint" style="margin: 0"><b>Cover packs</b> bring fonts, colours, presets and styles, and are safe to add from anyone: Booklet reads them through first. <b>Themes with templates</b> change the pages themselves; they’re code, so only add ones from people you trust. <a href="https://github.com/search?q=booklet+theme&type=repositories" target="_blank" rel="noopener">Find themes <span aria-hidden="true">↗</span></a></p>
+                </div>
+            @endif
+
+            @if ($waiting)
+                <div @class(['cover-staged', 'cover-staged--code' => $waiting['code']])>
+                    <p class="eyebrow" style="margin: 0">{{ $waiting['replaces'] ? 'Update, waiting for a yes' : 'Waiting for a yes' }}</p>
+                    <p class="cover-staged__name">{{ $waiting['name'] }} <span class="muted">{{ $waiting['version'] }}</span></p>
+                    @if ($waiting['about']) <p style="margin: 0">{{ $waiting['about'] }}</p> @endif
+                    <p class="field__hint" style="margin: 0">
+                        {{ $waiting['code'] ? 'With its own templates' : 'A cover pack' }}@if ($waiting['author']) · by {{ $waiting['author'] }}@endif
+                        · {{ $waiting['files'] }} {{ str('file')->plural($waiting['files']) }}, {{ number_format($waiting['bytes'] / 1024) }} KB
+                        @if ($waiting['replaces']) · replaces {{ $waiting['replaces']['version'] }}@endif
+                    </p>
+                    <ul class="cover-staged__brings">
+                        @if ($waiting['presets']) <li>Presets: {{ implode(', ', $waiting['presets']) }}</li> @endif
+                        @if ($waiting['fonts']) <li>Fonts: {{ implode(', ', $waiting['fonts']) }}</li> @endif
+                        @if ($waiting['options']) <li>Its own settings: {{ implode(', ', $waiting['options']) }}</li> @endif
+                        @if ($waiting['templates']) <li>Templates: {{ implode(', ', array_map(fn ($v) => str_replace(['components.site.', 'site.', 'errors.'], ['', '', 'error '], $v), $waiting['templates'])) }}</li> @endif
+                        @if ($waiting['scripts']) <li>Scripts: {{ implode(', ', $waiting['scripts']) }}</li> @endif
+                    </ul>
+                    @foreach ($waiting['problems'] as $problem) <p class="field__hint" style="margin: 0; color: var(--danger)">{{ $problem }}</p> @endforeach
+                    @if (! $waiting['fits'])
+                        <p class="vc-note vc-note--warn" style="margin: 0">It needs Booklet {{ $waiting['needs'] }} or newer; this is {{ config('booklet.version') }}.</p>
+                    @elseif ($waitingBlocked)
+                        <p class="vc-note vc-note--warn" style="margin: 0">{{ $waitingBlocked }}</p>
+                    @else
+                        @if ($waiting['code'])
+                            <p class="vc-note vc-note--warn" style="margin: 0">This theme has templates{{ $waiting['scripts'] ? ' and scripts' : '' }}: code that runs with the whole site’s keys. Only add it if you trust who made it.</p>
+                            @if ($this->needsPassword())
+                                <div class="field" style="margin: 0">
+                                    <label for="theme-password">Your password, to say yes</label>
+                                    <input id="theme-password" type="password" class="input" wire:model="password" autocomplete="current-password" wire:keydown.enter="install">
+                                    @error('password') <p class="field__error">{{ $message }}</p> @enderror
+                                </div>
+                            @endif
+                        @endif
+                        @error('install') <p class="field__error">{{ $message }}</p> @enderror
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                            <button type="button" class="btn btn--ink" wire:click="install">{{ $waiting['replaces'] ? 'Update it' : 'Add it' }}</button>
+                            <button type="button" class="btn btn--quiet" wire:click="cancelStaged">Not now</button>
+                        </div>
+                    @endif
+                    @if (! $waiting['fits'] || $waitingBlocked)
+                        <button type="button" class="btn btn--quiet btn--sm" style="align-self: flex-start" wire:click="cancelStaged">Put it away</button>
+                    @endif
+                </div>
+            @endif
+
+            @if ($theme)
+                <div class="cover-theme-about">
+                    @if ($theme->about()) <p style="margin: 0">{{ $theme->about() }}</p> @endif
+                    <p class="field__hint" style="margin: 0">
+                        Version {{ $theme->version() }}@if ($theme->author()) · by {{ $theme->author() }}@endif
+                        @if ($theme->homepage()) · <a href="{{ $theme->homepage() }}" target="_blank" rel="noopener">its page <span aria-hidden="true">↗</span></a>@endif
+                        · {{ $theme->hasCode() ? 'with its own templates' : 'a cover pack' }}
+                        @if ($theme->hasCode() && config('booklet.safe_mode')) · <b>safe mode: worn as a cover pack</b>@endif
+                    </p>
+                    @if ($error)
+                        <p class="vc-note vc-note--warn" style="margin: 0">
+                            Its template {{ $error['file'] ? '('.$error['file'].') ' : '' }}broke on <code>{{ $error['where'] }}</code> {{ \Illuminate\Support\Carbon::parse($error['at'])->diffForHumans() }}{{ $error['count'] > 1 ? ', '.$error['count'].' times so far' : '' }}: {{ \Illuminate\Support\Str::limit($error['message'], 220) }}
+                            Readers were shown Booklet’s own page instead. An update from whoever made it should fix it.
+                        </p>
+                    @endif
+                    @foreach ($theme->problems as $problem) <p class="field__hint" style="margin: 0; color: var(--danger)">{{ $problem }}</p> @endforeach
+                    @if (! $theme->fits()) <p class="vc-note vc-note--warn" style="margin: 0">It needs Booklet {{ $theme->needs() }} or newer, so the site can’t wear it.</p> @endif
+                    <div class="cover-theme-about__actions">
+                        @if ($origin) <button type="button" class="btn btn--sm" wire:click="lookForUpdate('{{ $theme->key }}')" wire:loading.attr="disabled" wire:target="lookForUpdate">Look for an update</button> @endif
+                        @if ($previous) <button type="button" class="btn btn--quiet btn--sm" wire:click="undoUpdate('{{ $theme->key }}')" wire:confirm="Put back version {{ $previous }}?">Back to {{ $previous }}</button> @endif
+                        @if ($wearing !== $theme->key)
+                            <button type="button" class="btn btn--quiet btn--sm" wire:click="remove('{{ $theme->key }}')" wire:confirm="Take {{ $theme->name() }} off the shelf? Its files are deleted.">Take off the shelf</button>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        </section>
+
         <fieldset class="cover-presets">
             <legend class="field__label">Start from</legend>
             @foreach ($presets as $key => $p)
-                @php [, $paper, , $rule] = $papers[$p['paper']]; @endphp
+                @php [, $paper, , $rule] = $papers[$p['paper']] ?? $papers['warm']; @endphp
                 <button type="button" @class(['cover-preset', 'is-on' => $look['preset'] === $key]) wire:click="preset('{{ $key }}')" aria-pressed="{{ $look['preset'] === $key ? 'true' : 'false' }}"
-                        style="--c-paper: {{ $paper }}; --c-rule: {{ $rule }}; --c-accent: {{ $p['accent'] }}; --c-title: {!! $fonts[$p['title_font']][2] !!}; --c-label: {!! $fonts[$p['label_font']][2] !!}">
+                        style="--c-paper: {{ $paper }}; --c-rule: {{ $rule }}; --c-accent: {{ $p['accent'] }}; --c-title: {!! $fonts[$p['title_font']][2] ?? $fonts['newsreader'][2] !!}; --c-label: {!! $fonts[$p['label_font']][2] ?? $fonts['instrument'][2] !!}">
                     <span @class(['cover-preset__book', 'is-sharp' => $p['corners'] === 'sharp'])>
                         <span class="cover-preset__mark @if ($p['tilt']) is-tilted @endif"></span>
                         <span class="cover-preset__title">Aa</span>
                         <span class="cover-preset__lines"><i></i><i></i></span>
                     </span>
                     <span class="cover-preset__name">{{ $p['name'] }}</span>
-                    <span class="cover-preset__about">{{ $p['about'] }}</span>
+                    @if ($p['about']) <span class="cover-preset__about">{{ $p['about'] }}</span> @endif
                 </button>
             @endforeach
         </fieldset>
@@ -101,6 +241,36 @@
                     <span><b>Tilted stickers</b> <span class="field__hint">Labels set at a slight angle, like stickers.</span></span>
                 </label>
             </div>
+
+            @if ($options)
+                <fieldset class="cover-field cover-options">
+                    <legend class="field__label">{{ $theme->name() }}’s own</legend>
+                    @foreach ($options as $handle => $option)
+                        @if ($option['type'] === 'toggle')
+                            <label class="nav-switch" wire:key="opt-{{ $handle }}">
+                                <input type="checkbox" role="switch" wire:model.live="look.options.{{ $handle }}">
+                                <span><b>{{ $option['label'] }}</b> @if ($option['hint']) <span class="field__hint">{{ $option['hint'] }}</span> @endif</span>
+                            </label>
+                        @elseif ($option['type'] === 'select')
+                            <div class="cover-option" wire:key="opt-{{ $handle }}">
+                                <span class="cover-option__label">{{ $option['label'] }}</span>
+                                <div class="cover-chips">
+                                    @foreach ($option['options'] as $value => $label)
+                                        <label class="cover-chip"><input type="radio" wire:model.live="look.options.{{ $handle }}" value="{{ $value }}"><span>{{ $label }}</span></label>
+                                    @endforeach
+                                </div>
+                                @if ($option['hint']) <p class="field__hint" style="margin: 0">{{ $option['hint'] }}</p> @endif
+                            </div>
+                        @else
+                            <label class="cover-option cover-option--color" wire:key="opt-{{ $handle }}">
+                                <span class="cover-option__label">{{ $option['label'] }}</span>
+                                <span class="cover-option__color"><input type="color" value="{{ strtolower($look['options'][$handle] ?? $option['default']) }}" wire:model.live.debounce.300ms="look.options.{{ $handle }}"> <code>{{ $look['options'][$handle] ?? $option['default'] }}</code></span>
+                                @if ($option['hint']) <span class="field__hint">{{ $option['hint'] }}</span> @endif
+                            </label>
+                        @endif
+                    @endforeach
+                </fieldset>
+            @endif
         </div>
 
         <x-admin.folio side="left" />

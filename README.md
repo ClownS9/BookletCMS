@@ -46,10 +46,15 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 ### Your site, your way
 - **The cover:** the site's look chosen from five presets (Notebook, Broadsheet, Kopitiam, Botanic, Studio), then changed bit by bit: fonts for titles and for menus, the accent colour, the paper, how the header and the home page are laid out, corners and tilted stickers. A live preview, wide or phone-sized, shows it before anyone else sees it. No CSS needed.
+- **Themes:** add a theme from a .zip, a link or a GitHub repository, right in The cover. **Cover packs** bring their own fonts, colours, presets and settings (a wave under the masthead, round pictures…) and are safe to add from anyone: Booklet reads their styles through first. **Themes with templates** change the pages themselves; they're code, so adding one asks for your password. Either way, Booklet's own pieces (menus, comments, share cards, search-engine data) come along, and a broken template never reaches readers: they get Booklet's own page, and The cover says what broke. **Harbour**, a cover pack, comes with Booklet. Making one: `php artisan booklet:make-theme`, and [`themes/README.md`](themes/README.md).
 - **Publish as plain files:** one button turns the public site into ordinary web pages, pictures and styles, for GitHub Pages, Netlify or any host that serves files (no PHP needed there). With GitHub connected, they go to the `gh-pages` branch, and Booklet can publish again by itself a couple of minutes after you stop making changes. Search still works, in the reader's browser.
 - **Content API:** your published posts and pages as JSON, for an app or another website. Keys are made in Settings and can be switched off one at a time, or the API can be opened to everyone. Read-only, and drafts never leave.
 
 ![The cover: five presets on the left, the home page in Broadsheet on the right](docs/screenshots/the-cover.png)
+
+![Themes in The cover: Booklet, Folio (with templates) and Harbour (a cover pack) on the shelf, Harbour in the preview with its wave](docs/screenshots/themes.png)
+
+![Adding a theme with templates: what it brings, a warning that it's code, and a password to say yes](docs/screenshots/theme-with-templates.png)
 
 ![Publish as plain files: where it goes on the left, the last printing on the right](docs/screenshots/plain-files.png)
 
@@ -172,6 +177,7 @@ In **Settings › Stacy's brain**, pick an AI service and paste its key, or poin
 | `php artisan booklet:pages-clear` | Make every cached page fresh |
 | `php artisan booklet:insert-install` / `insert-update` / `insert-undo` | Add, update or roll back an insert |
 | `php artisan booklet:send-posts` | Send new posts to subscribers now |
+| `php artisan booklet:make-theme` | Make a theme in `themes/` to change (`--templates` to start from Booklet's templates) |
 | `php artisan booklet:publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |
 
 ## Content API
@@ -281,6 +287,18 @@ Inserts are code, and they run with the same access as Booklet itself. Booklet:
 
 **Only add inserts from people you trust.**
 
+### Themes
+
+A **cover pack** can only change how the site looks, so it's safe from anyone. Before one is added, Booklet:
+- allows only theme.json, a README or license, and styles, fonts and pictures in `assets/`;
+- reads its styles through: nothing from other websites, no `@import`, none of the old ways to run script from CSS (escapes are read as what they stand for first);
+- cleans its SVG pictures of anything that runs, and serves them so a browser won't run anything in them anyway;
+- never serves a script from it, even if one is there.
+
+A **theme with templates** is code, like an insert: it asks for the admin's password, its templates must be for the public site only (never the admin), and each is checked for mistakes before it's added. Its scripts only run on the public site. If one of its templates breaks, readers get Booklet's own page, and safe mode (`BOOKLET_SAFE_MODE=true`) wears every theme as a cover pack. The copy an update replaces is kept, so it can be undone.
+
+**Only add themes with templates from people you trust.**
+
 ### Before going live
 
 - [ ] `APP_ENV=production` and `APP_DEBUG=false` in `.env`. The check-up warns if debug is on in production.
@@ -314,6 +332,7 @@ app/Stacy/        the assistant: chat, tools, providers, voice
 app/Support/      blocks, links, rows, crops, version control, backups, health…
 content/          content as files (when BOOKLET_DRIVER=file)
 inserts/          add-ons: events, gallery, and your own
+themes/           how the site looks: Harbour, and your own (see themes/README.md)
 resources/views/  admin, site and email templates
 public/booklet/   the admin's and site's styles and scripts
 ```
