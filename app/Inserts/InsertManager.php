@@ -92,6 +92,72 @@ class InsertManager
         return $this->safeMode() ? collect() : $this->all()->filter(fn (Insert $i) => ! $i->manifest('broken') && $i->active());
     }
 
+    // Public pages --------------------------------------------------------------------------
+
+    /**
+     * The public pages switched-on inserts make ('pages' in insert.php: a
+     * list of paths, or of ['path' => '/events', 'updated' => a date]), for
+     * the sitemap and for publishing as plain files.
+     *
+     * @return list<array{path: string, updated: mixed}>
+     */
+    public function publicPages(): array
+    {
+        $pages = [];
+        foreach ($this->active() as $insert) {
+            $list = $insert->manifest('pages');
+            if ($list === null) {
+                continue;
+            }
+            try {
+                $list = is_callable($list) ? $list($insert) : $list;
+            } catch (Throwable $e) {
+                report($e);
+                $this->noteError($insert->key, $e);
+
+                continue;
+            }
+            foreach ((array) $list as $page) {
+                $path = is_array($page) ? ($page['path'] ?? null) : $page;
+                if (is_string($path) && preg_match('#^/[A-Za-z0-9._~/-]*$#', $path) && ! str_contains($path, '..')) {
+                    $pages[] = ['path' => '/'.trim($path, '/'), 'updated' => is_array($page) ? ($page['updated'] ?? null) : null];
+                }
+            }
+        }
+
+        return $pages;
+    }
+
+    /**
+     * The home page, if a switched-on insert makes it ('home' in insert.php:
+     * a function given the insert and the request, answering with a page,
+     * or null to leave the home page as it is). Booklet 1.2.
+     */
+    public function home(\Illuminate\Http\Request $request): mixed
+    {
+        foreach ($this->active() as $insert) {
+            $home = $insert->manifest('home');
+            if (! is_callable($home)) {
+                continue;
+            }
+            try {
+                $page = $home($insert, $request);
+                if ($page instanceof \Illuminate\Contracts\View\View) {
+                    $page = ViewState::protect(fn () => response($page->render()));
+                }
+                if ($page !== null && $page !== '' && $page !== false) {
+                    return $page;
+                }
+            } catch (Throwable $e) {
+                // Booklet's own home page instead of an error page.
+                report($e);
+                $this->noteError($insert->key, $e);
+            }
+        }
+
+        return null;
+    }
+
     // Guarding forms -----------------------------------------------------------------------
 
     /** The public forms (and sign-in) an insert can guard: a CAPTCHA, a block list… */

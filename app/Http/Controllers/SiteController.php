@@ -23,6 +23,10 @@ class SiteController extends Controller
 
     public function home(Request $request)
     {
+        // A home page an insert makes (a page from the page builder, say).
+        if ($page = app(\App\Inserts\InsertManager::class)->home($request)) {
+            return $page;
+        }
         if ($page = $this->site()->homepage()) {
             return $this->page($page);
         }

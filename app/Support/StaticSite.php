@@ -245,6 +245,10 @@ class StaticSite
                 $paths[] = '/'.trim((string) $uri, '/');
             }
         }
+        // Pages inserts make (Events' /events, the page builder's pages…).
+        foreach (rescue(fn () => app(\App\Inserts\InsertManager::class)->publicPages(), [], false) as $page) {
+            $paths[] = $page['path'];
+        }
 
         return array_values(array_unique(array_filter($paths)));
     }

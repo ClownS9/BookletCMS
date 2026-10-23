@@ -47,9 +47,14 @@ class FeedController extends Controller
             ->filter(fn (Term $t) => $t->attribute('uri'))
             ->map(fn (Term $t) => ['loc' => url($t->attribute('uri')), 'lastmod' => null]);
 
+        // Pages inserts make (Events' /events, the page builder's pages…).
+        $inserts = collect(rescue(fn () => app(\App\Inserts\InsertManager::class)->publicPages(), [], false))
+            ->map(fn ($p) => ['loc' => url($p['path']), 'lastmod' => $p['updated']]);
+
         $urls = collect([['loc' => url('/'), 'lastmod' => $this->site()->posts()->first()?->date()]])
             ->concat($entries)
             ->concat($terms)
+            ->concat($inserts)
             ->unique('loc')
             ->map(fn ($url) => ['loc' => $this->site()->absolute($url['loc']), 'lastmod' => $url['lastmod'], 'alternates' => $url['alternates'] ?? []])
             ->values();
