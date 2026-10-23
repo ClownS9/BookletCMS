@@ -4,8 +4,9 @@ Extras tucked into the book. Each insert is a folder here with an `insert.php`
 that describes what it adds. Add them, switch them on and off, and update them in
 **Settings › Inserts**.
 
-Two come with Booklet: **Gallery** (albums from Media) and **Events** (a page at
-/events, calendar files, and a list for posts).
+Three come with Booklet: **Gallery** (albums from Media), **Events** (a page at
+/events, calendar files, and a list for posts) and **Guard** (a “prove you’re human”
+check on the site’s forms, words and addresses to turn away, and a log).
 
 ## Making one
 
@@ -20,7 +21,8 @@ makes `inserts/reading-list/` with a working example. Then change it.
 | `name`, `about`, `version`, `author` | How it appears on the shelf (and what Stacy knows about it) |
 | `sticker` | Its colour: coral, sun, mint, sky, lilac, rose, sand or ink |
 | `needs` | The Booklet version it needs, like `'1.0'` |
-| `settings` | Fields drawn on the shelf for you: `text`, `textarea`, `number`, `toggle`, `select`, `email`, `url` |
+| `settings` | Fields drawn on the shelf for you (`secret` needs Booklet 1.1): `text`, `textarea`, `number`, `toggle`, `select`, `email`, `url`, and `secret` (another service’s key: kept encrypted with `APP_KEY`, never sent to the browser, left out of backups) |
+| `guard` | Guarding the site’s forms (see below; Booklet 1.1, so say `'needs' => '1.1'`) |
 | `page` | Its own page in the admin book: `title`, `chapter` (Posts, Pages, Media, People, Comments…; leave out for its own), `who` (roles), `form` (starting values), `data` (a function giving the view its variables), `actions` (functions its buttons call) |
 | `slips` | Pieces for writing: `'gallery' => fn ($words, $insert) => …` makes `[[gallery: …]]` work in posts and pages |
 | `slip_help` | How to use each slip, in one line |
@@ -62,6 +64,29 @@ Return `null` (or no text and no items) when there's nothing to say, and the car
 stays hidden: the Contents page should only show what's worth a look today. Up to
 five items show. Stacy's daily brief includes them too. `?open={id}` on an insert's
 page runs its `open` action, so a link can land on one record.
+
+## Guarding forms
+
+An insert can guard the comment form, the contact form, new posts by email, and
+sign-in (`comment`, `contact`, `subscribe`, `login`, `reset`):
+
+```php
+'guard' => [
+    'forms' => fn (Insert $insert) => ['comment', 'contact'],          // which (or a plain list)
+    'widget' => fn (string $form, Insert $insert) => '<div class="my-box"></div>',  // HTML in the form
+    'check' => function (string $form, array $answers, Request $request, string $token, Insert $insert) {
+        return str_contains($answers['body'] ?? '', 'casino') ? 'Not here, thanks.' : null;
+    },
+],
+```
+
+`check` returns why it says no (shown under the form), or null to let it through.
+`$answers` is what was typed; `$token` is what the widget handed back: from the page,
+`Livewire.find(id).set('guardToken', token, false)` on the form's component (Guard's
+`assets/guard.js` shows how), and listen for the `booklet-guard-reset` event to start
+the widget again after each try. An insert that breaks here never stops a form: its
+problem is noted on the shelf and the form goes ahead. Safe mode switches guards off
+with every other insert.
 
 ## Telling search engines
 

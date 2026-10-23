@@ -106,6 +106,17 @@ class Backups
             if ($table === 'users') {
                 $rows = array_map(fn ($r) => array_diff_key($r, ['remember_token' => 1]), $rows);
             }
+            if ($table === 'inserts') {
+                // Inserts' secret settings (another service's keys) never go in a backup, like AI keys.
+                $rows = array_map(function ($r) {
+                    $settings = json_decode((string) ($r['settings'] ?? ''), true);
+                    if (is_array($settings)) {
+                        $r['settings'] = json_encode(array_map(fn ($v) => is_string($v) && str_starts_with($v, \App\Inserts\Insert::SECRET) ? '' : $v, $settings));
+                    }
+
+                    return $r;
+                }, $rows);
+            }
             $zip->addFromString('tables/'.$table.'.json', json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $counts['tables'][$table] = count($rows);
         }

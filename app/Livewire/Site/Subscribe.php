@@ -12,6 +12,8 @@ use Livewire\Component;
  */
 class Subscribe extends Component
 {
+    use \App\Livewire\Concerns\Guarded;
+
     public string $email = '';
 
     /** Honeypot: people never see it, bots fill it in. */
@@ -34,6 +36,10 @@ class Subscribe extends Component
 
         $this->email = mb_strtolower(trim($this->email));
         $this->validate(['email' => ['required', 'email:rfc', 'max:190']], [], ['email' => 'email address']);
+
+        if (! $this->guarded('subscribe', ['email' => $this->email])) {
+            return;
+        }
 
         $key = 'subscribe:'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {

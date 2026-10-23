@@ -13,6 +13,8 @@ use Livewire\Component;
  */
 class ContactForm extends Component
 {
+    use \App\Livewire\Concerns\Guarded;
+
     /** Field values, by the form's field handles. */
     public array $values = [];
 
@@ -73,6 +75,10 @@ class ContactForm extends Component
             $names['values.'.$handle] = mb_strtolower($f['label']);
         }
         $this->validate($rules, ['values.name.not_regex' => 'Just your name, please (no links).'], $names);
+
+        if (! $this->guarded('contact', $values)) {
+            return;
+        }
 
         $key = 'contact:'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 3)) {

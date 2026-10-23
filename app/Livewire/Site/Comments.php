@@ -15,6 +15,8 @@ use Livewire\Component;
  */
 class Comments extends Component
 {
+    use \App\Livewire\Concerns\Guarded;
+
     #[Locked]
     public string $entryId;
 
@@ -87,6 +89,11 @@ class Comments extends Component
         ], [
             'name.not_regex' => 'Just your name, please (no links).',
         ], ['body' => 'note']);
+
+        // A guarding insert (a CAPTCHA, a block list) has its say first.
+        if (! $this->guarded('comment', ['name' => $this->name, 'email' => $this->email, 'body' => $this->body])) {
+            return;
+        }
 
         $key = 'comment:'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {

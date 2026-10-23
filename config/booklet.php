@@ -32,7 +32,8 @@ return [
     |
     */
 
-    'version' => '1.0',
+    // 1.1: inserts can guard forms ('guard') and keep secret settings ('secret').
+    'version' => '1.1',
 
     'inserts_path' => env('BOOKLET_INSERTS_PATH', base_path('inserts')),
 
