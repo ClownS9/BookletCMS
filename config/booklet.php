@@ -33,7 +33,8 @@ return [
     */
 
     // 1.1: inserts can guard forms ('guard') and keep secret settings ('secret').
-    'version' => '1.1',
+    // 1.2: inserts can list their public pages ('pages': the sitemap, plain files).
+    'version' => '1.2',
 
     'inserts_path' => env('BOOKLET_INSERTS_PATH', base_path('inserts')),
 
