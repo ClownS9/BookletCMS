@@ -165,7 +165,7 @@ class ThemesTest extends TestCase
 
         // Its own files, a picture written into the CSS, and ../ that stays inside: fine.
         $token = $installer->stage($this->zip($this->pack([], [
-            'assets/css/tide.css' => ".a { background: url('../wave.svg'), url(data:image/png;base64,AAAA); }",
+            'assets/css/tide.css' => ".a { background: url('../wave.svg'), url(data:image/png;base64,AAAA); } .b::before { content: '// '; }",
         ])), ['type' => 'upload']);
         $this->assertNotNull($installer->staged($token));
 

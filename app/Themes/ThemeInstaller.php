@@ -379,8 +379,8 @@ class ThemeInstaller
                 return 'loads '.Str::limit($url, 60).', which isn’t a file in the pack. A cover pack can only use its own fonts and pictures.';
             }
         }
-        // Strings that are addresses elsewhere (image-set("…"), src: "…").
-        if (preg_match('#["\']\s*(https?:)?//#i', $plain)) {
+        // Strings that are addresses elsewhere (image-set("…"), src: "…"); not text like content: "// ".
+        if (preg_match('#["\']\s*(https?:)?//[a-z0-9\[]#i', $plain)) {
             return 'points at another website. A cover pack can only use its own fonts and pictures.';
         }
 
