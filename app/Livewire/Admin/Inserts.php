@@ -71,6 +71,12 @@ class Inserts extends Component
     protected function loadValues(): void
     {
         $this->values = $this->current()?->settings() ?? [];
+        // A secret never goes to the browser: its box starts empty, and empty means "keep it".
+        foreach ($this->current()?->settingsSchema() ?? [] as $handle => $f) {
+            if ($f['type'] === 'secret') {
+                $this->values[$handle] = '';
+            }
+        }
         $this->resetErrorBag();
     }
 
@@ -299,6 +305,7 @@ class Inserts extends Component
                 'url' => ['nullable', 'url', 'max:500'],
                 'select' => ['nullable', 'in:'.implode(',', array_map('strval', array_keys($f['options'])))],
                 'textarea' => ['nullable', 'string', 'max:5000'],
+                'secret' => ['nullable', 'string', 'max:500'],
                 default => ['nullable', 'string', 'max:500'],
             };
             $names['values.'.$handle] = mb_strtolower($f['label']);
@@ -306,8 +313,12 @@ class Inserts extends Component
         $this->validate($rules, [], $names);
 
         $clean = [];
+        $kept = $insert->settings();
         foreach ($insert->settingsSchema() as $handle => $f) {
             $v = $this->values[$handle] ?? $f['default'];
+            if ($f['type'] === 'secret') {
+                $v = trim((string) $v) === '' ? (string) ($kept[$handle] ?? '') : trim((string) $v); // empty: keep the saved one
+            }
             $clean[$handle] = match ($f['type']) {
                 'toggle' => (bool) $v,
                 'number' => $v === '' || $v === null ? $f['default'] : $v + 0,

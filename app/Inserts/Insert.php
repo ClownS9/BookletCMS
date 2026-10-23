@@ -16,7 +16,10 @@ use Illuminate\Validation\ValidationException;
 class Insert
 {
     /** Kinds of setting the shelf can draw a field for. */
-    public const SETTING_TYPES = ['text', 'textarea', 'number', 'toggle', 'select', 'email', 'url'];
+    public const SETTING_TYPES = ['text', 'textarea', 'number', 'toggle', 'select', 'email', 'url', 'secret'];
+
+    /** How a secret setting (a key from another service) is kept: encrypted with APP_KEY. */
+    public const SECRET = 'enc:';
 
     protected ?array $state = null;
 
@@ -167,7 +170,14 @@ class Insert
         $saved = json_decode((string) ($this->state()['settings'] ?? '[]'), true) ?: [];
         $values = [];
         foreach ($this->settingsSchema() as $handle => $field) {
-            $values[$handle] = array_key_exists($handle, $saved) ? $saved[$handle] : $field['default'];
+            $value = array_key_exists($handle, $saved) ? $saved[$handle] : $field['default'];
+            if ($field['type'] === 'secret') {
+                // Read with APP_KEY; if that changed, it reads as empty and is asked for again.
+                $value = is_string($value) && str_starts_with($value, self::SECRET)
+                    ? (string) rescue(fn () => \Illuminate\Support\Facades\Crypt::decryptString(substr($value, strlen(self::SECRET))), '', false)
+                    : '';
+            }
+            $values[$handle] = $value;
         }
 
         return $values;

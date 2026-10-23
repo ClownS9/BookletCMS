@@ -18,6 +18,8 @@ use Livewire\Component;
 #[Title('Open your book')]
 class Login extends Component
 {
+    use \App\Livewire\Concerns\Guarded;
+
     #[Validate('required|email')]
     public string $email = '';
 
@@ -66,6 +68,9 @@ class Login extends Component
     public function sendResetLink(): void
     {
         $this->validate(['resetEmail' => ['required', 'email']], [], ['resetEmail' => 'email']);
+        if (! $this->guarded('reset', ['email' => $this->resetEmail])) {
+            return;
+        }
 
         $throttle = 'reset|'.request()->ip();
         if (RateLimiter::tooManyAttempts($throttle, 3)) {
@@ -83,6 +88,10 @@ class Login extends Component
     public function login()
     {
         $this->validate();
+
+        if (! $this->guarded('login', ['email' => $this->email])) {
+            return null;
+        }
 
         $throttle = Str::lower($this->email).'|'.request()->ip();
 

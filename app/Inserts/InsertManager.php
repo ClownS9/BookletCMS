@@ -92,6 +92,90 @@ class InsertManager
         return $this->safeMode() ? collect() : $this->all()->filter(fn (Insert $i) => ! $i->manifest('broken') && $i->active());
     }
 
+    // Guarding forms -----------------------------------------------------------------------
+
+    /** The public forms (and sign-in) an insert can guard: a CAPTCHA, a block list… */
+    public const GUARDED_FORMS = ['comment', 'contact', 'subscribe', 'login', 'reset'];
+
+    /**
+     * Switched-on inserts guarding this form ('guard' in insert.php: which
+     * 'forms', a 'widget' to show in them, and a 'check' that can refuse).
+     *
+     * @return Collection<string, Insert>
+     */
+    public function guards(string $form): Collection
+    {
+        return $this->active()->filter(function (Insert $insert) use ($form) {
+            $guard = $insert->manifest('guard');
+            if (! is_array($guard)) {
+                return false;
+            }
+            $forms = $guard['forms'] ?? [];
+            if (is_callable($forms)) {
+                try {
+                    $forms = (array) $forms($insert);
+                } catch (Throwable $e) {
+                    report($e);
+                    $this->noteError($insert->key, $e);
+
+                    return false;
+                }
+            }
+
+            return in_array($form, (array) $forms, true);
+        });
+    }
+
+    /** What the guarding inserts show in a form (a CAPTCHA box, say), as HTML. */
+    public function guardWidget(string $form): string
+    {
+        $html = '';
+        foreach ($this->guards($form) as $insert) {
+            $widget = $insert->manifest('guard')['widget'] ?? null;
+            if (! is_callable($widget)) {
+                continue;
+            }
+            try {
+                $html .= (string) $widget($form, $insert);
+            } catch (Throwable $e) {
+                report($e);
+                $this->noteError($insert->key, $e);
+            }
+        }
+
+        return $html;
+    }
+
+    /**
+     * Ask the guarding inserts about something sent. The first that says no
+     * gives the reason (shown to the person); null: it may go ahead. An insert
+     * that breaks here never stops a form: its problem is noted on the shelf.
+     *
+     * @param  array<string, string>  $answers  what was typed (name, email, the message…)
+     */
+    public function guardCheck(string $form, array $answers, ?string $token = null): ?string
+    {
+        foreach ($this->guards($form) as $insert) {
+            $check = $insert->manifest('guard')['check'] ?? null;
+            if (! is_callable($check)) {
+                continue;
+            }
+            try {
+                $why = $check($form, $answers, request(), (string) $token, $insert);
+            } catch (Throwable $e) {
+                report($e);
+                $this->noteError($insert->key, $e);
+
+                continue;
+            }
+            if (is_string($why) && trim($why) !== '') {
+                return trim($why);
+            }
+        }
+
+        return null;
+    }
+
     public function forget(): void
     {
         $this->inserts = null;
@@ -365,6 +449,13 @@ class InsertManager
 
     public function saveSettings(string $key, array $values): void
     {
+        // Secret settings are kept encrypted (with APP_KEY), never as they were typed.
+        $insert = $this->find($key);
+        foreach ($insert?->settingsSchema() ?? [] as $handle => $field) {
+            if ($field['type'] === 'secret' && isset($values[$handle])) {
+                $values[$handle] = $values[$handle] === '' ? '' : Insert::SECRET.\Illuminate\Support\Facades\Crypt::encryptString((string) $values[$handle]);
+            }
+        }
         $this->write($key, ['settings' => json_encode($values)]);
         $this->changed();
     }
