@@ -3,3 +3,19 @@ tagline: null
 accent: '#F4876A'
 backups_nightly: false
 newsletter_since: '2026-10-18T16:06:22+00:00'
+look:
+  theme: booklet
+  preset: notebook
+  title_font: newsreader
+  label_font: instrument
+  accent: '#F4876A'
+  paper: warm
+  header: classic
+  home: feature
+  corners: soft
+  tilt: true
+  options:
+    glow: '#FF5A5F'
+    grid: true
+    scan: true
+    brackets: brackets
