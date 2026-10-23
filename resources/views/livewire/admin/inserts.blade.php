@@ -99,6 +99,9 @@
                             <input id="insert-password" type="password" wire:model="password" autocomplete="current-password" style="max-width: 280px">
                             @error('password') <p class="field__error">{{ $message }}</p> @enderror
                         </div>
+                    @else
+                        @php $confirmedAt = (int) session('auth.password_confirmed_at', 0); @endphp
+                            <p class="field__hint" style="margin: 0">No password needed this time: you gave it {{ \Illuminate\Support\Carbon::createFromTimestamp($confirmedAt)->diffForHumans() }}, and Booklet trusts that for {{ (int) round(config('auth.password_timeout', 10800) / 3600) }} hours.</p>
                     @endif
                     @error('install') <p class="field__error">{{ $message }}</p> @enderror
                     <div style="display: flex; gap: 10px; flex-wrap: wrap">

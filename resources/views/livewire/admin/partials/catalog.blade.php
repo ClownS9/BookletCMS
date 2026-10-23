@@ -55,8 +55,8 @@
                                 @if ($here && $here['newer']) <span class="catalog-tag catalog-tag--new">Newer than yours ({{ $here['version'] }})</span>
                                 @elseif ($here) <span class="catalog-tag">On your shelf</span> @endif
                                 @if (! $fits) <span class="catalog-tag catalog-tag--warn">Needs Booklet {{ $item['needs'] }}</span> @endif
-                                @if ($kind === 'insert') <span class="catalog-tag">Code: asks for your password</span>
-                                @elseif ($item['scripts']) <span class="catalog-tag">Has scripts: asks for your password</span> @endif
+                                @if ($kind === 'insert') <span class="catalog-tag" title="Adding code asks for your password (unless you gave it in the last few hours).">Code: needs your password</span>
+                                @elseif ($item['scripts']) <span class="catalog-tag" title="Adding code asks for your password (unless you gave it in the last few hours).">Has scripts: needs your password</span> @endif
                                 @if (! $item['readable']) <span class="catalog-tag catalog-tag--warn">No {{ $kind === 'theme' ? 'theme.json' : 'insert.php' }} found</span> @endif
                             </span>
                         </span>
