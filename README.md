@@ -177,6 +177,7 @@ In **Settings › Stacy's brain**, pick an AI service and paste its key, or poin
 | `php artisan booklet:pages-clear` | Make every cached page fresh |
 | `php artisan booklet:insert-install` / `insert-update` / `insert-undo` | Add, update or roll back an insert |
 | `php artisan booklet:send-posts` | Send new posts to subscribers now |
+| `php artisan booklet:share` | Pack a theme or insert into a .zip to share, checked as Booklet checks one being added |
 | `php artisan booklet:make-theme` | Make a theme in `themes/` to change (`--templates` to start from Booklet's templates) |
 | `php artisan booklet:publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |
 

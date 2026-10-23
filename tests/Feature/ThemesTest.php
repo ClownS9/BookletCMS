@@ -325,6 +325,33 @@ class ThemesTest extends TestCase
         $this->get('/')->assertOk()->assertSee('themes/harbour/assets/harbour.css', false);
     }
 
+    public function test_share_packs_a_theme_or_insert_that_would_be_accepted(): void
+    {
+        $this->installPack();
+        $to = sys_get_temp_dir().'/booklet-share-'.uniqid();
+        try {
+            $this->artisan('booklet:share', ['name' => 'tide', '--to' => $to])->assertSuccessful()->expectsOutputToContain('booklet-theme');
+            $this->assertFileExists($to.'/booklet-tide-1.0.zip');
+            // …and it goes back in as it came out.
+            $installer = app(ThemeInstaller::class);
+            $meta = $installer->staged($token = $installer->stage($to.'/booklet-tide-1.0.zip', ['type' => 'upload']));
+            $this->assertSame('tide', $meta['key']);
+            $installer->discard($token);
+
+            config(['booklet.inserts_path' => base_path('inserts')]);
+            $this->artisan('booklet:share', ['name' => 'events', '--to' => $to])->assertSuccessful()->expectsOutputToContain('booklet-insert');
+            $this->assertFileExists($to.'/booklet-events-1.0.zip');
+
+            // One that wouldn't be accepted isn't packed.
+            file_put_contents(ThemeManager::path().'/tide/assets/tide.css', '@import url(https://x.example/a.css);');
+            $this->artisan('booklet:share', ['name' => 'tide', '--to' => $to])->assertFailed();
+            $this->assertFileDoesNotExist($to.'/booklet-tide-1.0.zip');
+            $this->artisan('booklet:share', ['name' => 'nothing'])->assertFailed();
+        } finally {
+            File::deleteDirectory($to);
+        }
+    }
+
     public function test_plain_files_carry_the_theme(): void
     {
         $this->installPack();

@@ -148,11 +148,16 @@ For inserts in private GitHub repositories, set `BOOKLET_GITHUB_TOKEN`.
 
 ## Sharing one
 
-No GitHub needed: zip the insert's folder and send it. Anyone can add the zip.
+    php artisan booklet:share recipes
+
+packs it into a .zip, checked the same way the shelf checks an insert being added.
+No GitHub needed: send the .zip, and anyone can add it.
 
 To let people add it by name and get updates, put it in a GitHub repository with
-`insert.php` at the top, and make a **release** for each version, tagged with the
-version (`1.2` or `v1.2`). Without releases, the newest code is used.
+`insert.php` at the top, give the repository the topic **`booklet-insert`** (so it
+can be found when Booklet searches for inserts), and make a **release** for each
+version, tagged with the version (`1.2` or `v1.2`). Without releases, the newest
+code is used.
 
 The shelf reads what an insert is **without running it**, so keep these written out
 plainly at the top of the array in `insert.php` (not worked out by code):
