@@ -36,6 +36,10 @@ class SiteController extends Controller
 
     public function blog(Request $request)
     {
+        // The blog page as an insert arranges it (the page builder, say).
+        if ($page = app(\App\Inserts\InsertManager::class)->blog($request)) {
+            return $page;
+        }
         $category = (string) $request->query('category', '');
         $posts = $this->site()->posts($category !== '' ? 'categories' : null, $category ?: null);
 

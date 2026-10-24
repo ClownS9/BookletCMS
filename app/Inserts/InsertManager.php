@@ -135,8 +135,24 @@ class InsertManager
      */
     public function home(\Illuminate\Http\Request $request): mixed
     {
+        return $this->page('home', $request);
+    }
+
+    /**
+     * The blog page, if a switched-on insert draws it ('blog' in insert.php:
+     * a function given the insert and the request, answering with a page,
+     * or null to leave the blog as Booklet draws it). Booklet 1.3.
+     */
+    public function blog(\Illuminate\Http\Request $request): mixed
+    {
+        return $this->page('blog', $request);
+    }
+
+    /** Ask the inserts that answer $hook for a page; the first answer wins. */
+    protected function page(string $hook, \Illuminate\Http\Request $request): mixed
+    {
         foreach ($this->active() as $insert) {
-            $home = $insert->manifest('home');
+            $home = $insert->manifest($hook);
             if (! is_callable($home)) {
                 continue;
             }
@@ -149,7 +165,7 @@ class InsertManager
                     return $page;
                 }
             } catch (Throwable $e) {
-                // Booklet's own home page instead of an error page.
+                // Booklet's own page instead of an error page.
                 report($e);
                 $this->noteError($insert->key, $e);
             }
