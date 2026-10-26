@@ -5633,3 +5633,22 @@ body.night .size-print small { color: var(--faint); }
 .catalog__when { margin: 8px 0 0; font-size: 12.5px; color: var(--faint); }
 .catalog__when .link-button, .catalog .empty-note .link-button { font-size: inherit; text-decoration: underline; }
 .cover-theme__update { position: absolute; top: 4px; left: 4px; padding: 2px 7px; border-radius: 999px; background: var(--sun); color: #1E1C18; font-size: 10.5px; font-weight: 600; }
+
+/* Help › Building pages */
+.review-card__go { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.review-card__go .link-button { font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
+.guide-toc { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+.guide-toc a { display: inline-block; min-height: 30px; padding: 4px 0; color: var(--ink); text-underline-offset: 3px; }
+.guide-try { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 10px; background: color-mix(in srgb, var(--mint) 18%, var(--paper-3)); }
+.guide-try__title { margin: 0; font-weight: 600; }
+.guide-try__go { display: flex; flex-wrap: wrap; gap: 8px; }
+.guide { display: flex; flex-direction: column; gap: 28px; max-width: 620px; }
+.guide section { scroll-margin-top: 24px; }
+.guide h2 { margin: 0 0 8px; }
+.guide p, .guide li { font-size: 15px; line-height: 1.6; }
+.guide p { margin: 0 0 10px; }
+.guide ul { margin: 0 0 10px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.guide-keys { margin: 0 0 8px; display: flex; flex-direction: column; gap: 8px; }
+.guide-keys div { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.guide-keys dt { min-width: 220px; }
+.guide-keys dd { margin: 0; color: var(--muted); }

@@ -191,13 +191,19 @@
                 <p class="field__hint">Readers see the sections you built{{ $build['status'] === 'draft' ? ' once it’s published' : '' }}. {{ $build['fresh']
                     ? 'Its words here are made from them each time you publish, and show only if you stop building it.'
                     : 'Its words here show only if you stop building it.' }}</p>
-                <a class="btn btn--ink" href="{{ $build['url'] }}">Edit it on the page</a>
+                <span class="review-card__go">
+                    <a class="btn btn--ink" href="{{ $build['url'] }}">Edit it on the page</a>
+                    <a class="link-button" href="{{ route('admin.help.building') }}" wire:navigate>How building pages works</a>
+                </span>
             </section>
         @elseif ($canBuild)
             <section class="review-card" aria-label="Build it on the page">
                 <p class="review-card__head">Build it on the page</p>
                 <p class="field__hint">Make it of sections (a hero, cards, prices, questions…), right where readers see it. Its words and pictures are where you start; nothing changes for readers until you publish.</p>
-                <button type="button" class="btn" wire:click="buildOnPage" wire:confirm="Save, then open it on the site to build it?">Build it on the page</button>
+                <span class="review-card__go">
+                    <button type="button" class="btn" wire:click="buildOnPage" wire:confirm="Save, then open it on the site to build it?">Build it on the page</button>
+                    <a class="link-button" href="{{ route('admin.help.building') }}" wire:navigate>How it works</a>
+                </span>
             </section>
         @endif
 

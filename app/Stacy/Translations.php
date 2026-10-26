@@ -71,6 +71,10 @@ class Translations
         }
 
         $words = Writer::translateEntry($user, $root, $lang);
+        // Built on the page: its sections come too, in the other language.
+        $pages = app(\App\PageBuilder\PageBuilder::class);
+        $built = $pages->buildable($root) ? \App\Models\PageBuild::forEntry($root) : null;
+        $sections = $built ? $pages->translateSections($user, $built, $lang, (string) $root->title()) : null;
 
         $data = array_merge($root->data(), $words, [
             'translation_of' => $root->id(),
@@ -94,6 +98,10 @@ class Translations
             $tree = PageTree::for($collection->handle());
             $tree->place($copy->id(), $tree->parentOf($root->id()))->save();
             $copy = Booklet::entries()->find($copy->id()) ?? $copy;
+        }
+
+        if ($built && $sections !== null) {
+            $pages->buildTranslation($built, $copy, $sections);
         }
 
         Booklet::revisions()->snapshot($copy->revisionKey(), $copy, 'started a draft', (string) $user->id, 'Translated by Stacy from “'.($root->title() ?: 'Untitled').'”');

@@ -1424,6 +1424,71 @@ class PageBuilder
         return $section;
     }
 
+    // Translating a built page --------------------------------------------------------------
+
+    /**
+     * Every piece of words a reader sees in a section, by where it is:
+     * ['title' => …, 'items.0.question' => …, 'button.label' => …].
+     *
+     * @return array<string, string>
+     */
+    public function wordsIn(array $section): array
+    {
+        $out = [];
+        $walk = function (array $fields, array $values, string $at) use (&$walk, &$out): void {
+            foreach ($fields as $name => $f) {
+                $type = $f['type'] ?? '';
+                if (in_array($type, ['text', 'words'], true) && is_scalar($values[$name] ?? null) && trim((string) $values[$name]) !== '') {
+                    $out[$at.$name] = trim((string) $values[$name]);
+                } elseif ($type === 'link' && trim((string) ($values[$name]['label'] ?? '')) !== '') {
+                    $out[$at.$name.'.label'] = trim((string) $values[$name]['label']);
+                } elseif ($type === 'items') {
+                    foreach (array_values(array_filter((array) ($values[$name] ?? []), 'is_array')) as $i => $item) {
+                        $walk((array) ($f['fields'] ?? []), $item, $at.$name.'.'.$i.'.');
+                    }
+                }
+            }
+        };
+        $walk((array) ($this->builder->type($section['type'])['fields'] ?? []), (array) $section['fields'], '');
+
+        return $out;
+    }
+
+    /**
+     * A built page's sections in another language, for its translation: the
+     * same sections, pictures and looks, with Stacy's words. A shared section
+     * becomes the translation's own (the shared one stays in its language).
+     */
+    public function translateSections(User $user, PageBuild $page, string $language, string $title = ''): array
+    {
+        $sections = array_map(function (array $s) {
+            unset($s['shared']);
+
+            return $s;
+        }, $this->sectionsOf($page));
+        $words = [];
+        foreach ($sections as $i => $s) {
+            foreach ($this->wordsIn($s) as $path => $text) {
+                $words[$i.'|'.$path] = $text;
+            }
+        }
+        foreach (\App\Stacy\Writer::translateWords($user, $words, \App\Stacy\Writer::languageName($language), $title) as $key => $text) {
+            [$i, $path] = explode('|', $key, 2);
+            $sections[(int) $i] = rescue(fn () => $this->builder->set($sections[(int) $i], $path, $text, fn ($p) => $this->isPicture($p)), $sections[(int) $i], false);
+        }
+
+        return $sections;
+    }
+
+    /** The translation of a built page is built too, in its language (on the site as soon as it's published, as the original is). */
+    public function buildTranslation(PageBuild $original, Entry $copy, array $sections): PageBuild
+    {
+        return PageBuild::create([
+            'target' => (string) $copy->id(), 'draft' => $sections, 'history' => [], 'fresh' => (bool) $original->fresh,
+            'published' => $original->published !== null ? $sections : null, 'published_at' => $original->published !== null ? now() : null,
+        ]);
+    }
+
     // Pictures --------------------------------------------------------------------------------
 
     /** A picture in Media this person may change (descriptions and focus are Media's), or null. */
@@ -1598,7 +1663,7 @@ class PageBuilder
                 $say('the button “'.\Illuminate\Support\Str::limit($label, 30, '…').'” doesn’t go anywhere yet.');
             }
             if ($undescribed > 0) {
-                $say(($undescribed === 1 ? 'a picture has' : $undescribed.' pictures have').' no description, for people who can’t see them (add one in Media).');
+                $say(($undescribed === 1 ? 'a picture has' : $undescribed.' pictures have').' no description, for people who can’t see them (select the picture to add one).');
             }
             if ($s['type'] === 'video' && trim((string) ($s['fields']['url'] ?? '')) === '') {
                 $say('no video chosen yet.');

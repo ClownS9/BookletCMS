@@ -164,6 +164,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::get('/print', Admin\PrintBook::class)->name('print');
     Route::get('/print/book', \App\Http\Controllers\Admin\PrintBookController::class)->name('print.book');
 
+    Route::get('/help/building-pages', Admin\BuildingPages::class)->name('help.building');
+
     Route::get('/stacy', Admin\AskStacy::class)->name('stacy');
     Route::post('/stacy/voice', \App\Http\Controllers\Admin\StacyVoiceController::class)
         ->middleware('throttle:40,1')->name('stacy.voice');

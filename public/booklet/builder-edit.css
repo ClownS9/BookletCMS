@@ -198,6 +198,10 @@ code { font: 12px ui-monospace, "JetBrains Mono", monospace; background: var(--p
 .bar button[aria-pressed="true"] { background: rgba(251, 248, 241, .16); }
 .bar button.ink { background: #FBF8F1; color: #1E1C18; }
 .bar button.ink:hover:not(:disabled) { background: #fff; }
+/* How building pages works: a round "?" beside Done */
+.bar__help { display: inline-flex; align-items: center; justify-content: center; flex: none; align-self: center; width: 30px; height: 30px; border: 1px solid rgba(251, 248, 241, .35); border-radius: 50%; color: #FBF8F1; font-weight: 700; font-size: 14px; text-decoration: none; }
+.bar__help:hover { background: rgba(251, 248, 241, .12); }
+.bar__help:focus-visible { outline: 2px solid var(--pick); outline-offset: 2px; }
 @media (max-width: 760px) {
     .bar { left: 8px; right: 8px; bottom: 8px; transform: none; max-width: none; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; }
     .bar.with-drawer { left: 8px; }

@@ -603,7 +603,7 @@ class PageBuilderTest extends TestCase
         $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'picture', 'value' => $path]);
         $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'layout', 'value' => 'side']);
         $pages = app(\App\PageBuilder\PageBuilder::class);
-        $this->assertContains('Hero: a picture has no description, for people who can’t see them (add one in Media).', array_column($pages->checks($this->build($about)), 'words'));
+        $this->assertContains('Hero: a picture has no description, for people who can’t see them (select the picture to add one).', array_column($pages->checks($this->build($about)), 'words'));
 
         // Under the chosen picture: where it's focused, and its description.
         $drawer = (string) $this->act($about->id(), 'select', $hero, ['section' => $hero])->json('drawer');
@@ -621,7 +621,7 @@ class PageBuilderTest extends TestCase
         $page = (string) $this->act($about->id(), 'tab', 'outline')->json('page');
         $this->assertStringContainsString('object-position: 30% 70%', $page);
         $this->assertStringContainsString('alt="A slice of pandan cake"', $page);
-        $this->assertNotContains('Hero: a picture has no description, for people who can’t see them (add one in Media).', array_column($pages->checks($this->build($about)->fresh()), 'words'));
+        $this->assertNotContains('Hero: a picture has no description, for people who can’t see them (select the picture to add one).', array_column($pages->checks($this->build($about)->fresh()), 'words'));
 
         // Only people who can change Media can change them.
         $card = \App\Models\Role::create(['key' => 'no_media', 'name' => 'No media', 'tone' => 'sky', 'base' => 'editor', 'chapters' => ['pages' => 'publish'], 'media' => false, 'stacy' => false]);
@@ -679,6 +679,66 @@ class PageBuilderTest extends TestCase
         // A kind the other page can't have, or nowhere it may go.
         $this->assertSame([], app(\App\PageBuilder\PageBuilder::class)->sendTargets($this->build($about), 'blog-posts'));
         $this->act($about->id(), 'send', ['id' => $hero, 'to' => 'nowhere'], ['section' => $hero])->assertStatus(422);
+    }
+
+    public function test_a_built_pages_translation_is_built_too(): void
+    {
+        $about = $this->about();
+        $hero = $this->startAbout()->draft[0]['id'];
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Who we are']);
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'button.label', 'value' => 'Say hello'])->assertOk();
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'button.url', 'value' => '/contact'])->assertOk();
+        $this->act($about->id(), 'add', 'faq');
+        $this->act($about->id(), 'set', ['id' => collect($this->build($about)->draft)->firstWhere('type', 'faq')['id'], 'field' => 'items.0.answer', 'value' => 'We bake **every** morning. [Come by](/contact).']);
+        $this->act($about->id(), 'publish');
+
+        // Stacy (pretend): each piece back with "MS " in front; the page's pieces all in one go.
+        \App\Models\AiProvider::create(['service' => 'openrouter', 'enabled' => true, 'is_default' => true, 'api_key' => 'k', 'default_model' => 'deepseek/deepseek-chat']);
+        $pieces = 0;
+        \Illuminate\Support\Facades\Http::fake(['openrouter.ai/*' => function ($request) use (&$pieces) {
+            $prompt = $request['messages'][1]['content'];
+            if (preg_match('/\{.*\}/s', $prompt, $m) && str_contains($prompt, 'Translate every value')) {
+                $pieces++;
+                $out = array_map(fn ($v) => 'MS '.$v, json_decode($m[0], true));
+
+                return \Illuminate\Support\Facades\Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => json_encode($out, JSON_UNESCAPED_UNICODE)]]]]);
+            }
+            preg_match('/<text>\n(.*)\n<\/text>/s', $prompt, $m);
+
+            return \Illuminate\Support\Facades\Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => 'MS '.($m[1] ?? '')]]]]);
+        }]);
+
+        $copy = \App\Stacy\Translations::make($this->admin, $about, 'ms');
+        $this->assertSame(1, $pieces, 'the whole page in one go');
+        $built = $this->build($copy);
+        $hero2 = $built->draft[0];
+        $this->assertSame('MS Who we are', $hero2['fields']['title']);
+        $this->assertSame(['label' => 'MS Say hello', 'url' => '/contact'], $hero2['fields']['button'], 'the address stays');
+        $faq = collect($built->draft)->firstWhere('type', 'faq');
+        $this->assertSame('MS We bake **every** morning. [Come by](/contact).', $faq['fields']['items'][0]['answer']);
+        $this->assertSame(array_column($this->build($about)->draft, 'type'), array_column($built->draft, 'type'));
+        $this->assertSame($built->draft, $built->published, 'ready for the site, as the original is');
+        $this->assertSame('Who we are', $this->build($about)->draft[0]['fields']['title'], 'the original is left alone');
+
+        // On the site as built as soon as it's published (from the book, say).
+        $copy->setAttribute('published', true)->save();
+        \App\Support\PageCache::flush();
+        $this->reader((string) $copy->uri())->assertOk()->assertSee('MS Who we are')->assertSee('MS Say hello');
+    }
+
+    public function test_the_guide_to_building_pages(): void
+    {
+        $about = $this->about();
+        $this->actingAs($this->admin)->get(route('admin.help.building'))->assertOk()
+            ->assertSee('Building pages')->assertSee('Start from a layout')->assertSee('A shop or café')->assertSee('Appendix E');
+        $this->actingAs($this->admin)->get(route('admin.contents'))->assertSee(route('admin.help.building'), false);
+        // From the book (built or not) and from the editor's bar.
+        $this->actingAs($this->admin)->get(route('admin.entries.edit', ['pages', $about->id()]))->assertSee(route('admin.help.building'), false);
+        $this->startAbout();
+        $this->actingAs($this->admin)->get(route('admin.entries.edit', ['pages', $about->id()]))->assertSee('How building pages works');
+        $this->actingAs($this->admin)->get('/about')->assertSee('data-help="'.route('admin.help.building').'"', false);
+        // Anyone signed in may read it.
+        $this->actingAs(User::factory()->create(['role' => 'author']))->get(route('admin.help.building'))->assertOk();
     }
 
     public function test_the_slip_and_who_can_build(): void

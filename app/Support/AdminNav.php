@@ -228,6 +228,7 @@ class AdminNav
         $add('inserts', 'back', 'Appendix C', 'Settings', 'Inserts', route('admin.settings.inserts'), 'sand');
         $add('stacy-settings', 'back', 'Appendix D', 'Stacy’s brain', 'Stacy’s brain', route('admin.settings.stacy'), 'ink');
         $add('stacy-behaviour', 'back', 'Appendix D', 'Stacy’s brain', 'How Stacy behaves', route('admin.settings.stacy.behaviour'), 'ink');
+        $add('help.building', 'back', 'Appendix E', 'Help', 'Building pages', route('admin.help.building'), 'mint');
         $add('account', 'back', 'Ex libris', 'Your account', 'Your account', route('admin.account'), 'lilac');
 
         // Inserts' pages: tucked in after the chapter they name, or into one of their own.

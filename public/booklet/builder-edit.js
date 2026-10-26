@@ -71,6 +71,7 @@
                 <button type="button" data-bar="phone">Phone view</button>
                 <button type="button" data-bar="drawer" aria-pressed="false">Drawer</button>
                 <button type="button" data-bar="publish" class="ink">Publish</button>
+                <a class="bar__help" data-bar-help target="_blank" rel="noopener" aria-label="How building pages works (opens in a new tab)" title="How building pages works">?</a>
                 <button type="button" data-bar="done">Done</button>
             </span>
         </div>
@@ -92,6 +93,7 @@
 
     const $ = (s) => ui.querySelector(s);
     $('.start__words').textContent = cfg.label || 'Edit this page';
+    if (cfg.help) $('[data-bar-help]').href = cfg.help; else $('[data-bar-help]').remove();
     const start = $('.start'), tools = $('.tools'), addHere = $('.add-here'), drawer = $('.drawer'), inner = $('.drawer__inner');
     const bar = $('.bar'), toastEl = $('.toast'), phone = $('.phone');
 

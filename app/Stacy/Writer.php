@@ -154,6 +154,60 @@ class Writer
         return self::clean(self::complete($user, $system, $prompt, (int) min(8000, max(200, mb_strlen($text) / 2 + 200))), $text);
     }
 
+    /**
+     * Many short pieces of words at once (a built page's headings, lines and
+     * buttons): [key => words] in, the same keys in the other language out.
+     * A piece that doesn't come back stays as it was.
+     *
+     * @param  array<string, string>  $words
+     * @return array<string, string>
+     */
+    public static function translateWords(User $user, array $words, string $language, string $page = ''): array
+    {
+        @set_time_limit(600);
+        // In batches of about a chunk's length each.
+        $batches = [];
+        $size = 0;
+        foreach ($words as $key => $text) {
+            if ($batches === [] || $size + mb_strlen($text) > self::CHUNK) {
+                $batches[] = [];
+                $size = 0;
+            }
+            $batches[count($batches) - 1][(string) $key] = $text;
+            $size += mb_strlen($text) + mb_strlen((string) $key) + 8;
+        }
+        $out = [];
+        foreach ($batches as $batch) {
+            $out += self::translateBatch($user, $batch, $language, $page);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, string>  $batch
+     * @return array<string, string>
+     */
+    protected static function translateBatch(User $user, array $batch, string $language, string $page): array
+    {
+        self::slowDown($user, 120);
+        $json = (string) json_encode($batch, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE);
+        $prompt = ($page !== '' ? "These are the words of a web page called “{$page}”, piece by piece.\n\n" : '')
+            ."Translate every value of this JSON object into {$language}:\n\n{$json}\n\n"
+            .'Keep every key exactly as it is. Keep **bold**, *italic* and [link text](address) marks; translate the link text but never the address. '
+            .'Keep line breaks and empty lines. Leave names of people, places, brands and code as they are, and keep each piece about as short as the original (they are headings, buttons and lines on a page). '
+            .'Reply with only the JSON object, nothing before or after it.';
+        $reply = self::complete($user, self::system('You are Stacy, a skilled translator for a website. You translate faithfully and naturally, the way a native writer would put it, not word for word.'),
+            $prompt, (int) min(8000, max(300, mb_strlen($json) / 2 + 300)));
+        $got = json_decode((string) preg_replace('/^[^{]*|[^}]*$/s', '', self::clean($reply)), true);
+        $out = [];
+        foreach ($batch as $key => $original) {
+            $out[$key] = is_array($got) && is_string($got[$key] ?? null) && trim($got[$key]) !== '' ? trim($got[$key]) : $original;
+        }
+
+        return $out;
+    }
+
     /** A long body, a few paragraphs at a time. */
     protected static function translateLong(User $user, string $text, string $language): string
     {
