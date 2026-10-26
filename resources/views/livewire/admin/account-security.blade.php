@@ -29,7 +29,7 @@
                 </div>
             </form>
         @elseif ($addingPasskey)
-            <form class="field" style="max-width: 380px" x-on:submit.prevent="go()">
+            <form class="field" style="max-width: 380px" x-on:submit.prevent="go()" x-init="prepare()">
                 <label for="passkey-name">{{ __('A name, so you know which device it is') }}</label>
                 <input id="passkey-name" type="text" class="input" wire:model="passkeyName" maxlength="80" autofocus>
                 @error('passkeyName') <p class="field__error">{{ $message }}</p> @enderror

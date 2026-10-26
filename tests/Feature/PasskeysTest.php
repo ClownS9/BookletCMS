@@ -145,7 +145,8 @@ class PasskeysTest extends TestCase
         $this->assertAuthenticatedAs($this->admin);
         auth()->logout();
 
-        Livewire::test(Login::class)->call('passkeyFailed', 'NotAllowedError')->assertSee('Cancelled, or your device didn’t answer in time.');
+        Livewire::test(Login::class)->call('passkeyFailed', 'NotAllowedError')->assertSee('this device has no passkey for this book yet');
+        $this->assertStringContainsString('Windows Hello', Passkeys::failure('NotAllowedError', making: true));
         $this->assertStringContainsString('https', Passkeys::failure('insecure'));
 
         // Every reason a passkey is turned away has its Malay.
