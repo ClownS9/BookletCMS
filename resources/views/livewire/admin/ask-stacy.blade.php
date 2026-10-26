@@ -82,7 +82,7 @@
             @if ($this->messages->isEmpty() && $this->enabled)
                 <li class="chat__theirs">
                     <p class="eyebrow chat__who">Stacy</p>
-                    <p class="serif chat__text">Hello {{ str(request()->user()->name)->before(' ') }}. What can I find or do for you?</p>
+                    <p class="serif chat__text">Hello {{ str(request()->user()->name)->before(' ') }}. {{ $this->brain ? 'What can I find or do for you?' : (request()->user()->isAdmin() ? 'I can’t think yet: give me a brain (an AI service) and I’m ready.' : 'I can’t think yet: an admin needs to give me a brain (an AI service) first.') }}</p>
                 </li>
             @endif
 
@@ -95,7 +95,11 @@
                     @php $meta = (array) $message->meta; @endphp
                     <li class="chat__theirs" wire:key="m-{{ $message->id }}">
                         <p class="eyebrow chat__who">Stacy</p>
-                        <p @class(['serif', 'chat__text', 'chat__text--error' => $meta['error'] ?? false])>{{ $message->role === 'assistant' ? \App\Stacy\Chat::tidy((string) $message->content) : $message->content }}</p>
+                        @if ($message->role === 'assistant' && ! ($meta['error'] ?? false))
+                            <div class="serif chat__text chat__text--rich">{{ \App\Stacy\Chat::html((string) $message->content) }}</div>
+                        @else
+                            <p @class(['serif', 'chat__text', 'chat__text--error' => $meta['error'] ?? false])>{{ $message->content }}</p>
+                        @endif
                         @if ($meta['error'] ?? false)
                             <button type="button" class="btn btn--sm" style="margin-top: 10px" wire:click="retry({{ $message->id }})">Try again</button>
                         @endif
@@ -156,6 +160,7 @@
                 @include('livewire.admin.partials.stacy-slash')
                 <label for="ask" class="sr-only">Ask Stacy</label>
                 <input id="ask" type="text" wire:model="draft" placeholder="{{ $this->brain ? 'Ask Stacy, talk, or type / for shortcuts…' : 'Stacy needs a brain first' }}"
+                       @if ($this->brain) x-bind:placeholder="matchMedia('(max-width: 600px)').matches ? 'Ask Stacy…' : 'Ask Stacy, talk, or type / for shortcuts…'" @endif
                        x-on:keydown="slashKey($event)"
                        autocomplete="off" maxlength="4000" @disabled(! $this->brain) wire:loading.attr="disabled" wire:target="ask">
                 @if ($this->brain)

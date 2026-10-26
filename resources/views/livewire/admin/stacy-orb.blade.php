@@ -28,7 +28,11 @@
                 @forelse ($recent as $message)
                     @php $meta = (array) $message->meta; @endphp
                     <li wire:key="orb-{{ $message->id }}" @class(['orb__line', 'orb__line--mine' => $message->role === 'user', 'orb__line--error' => $meta['error'] ?? false])>
-                        <p>{{ \Illuminate\Support\Str::limit($message->role === 'assistant' ? \App\Stacy\Chat::tidy((string) $message->content) : $message->content, 420) }}</p>
+                        @if ($message->role === 'assistant' && ! ($meta['error'] ?? false))
+                            <div class="orb__words">{{ \App\Stacy\Chat::html((string) $message->content) }}</div>
+                        @else
+                            <p>{{ $message->content }}</p>
+                        @endif
 
                         @if ($meta['error'] ?? false)
                             <button type="button" class="btn btn--sm" style="margin-top: 8px" wire:click="retry({{ $message->id }})">Try again</button>

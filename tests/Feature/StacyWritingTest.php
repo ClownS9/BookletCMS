@@ -56,6 +56,23 @@ class StacyWritingTest extends TestCase
         )->save();
     }
 
+    public function test_her_answers_keep_their_lists_and_bold_but_nothing_unsafe(): void
+    {
+        $html = (string) \App\Stacy\Chat::html("Three **drafts** wait, the newest *Spring*:\n- Spring — today\n- Kuih lapis — yesterday\n\n1. One\n2. Two\n\nSee [Pages](go_to_pages) or https://evil.example/x. <script>alert(1)</script> `code` 🎉");
+
+        $this->assertStringContainsString('Three <strong>drafts</strong> wait, the newest <em>Spring</em>:', $html);
+        $this->assertStringContainsString('<ul><li>Spring — today</li><li>Kuih lapis — yesterday</li></ul>', $html);
+        $this->assertStringContainsString('<ol><li>One</li><li>Two</li></ol>', $html);
+        $this->assertStringContainsString('See Pages or', $html, 'a link she wrote keeps only its words');
+        $this->assertStringNotContainsString('evil.example', $html);
+        $this->assertStringNotContainsString('<script', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+        $this->assertStringContainsString('<code>code</code>', $html);
+        $this->assertStringNotContainsString('🎉', $html);
+        // Read aloud and copied: still plain.
+        $this->assertSame('Three drafts wait', \Illuminate\Support\Str::before(\App\Stacy\Chat::tidy('Three **drafts** wait, x'), ','));
+    }
+
     public function test_rewriting_picked_words_sends_only_them_and_returns_clean_text(): void
     {
         $this->answers("Here's a tighter version:\n\n“The fig tree woke up.”");
