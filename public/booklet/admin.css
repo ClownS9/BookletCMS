@@ -171,6 +171,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     height: 120px;
     background: var(--ribbon, var(--coral));
     clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%);
+    /* A bookmark lies on top of the page: notes and cards (tilted ones too) slip under it, never over */
+    z-index: 2;
+    pointer-events: none;
 }
 
 /* Flags ------------------------------------------------------------------- */
