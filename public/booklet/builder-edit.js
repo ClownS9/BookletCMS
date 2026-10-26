@@ -49,6 +49,7 @@
         <link rel="stylesheet" href="${cfg.css}">
         <button type="button" class="start" part="start"><span aria-hidden="true">✎</span> <span class="start__words"></span></button>
         <div class="tools" hidden>
+            <button type="button" class="tools__grip" data-tool="drag" aria-label="Drag to move" title="Drag to move"><svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="3" r="1.6"/><circle cx="9" cy="3" r="1.6"/><circle cx="3" cy="8" r="1.6"/><circle cx="9" cy="8" r="1.6"/><circle cx="3" cy="13" r="1.6"/><circle cx="9" cy="13" r="1.6"/></svg></button>
             <span class="tools__name"></span>
             <button type="button" data-tool="up" aria-label="Move up" title="Move up">↑</button>
             <button type="button" data-tool="down" aria-label="Move down" title="Move down">↓</button>
@@ -433,6 +434,66 @@
     addEventListener('scroll', placeTools, { passive: true });
     addEventListener('resize', placeTools);
 
+    // Dragging a section by its grip, up or down the page (mouse, pen or finger).
+    const dropLine = document.createElement('div');
+    dropLine.className = 'drop-line';
+    dropLine.hidden = true;
+    ui.appendChild(dropLine);
+    let drag = null;
+    const dropAt = (y) => {
+        const all = [...page.querySelectorAll('[data-pb-section]')];
+        let at = all.length;
+        for (let i = 0; i < all.length; i++) {
+            const r = all[i].getBoundingClientRect();
+            if (y < r.top + r.height / 2) { at = i; break; }
+        }
+        const ref = all[at] ? all[at].getBoundingClientRect() : all[all.length - 1].getBoundingClientRect();
+        const p = page.getBoundingClientRect();
+        dropLine.style.top = ((all[at] ? ref.top : ref.bottom) - 2) + 'px';
+        dropLine.style.left = Math.max(p.left, 0) + 'px';
+        dropLine.style.width = Math.min(p.width, innerWidth) + 'px';
+        return { at, all };
+    };
+    const dragScroll = () => {
+        if (!drag) return;
+        const edge = 90;
+        if (drag.y < edge) window.scrollBy(0, -Math.ceil((edge - drag.y) / 6));
+        else if (drag.y > innerHeight - edge - 70) window.scrollBy(0, Math.ceil((drag.y - innerHeight + edge + 70) / 6));
+        dropAt(drag.y);
+        drag.raf = requestAnimationFrame(dragScroll);
+    };
+    const endDrag = (drop) => {
+        if (!drag) return;
+        cancelAnimationFrame(drag.raf);
+        const { id, el } = drag;
+        el.classList.remove('is-dragging');
+        document.documentElement.classList.remove('pb-dragging');
+        dropLine.hidden = true;
+        if (drop) {
+            const { at, all } = dropAt(drag.y);
+            const from = all.indexOf(el);
+            const to = at > from ? at - 1 : at;
+            if (from >= 0 && to !== from) act('move', { id, to }, { scroll: true });
+        }
+        drag = null;
+    };
+    tools.querySelector('[data-tool="drag"]').addEventListener('pointerdown', (e) => {
+        if (!state.section || e.button > 0) return;
+        const el = sectionEl(state.section);
+        if (!el) return;
+        e.preventDefault();
+        drag = { id: state.section, el, y: e.clientY, raf: 0 };
+        el.classList.add('is-dragging');
+        document.documentElement.classList.add('pb-dragging');
+        dropLine.hidden = false;
+        dropAt(e.clientY);
+        drag.raf = requestAnimationFrame(dragScroll);
+    });
+    addEventListener('pointermove', (e) => { if (drag) { drag.y = e.clientY; e.preventDefault(); } }, { passive: false });
+    addEventListener('pointerup', () => endDrag(true));
+    addEventListener('pointercancel', () => endDrag(false));
+    addEventListener('keydown', (e) => { if (drag && e.key === 'Escape') endDrag(false); });
+
     tools.addEventListener('click', (e) => {
         const b = e.target.closest('[data-tool]');
         if (!b || !state.section) return;
@@ -493,7 +554,11 @@
         if (!form) return;
         e.preventDefault();
         // "details" saves the page's name and address; "status" makes it a draft, scheduled or published.
-        act(form.dataset.form, Object.fromEntries(new FormData(form)), { quiet: true, redraw: true }); // a form sent: draw its answer (and any errors) even from a box
+        // Busy until its answer comes (Stacy can take a few seconds).
+        const send = form.querySelector('[type="submit"]');
+        if (send) { send.disabled = true; if (form.dataset.form === 'stacy') send.textContent = 'Writing…'; }
+        // A form sent: draw its answer (and any errors) even from a box; Stacy's words go on the page too.
+        act(form.dataset.form, Object.fromEntries(new FormData(form)), { quiet: form.dataset.form !== 'stacy', redraw: true });
     });
     // Dragging sections in "All sections"
     let dragging = null;

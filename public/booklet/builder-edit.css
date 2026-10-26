@@ -294,3 +294,21 @@ a.d-link { color: inherit; display: inline-flex; align-items: center; }
 .d-proof-notes__who b { color: var(--ink); }
 .d-proof-notes blockquote { margin: 4px 0; padding-left: 8px; border-left: 2px solid var(--rule-2); font-size: 13px; color: var(--muted); }
 .d-proof-notes__body { margin: 4px 0; font-size: 14px; white-space: pre-line; }
+.tools__grip { cursor: grab; touch-action: none; }
+.tools__grip:active { cursor: grabbing; }
+.drop-line { position: fixed; height: 4px; border-radius: 2px; background: var(--pick); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pick) 25%, transparent); pointer-events: none; z-index: 4; }
+.drop-line[hidden] { display: none; }
+.d-layouts { border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+.d-layouts summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 30px; }
+.d-layouts__list { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 6px; }
+.d-layouts__item { display: flex; align-items: center; gap: 4px; }
+.d-layouts__pick { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-3); text-align: left; }
+.d-layouts__pick:hover { border-color: var(--ink); }
+.d-layouts__pick b { font-size: 14px; }
+.d-layouts__pick small { font-size: 12px; color: var(--faint); line-height: 1.35; }
+.d-layouts__save { padding: 12px; border: 1px dashed var(--rule-2); border-radius: 10px; }
+.d-kind__icon--free { background-image: linear-gradient(var(--sky), var(--sky)), linear-gradient(var(--g), var(--g)), linear-gradient(var(--g), var(--g)), linear-gradient(var(--k), var(--k)); background-size: 14px 10px, 14px 2px, 14px 2px, 8px 4px; background-position: 6px 7px, 23px 9px, 23px 14px, 23px 21px; }
+.d-stacy { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--lilac) 18%, var(--paper-3)); }
+.d-stacy summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 26px; }
+.d-stacy summary::before { content: "✦ "; color: var(--ink); }
+.d-stacy .d-form { margin-top: 8px; }

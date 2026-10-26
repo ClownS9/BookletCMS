@@ -356,3 +356,29 @@ h1.pb-eyebrow { font-family: inherit; }
 .pb-words a, .pb-plan__list a, .pb-contact a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .pb-words a:hover { text-decoration-thickness: 2px; }
 .pb-words strong { font-weight: 650; color: var(--pb-ink); }
+
+/* Shown on computers only, or phones only (while building, both show, labelled) */
+@media (max-width: 760px) { .pb-page:not(.pb-live) .pb-show--computer, .pb-embed .pb-show--computer { display: none; } }
+@media (min-width: 761px) { .pb-page:not(.pb-live) .pb-show--phone, .pb-embed .pb-show--phone { display: none; } }
+.pb-live .pb-show--computer::after, .pb-live .pb-show--phone::after { position: absolute; top: 10px; right: 10px; z-index: 2; padding: 3px 9px; border-radius: 999px; background: #1E1C18; color: #FBF8F1; font: 600 11px/1.4 var(--sans, system-ui, sans-serif); letter-spacing: .02em; opacity: .8; pointer-events: none; }
+.pb-live .pb-show--computer::after { content: "Computers only"; }
+.pb-live .pb-show--phone::after { content: "Phones only"; }
+.pb-live .pb-show--computer, .pb-live .pb-show--phone { outline: 1px dashed color-mix(in srgb, #5B7BE0 50%, transparent); outline-offset: -1px; }
+.pb-live [data-pb-section].is-dragging { opacity: .45; }
+html.pb-dragging, html.pb-dragging * { cursor: grabbing !important; user-select: none !important; }
+
+/* Columns of your own */
+.pb-free { display: grid; gap: clamp(24px, 4vw, 48px); grid-template-columns: repeat(var(--pb-free, 2), minmax(0, 1fr)); align-items: start; }
+.pb-free--1 { --pb-free: 1; }
+.pb-free--3 { --pb-free: 3; }
+.pb-free--4 { --pb-free: 4; }
+.pb-free--2.pb-free--left { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.pb-free--2.pb-free--right { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+@media (max-width: 1000px) { .pb-free--4 { --pb-free: 2; } }
+@media (max-width: 760px) { .pb-free, .pb-free--2.pb-free--left, .pb-free--2.pb-free--right { grid-template-columns: minmax(0, 1fr); } }
+.pb-free__col { min-width: 0; text-align: inherit; }
+.pb-free__picture { margin-bottom: 16px; }
+.pb-free__picture .pb-picture { aspect-ratio: 4 / 3; }
+.pb-free__title { margin: 0 0 8px; font-family: var(--serif, Georgia, serif); font-weight: 500; font-size: 24px; line-height: 1.2; color: var(--pb-ink); }
+.pb-free__words { font-size: 17px; line-height: 1.65; color: var(--pb-soft-ink); }
+.pb-free .pb-buttons { margin-top: 18px; }
