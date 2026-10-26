@@ -97,6 +97,53 @@ return [
             'style' => ['background' => 'accent', 'align' => 'center'],
         ],
 
+        'banner' => [
+            'name' => 'Banner',
+            'about' => 'Big words over a picture, as wide as the page.',
+            'group' => 'Openings and endings',
+            'fields' => [
+                'eyebrow' => ['type' => 'text', 'label' => 'Small words above'],
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'words' => ['type' => 'words', 'label' => 'A line or two', 'max' => 600],
+                'button' => ['type' => 'link', 'label' => 'Button'],
+                'picture' => ['type' => 'picture', 'label' => 'Picture'],
+                'height' => ['type' => 'select', 'label' => 'How tall', 'options' => ['short' => 'Short', 'tall' => 'Tall']],
+            ],
+            'start' => [
+                'eyebrow' => '',
+                'title' => 'Something worth stopping for',
+                'words' => 'A line or two, over the picture.',
+                'button' => ['label' => 'Find out more', 'url' => '#'],
+                'picture' => '',
+                'height' => 'short',
+            ],
+            'style' => ['align' => 'center', 'width' => 'wide'],
+        ],
+
+        'notice' => [
+            'name' => 'Announcement',
+            'about' => 'One short line with a sticker and a link, for news that matters now.',
+            'group' => 'Openings and endings',
+            'fields' => [
+                'sticker' => ['type' => 'text', 'label' => 'Sticker', 'max' => 24],
+                'words' => ['type' => 'text', 'label' => 'The news', 'max' => 200],
+                'link' => ['type' => 'link', 'label' => 'Link'],
+            ],
+            'start' => ['sticker' => 'New', 'words' => 'Something people should know about, in a line.', 'link' => ['label' => 'Read more', 'url' => '#']],
+            'style' => ['space' => 'snug', 'background' => 'soft', 'align' => 'center'],
+        ],
+
+        'divider' => [
+            'name' => 'Divider',
+            'about' => 'A quiet break between sections: a line, a few dots, or just space.',
+            'group' => 'Openings and endings',
+            'fields' => [
+                'style' => ['type' => 'select', 'label' => 'Shown as', 'options' => ['line' => 'A line', 'short' => 'A short line', 'dots' => 'Three dots', 'space' => 'Just space']],
+            ],
+            'start' => ['style' => 'line'],
+            'style' => ['space' => 'snug'],
+        ],
+
         'cards' => [
             'name' => 'Cards',
             'about' => 'A row of cards, each with a picture, a heading, a few words and a link.',
@@ -173,6 +220,54 @@ return [
             'style' => ['width' => 'narrow'],
         ],
 
+        'stats' => [
+            'name' => 'Numbers',
+            'about' => 'A few big figures, each with what it counts.',
+            'group' => 'Lists',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'intro' => ['type' => 'words', 'label' => 'A line under it'],
+                'items' => ['type' => 'items', 'label' => 'Numbers', 'one' => 'number', 'max_items' => 8, 'fields' => [
+                    'number' => ['type' => 'text', 'label' => 'The number (12, 40+, 98%…)', 'max' => 16],
+                    'label' => ['type' => 'text', 'label' => 'What it counts', 'max' => 80],
+                    'words' => ['type' => 'words', 'label' => 'A few words more (optional)', 'max' => 300],
+                ]],
+            ],
+            'start' => [
+                'title' => '',
+                'intro' => '',
+                'items' => [
+                    ['number' => '12', 'label' => 'years at it', 'words' => ''],
+                    ['number' => '40+', 'label' => 'things we make', 'words' => ''],
+                    ['number' => '7', 'label' => 'days a week', 'words' => ''],
+                ],
+            ],
+            'style' => ['align' => 'center'],
+        ],
+
+        'steps' => [
+            'name' => 'Steps',
+            'about' => 'How it works, in numbered steps.',
+            'group' => 'Lists',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'intro' => ['type' => 'words', 'label' => 'A line under it'],
+                'items' => ['type' => 'items', 'label' => 'Steps', 'one' => 'step', 'max_items' => 8, 'fields' => [
+                    'title' => ['type' => 'text', 'label' => 'Heading'],
+                    'words' => ['type' => 'words', 'label' => 'Words'],
+                ]],
+            ],
+            'start' => [
+                'title' => 'How it works',
+                'intro' => '',
+                'items' => [
+                    ['title' => 'First', 'words' => 'What happens first, in a sentence.'],
+                    ['title' => 'Then', 'words' => 'What comes next.'],
+                    ['title' => 'And then', 'words' => 'How it ends, happily.'],
+                ],
+            ],
+        ],
+
         'gallery' => [
             'name' => 'Pictures',
             'about' => 'A grid of pictures from Media.',
@@ -206,6 +301,47 @@ return [
                 ],
             ],
             'style' => ['background' => 'soft'],
+        ],
+
+        'team' => [
+            'name' => 'People',
+            'about' => 'The people behind it: a picture, a name, what they do.',
+            'group' => 'Pictures and voices',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'intro' => ['type' => 'words', 'label' => 'A line under it'],
+                'across' => ['type' => 'select', 'label' => 'Across', 'options' => ['2' => 'Two', '3' => 'Three', '4' => 'Four']],
+                'items' => ['type' => 'items', 'label' => 'People', 'one' => 'person', 'max_items' => 24, 'fields' => [
+                    'picture' => ['type' => 'picture', 'label' => 'Their picture'],
+                    'name' => ['type' => 'text', 'label' => 'Name'],
+                    'role' => ['type' => 'text', 'label' => 'What they do'],
+                    'words' => ['type' => 'words', 'label' => 'A few words about them', 'max' => 600],
+                ]],
+            ],
+            'start' => [
+                'title' => 'Who we are',
+                'intro' => '',
+                'across' => '3',
+                'items' => [
+                    ['name' => 'Their name', 'role' => 'What they do', 'words' => ''],
+                    ['name' => 'Their name', 'role' => 'What they do', 'words' => ''],
+                    ['name' => 'Their name', 'role' => 'What they do', 'words' => ''],
+                ],
+            ],
+            'style' => ['align' => 'center'],
+        ],
+
+        'logos' => [
+            'name' => 'Logos',
+            'about' => 'A row of logos from Media: who you work with, where you’ve been seen.',
+            'group' => 'Pictures and voices',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'pictures' => ['type' => 'pictures', 'label' => 'Logos', 'max_items' => 24],
+                'soft' => ['type' => 'toggle', 'label' => 'Quiet: grey until pointed at'],
+            ],
+            'start' => ['title' => 'As seen in', 'pictures' => [], 'soft' => true],
+            'style' => ['align' => 'center', 'space' => 'snug'],
         ],
 
         'video' => [
@@ -245,6 +381,62 @@ return [
                 ],
             ],
             'style' => ['align' => 'center'],
+        ],
+
+        'menu' => [
+            'name' => 'Menu',
+            'about' => 'What you sell, each with a price and a few words, in groups if you like.',
+            'group' => 'Doing business',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'intro' => ['type' => 'words', 'label' => 'A line under it'],
+                'across' => ['type' => 'select', 'label' => 'Across', 'options' => ['1' => 'One', '2' => 'Two']],
+                'items' => ['type' => 'items', 'label' => 'Things', 'one' => 'thing', 'max_items' => 80, 'fields' => [
+                    'group' => ['type' => 'text', 'label' => 'Starts a group: its heading (optional)', 'max' => 80],
+                    'name' => ['type' => 'text', 'label' => 'Name', 'max' => 120],
+                    'price' => ['type' => 'text', 'label' => 'Price', 'max' => 30],
+                    'tag' => ['type' => 'text', 'label' => 'Sticker (New, Vegan…)', 'max' => 24],
+                    'words' => ['type' => 'words', 'label' => 'A few words', 'max' => 300],
+                ]],
+            ],
+            'start' => [
+                'title' => 'The menu',
+                'intro' => '',
+                'across' => '2',
+                'items' => [
+                    ['group' => 'A group', 'name' => 'Something good', 'price' => '$4', 'tag' => 'New', 'words' => 'What’s in it, in a line.'],
+                    ['group' => '', 'name' => 'Something else', 'price' => '$5', 'tag' => '', 'words' => 'What’s in it, in a line.'],
+                    ['group' => 'Another group', 'name' => 'One more', 'price' => '$3', 'tag' => '', 'words' => ''],
+                    ['group' => '', 'name' => 'And another', 'price' => '$3', 'tag' => '', 'words' => ''],
+                ],
+            ],
+        ],
+
+        'hours' => [
+            'name' => 'Opening hours',
+            'about' => 'When you’re open and where to find you, with a button for directions.',
+            'group' => 'Doing business',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'items' => ['type' => 'items', 'label' => 'Times', 'one' => 'time', 'max_items' => 14, 'fields' => [
+                    'days' => ['type' => 'text', 'label' => 'Days', 'max' => 60],
+                    'time' => ['type' => 'text', 'label' => 'Open', 'max' => 60],
+                ]],
+                'note' => ['type' => 'words', 'label' => 'A note under the times (holidays…)', 'max' => 400],
+                'address' => ['type' => 'words', 'label' => 'Where (a line each)', 'max' => 400],
+                'button' => ['type' => 'link', 'label' => 'Button (a map link, say)'],
+            ],
+            'start' => [
+                'title' => 'Come and see us',
+                'items' => [
+                    ['days' => 'Monday to Friday', 'time' => '8am – 6pm'],
+                    ['days' => 'Saturday', 'time' => '9am – 4pm'],
+                    ['days' => 'Sunday', 'time' => 'Closed'],
+                ],
+                'note' => '',
+                'address' => "Your street\nYour town",
+                'button' => ['label' => 'Get directions', 'url' => ''],
+            ],
         ],
 
         'posts' => [
@@ -348,5 +540,7 @@ return [
         'about' => ['name' => 'About us', 'about' => 'Hero, your story, cards, quotes', 'sections' => ['hero', 'text-picture', 'cards', 'quotes']],
         'prices' => ['name' => 'Prices', 'about' => 'Hero, plans, questions, a call to action', 'sections' => ['hero', 'pricing', 'faq', 'cta']],
         'contact' => ['name' => 'Contact', 'about' => 'Hero, the contact form, questions', 'sections' => ['hero', 'contact', 'faq']],
+        'shop' => ['name' => 'A shop or café', 'about' => 'Hero, the menu, opening hours, quotes, a call to action', 'sections' => ['hero', 'menu', 'hours', 'quotes', 'cta']],
+        'team' => ['name' => 'Our people', 'about' => 'Hero, numbers, the people, how it works', 'sections' => ['hero', 'stats', 'team', 'steps']],
     ],
 ];

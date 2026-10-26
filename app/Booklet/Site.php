@@ -545,7 +545,9 @@ class Site
         $text = (string) ($entry->get('excerpt') ?? $entry->get('meta_description') ?? '');
 
         if ($text === '') {
-            $text = strip_tags((string) Str::markdown(\App\Inserts\InsertManager::stripSlips((string) $entry->get('content', '')), ['html_input' => 'strip']));
+            // Built of sections on the page: what readers read there.
+            $text = app(\App\PageBuilder\PageBuilder::class)->readerText($entry)
+                ?? strip_tags((string) Str::markdown(\App\Inserts\InsertManager::stripSlips((string) $entry->get('content', '')), ['html_input' => 'strip']));
         }
         if (trim($text) === '') {
             $text = \App\Support\Blocks::textOf($entry); // a page built only from cut-outs
@@ -556,6 +558,8 @@ class Site
 
     public function readingTime(Entry $entry): int
     {
-        return max(1, (int) round(str_word_count(strip_tags((string) $entry->get('content', '')).' '.\App\Support\Blocks::textOf($entry)) / 220));
+        $built = app(\App\PageBuilder\PageBuilder::class)->readerText($entry);
+
+        return max(1, (int) round(str_word_count($built ?? strip_tags((string) $entry->get('content', '')).' '.\App\Support\Blocks::textOf($entry)) / 220));
     }
 }

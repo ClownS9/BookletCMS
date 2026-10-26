@@ -77,7 +77,8 @@ class SiteController extends Controller
             ->filter(fn (Entry $e) => $type === 'all'
                 || ($type === 'posts' && $e->collection()?->dated())
                 || ($type === 'pages' && ! $e->collection()?->dated()))
-            ->filter(fn (Entry $e) => Str::contains(Str::lower($e->title().' '.strip_tags((string) $e->get('content', '')).' '.\App\Support\Blocks::textOf($e)), $needle))
+            // (A page built on the page: its sections' words, as readers see them.)
+            ->filter(fn (Entry $e) => Str::contains(Str::lower($e->title().' '.($this->builder()->readerText($e) ?? strip_tags((string) $e->get('content', ''))).' '.\App\Support\Blocks::textOf($e)), $needle))
             ->sortByDesc(fn (Entry $e) => Str::contains(Str::lower($e->title()), $needle))
             ->values();
 

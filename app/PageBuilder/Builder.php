@@ -145,6 +145,13 @@ class Builder
     {
         $found = $this->field($section['type'], $path) ?? throw new InvalidArgumentException('That isn’t part of this section.');
         ['spec' => $spec, 'kind' => $kind] = $found;
+        // In a list, only a thing that's there (never a gap past the end).
+        if (preg_match('/^([a-z_]+)\.(\d+)\./', $path, $m) && ! is_array(array_values(array_filter((array) ($section['fields'][$m[1]] ?? []), 'is_array'))[(int) $m[2]] ?? null)) {
+            throw new InvalidArgumentException('That isn’t in the list any more.');
+        }
+        if (preg_match('/^([a-z_]+)\.\d+\./', $path, $m)) {
+            $section['fields'][$m[1]] = array_values(array_filter((array) ($section['fields'][$m[1]] ?? []), 'is_array'));
+        }
 
         $value = match ($kind) {
             'text', 'label' => $this->line($value, (int) ($spec['max'] ?? ($kind === 'label' ? 60 : 200))),
@@ -202,7 +209,10 @@ class Builder
                 };
             }
             if (array_key_exists('featured', $new)) {
-                $new['featured'] = false;
+                $new['featured'] = false; // one plan stands out, not two
+            }
+            if (array_key_exists('group', $new)) {
+                $new['group'] = ''; // in the same group, not the start of another
             }
             array_splice($list, $at >= 0 && $at < count($list) ? $at + 1 : count($list), 0, [$new]);
         } elseif ($do === 'move') {
@@ -339,7 +349,7 @@ class Builder
             }
         }
         foreach ((array) ($f['items'] ?? []) as $item) {
-            foreach (['title', 'question', 'name', 'words'] as $k) {
+            foreach (['title', 'question', 'name', 'label', 'days', 'words'] as $k) {
                 if (is_string($item[$k] ?? null) && trim($item[$k]) !== '') {
                     return Str::limit(trim($item[$k]), 48);
                 }

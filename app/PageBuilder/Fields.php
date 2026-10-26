@@ -47,6 +47,10 @@ class Fields
             return true;
         }
         foreach ($keys as $key) {
+            // A button's words count only with somewhere to go.
+            if (str_ends_with($key, '.label') && trim((string) $this->get(substr($key, 0, -6).'.url', '')) === '') {
+                continue;
+            }
             if ($this->filled($key)) {
                 return true;
             }
@@ -103,8 +107,8 @@ class Fields
     {
         $label = trim((string) $this->get($key.'.label', ''));
         $url = trim((string) $this->get($key.'.url', ''));
-        if ($label === '' && ! $this->live) {
-            return new HtmlString('');
+        if (($label === '' || $url === '') && ! $this->live) {
+            return new HtmlString(''); // no words, or nowhere to go: no button for readers
         }
         $class = trim($class.($label === '' ? ' pb-empty' : ''));
         $outside = (bool) preg_match('~^https?://~i', $url) && ! str_starts_with($url, url('/'));

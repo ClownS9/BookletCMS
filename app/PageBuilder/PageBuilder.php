@@ -204,9 +204,13 @@ class PageBuilder
         if ($page = PageBuild::forEntry($entry)) {
             return $page;
         }
-        $empty = trim((string) $entry->get('content')) === '' && (array) $entry->get('blocks', []) === [];
         $post = (bool) $entry->collection()?->dated();
-        $sections = $empty && ! $post ? $this->builder->starter('landing') : $this->fromEntry($entry);
+        $sections = $this->fromEntry($entry);
+        // Nothing of its own to start from (only its title): a page starts from a layout.
+        $empty = trim((string) $entry->get('content')) === '' && count($sections) <= 1;
+        if ($empty && ! $post) {
+            $sections = $this->builder->starter('landing');
+        }
         if ($post && ($sections[0]['type'] ?? '') === 'hero') {
             // A post's head has its title (and standfirst) already; an opening line stays, as words.
             $lede = trim((string) array_shift($sections)['fields']['lede']);
@@ -698,6 +702,27 @@ class PageBuilder
         return implode("\n\n", $out);
     }
 
+    /**
+     * What readers read on a built page or post (its published sections, as
+     * text), or null when Booklet draws it: for search, excerpts and reading
+     * time. Looked up once a request.
+     */
+    public function readerText(Entry $entry): ?string
+    {
+        $all = request()->attributes->get('booklet.builder.texts');
+        if (! is_array($all)) {
+            $all = rescue(fn () => PageBuild::query()->whereNotNull('published')->where('target', '!=', PageBuild::BLOG)->get(['target', 'published'])
+                ->mapWithKeys(fn (PageBuild $b) => [$b->target => $b->published])->all(), [], false);
+            request()->attributes->set('booklet.builder.texts', $all);
+        }
+        $sections = $all[(string) $entry->id()] ?? null;
+        if (! is_array($sections) || ! $entry->published() || ! $this->buildable($entry)) {
+            return null;
+        }
+
+        return str_replace('## ', '', $this->asText($this->builder->clean($sections)));
+    }
+
     /** [[builder: about]]: a built page's published sections, in a post or another page. */
     public function slip(string $address): string
     {
@@ -986,10 +1011,16 @@ class PageBuilder
                 $field = $payload['field'];
                 $choices = str_ends_with($field, 'category') ? $categories() : [];
 
-                return $onSection($page, $payload['id'] ?? null,
+                $why = $onSection($page, $payload['id'] ?? null,
                     fn (array $s) => $builder->set($s, $field, $payload['value'] ?? '', $isPicture, $choices),
                     // A run of typing into the same words is one Undo step.
                     'set:'.($payload['id'] ?? '').':'.$field);
+                if ($why !== null) {
+                    // Can't go there: said under the field, with what was typed kept to fix.
+                    throw ValidationException::withMessages(['form.field:'.$field => $why]);
+                }
+
+                return null;
             },
             'look' => function (array $form, $payload, PageBuild $page) use ($builder, $onSection, $isPicture) {
                 if (! is_array($payload) || ! is_string($payload['key'] ?? null)) {
