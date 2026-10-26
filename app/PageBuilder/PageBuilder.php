@@ -7,6 +7,7 @@ use App\Booklet\Facades\Booklet;
 use App\Booklet\Site;
 use App\Models\ActivityLog;
 use App\Models\PageBuild;
+use App\Models\SharedSection;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -112,7 +113,7 @@ class PageBuilder
     public function sectionsOf(PageBuild $page, bool $draft = true): array
     {
         $builder = $this->builder;
-        $sections = $builder->clean($draft ? $page->draft : $page->published);
+        $sections = $this->resolve($builder->clean($draft ? $page->draft : $page->published), $draft);
         if (! $page->isBlog()) {
             return array_values(array_filter($sections, fn ($s) => empty($builder->type($s['type'])['blog'])));
         }
@@ -561,6 +562,8 @@ class PageBuilder
             $history = array_slice($history, -30);
         }
         $page->put(['draft' => $after, 'history' => $history, 'history_mark' => ['mark' => $mark, 'at' => now()->timestamp]]);
+        $this->keepShared($after);
+        request()->attributes->remove('booklet.builder.uses');
 
         return $after;
     }
@@ -606,6 +609,7 @@ class PageBuilder
      */
     public function goLive(PageBuild $page, array $sections, Carbon $at, bool $scheduled = false): void
     {
+        $this->keepShared($sections, true); // shared sections on it go live wherever they're used
         $page->put(['published' => $sections, 'published_at' => $at, 'scheduled' => null]);
         // Kept, to look at again and to put back (the oldest go after a while).
         $page->versions()->create(['sections' => $sections, 'published_at' => $at, 'user_id' => $scheduled ? null : request()->user()?->id, 'scheduled' => $scheduled]);
@@ -723,7 +727,7 @@ class PageBuilder
             return null;
         }
 
-        return Fields::plain(str_replace('## ', '', $this->asText($this->builder->clean($sections))));
+        return Fields::plain(str_replace('## ', '', $this->asText($this->resolve($this->builder->clean($sections), false))));
     }
 
     /** [[builder: about]]: a built page's published sections, in a post or another page. */
@@ -736,7 +740,7 @@ class PageBuilder
             return '';
         }
 
-        return view('builder.sections', ['sections' => $this->builder->clean($page->published), 'types' => $this->builder->types(), 'live' => false, 'embedded' => true])->render();
+        return view('builder.sections', ['sections' => $this->sectionsOf($page, false), 'types' => $this->builder->types(), 'live' => false, 'embedded' => true])->render();
     }
 
     // Doing things in the editor ------------------------------------------------------------
@@ -935,6 +939,22 @@ class PageBuilder
 
             // Sections -------------------------------------------------------------------------
             'add' => function (array $form, $type, PageBuild $page) use ($builder, $change, $locate, $typesFor, $sectionsOf) {
+                // One of the shared sections ("shared:7"): the same one, here too.
+                $shared = is_string($type) && preg_match('/^shared:(\d+)$/', $type, $m) ? ($this->sharedAll()[(int) $m[1]] ?? null) : null;
+                if ($shared) {
+                    if (! isset($typesFor($page)[$shared->type]) || ! $this->shareable($shared->type)) {
+                        return null;
+                    }
+                    $new = ['id' => $builder->make($shared->type)['id'], 'type' => $shared->type, 'fields' => $shared->draft['fields'] ?? [], 'look' => $shared->draft['look'] ?? [], 'shared' => $shared->id];
+                    $change($page, function (array $sections) use ($new, $form, $locate) {
+                        [$at] = $locate($sections, $form['section'] ?? null);
+                        array_splice($sections, $at === null ? count($sections) : $at + 1, 0, [$new]);
+
+                        return $sections;
+                    });
+
+                    return ['form' => array_merge($form, ['section' => $new['id'], 'adding' => false, 'picking' => null, 'tab' => 'section'])];
+                }
                 if (! is_string($type) || ! isset($typesFor($page)[$type]) || ! empty($builder->type($type)['required'])) {
                     return null;
                 }
@@ -989,6 +1009,7 @@ class PageBuilder
                     [$i, $s] = $locate($sections, $id);
                     if ($i !== null) {
                         $made = $builder->copy($s);
+                        unset($made['shared']); // a copy is this page's own
                         array_splice($sections, $i + 1, 0, [$made]);
                     }
 
@@ -1094,11 +1115,277 @@ class PageBuilder
                 }
                 $back = $builder->clean(array_pop($history));
                 $page->put(['draft' => $back, 'history' => $history, 'history_mark' => []]);
+                $this->keepShared($back);
                 [$i] = $locate($back, $form['section'] ?? null);
 
                 return ['form' => array_merge($form, ['section' => $i === null ? ($back[0]['id'] ?? null) : $form['section'], 'picking' => null])];
             },
+
+            // Shared sections ------------------------------------------------------------------
+            // This section, used on other pages too (from Add a section › Shared).
+            'share' => function (array $form, $payload, PageBuild $page) use ($change, $locate, $sectionsOf) {
+                if (! is_array($payload)) {
+                    return null;
+                }
+                [, $s] = $locate($sectionsOf($page), $payload['id'] ?? null);
+                if (! $s || isset($s['shared']) || ! $this->shareable($s['type'])) {
+                    return null;
+                }
+                $name = $this->builder->line($payload['name'] ?? '', 80);
+                if ($name === '') {
+                    throw ValidationException::withMessages(['form.share' => 'Give it a name, to find it by on other pages.']);
+                }
+                $shared = SharedSection::create(['name' => $name, 'type' => $s['type'], 'draft' => ['fields' => $s['fields'], 'look' => $s['look']]]);
+                $this->forgetShared();
+                $change($page, function (array $sections) use ($s, $shared, $locate) {
+                    [$i] = $locate($sections, $s['id']);
+                    if ($i !== null) {
+                        $sections[$i]['shared'] = $shared->id;
+                    }
+
+                    return $sections;
+                });
+
+                return 'Shared as “'.$name.'”. Add it to other pages from Add a section › Shared.';
+            },
+            // This page's own again (as it is now); the shared one stays for the others.
+            'unshare' => function (array $form, $id, PageBuild $page) use ($change) {
+                $change($page, function (array $sections) use ($id) {
+                    foreach ($sections as $i => $s) {
+                        if ($s['id'] === $id) {
+                            unset($sections[$i]['shared']);
+                        }
+                    }
+
+                    return $sections;
+                });
+
+                return 'It’s this page’s own now: changes here stay here.';
+            },
+            // A shared section no page uses any more.
+            'forget-shared' => function (array $form, $id, PageBuild $page) {
+                $shared = is_numeric($id) ? SharedSection::find((int) $id) : null;
+                if (! $shared) {
+                    return null;
+                }
+                if ($this->usesOf($shared->id) > 0) {
+                    return 'It’s still on a page. Take it off the pages first.';
+                }
+                $shared->delete();
+                $this->forgetShared();
+
+                return '“'.$shared->name.'” is gone.';
+            },
         ];
+    }
+
+    // Checks before publishing -----------------------------------------------------------------
+
+    /** Labels that are meant to be kept as they start (not example words). */
+    protected const KEPT_AS_THEY_START = ['more', 'label', 'all', 'empty', 'about_title', 'recent_title', 'tags_title', 'days', 'time'];
+
+    /**
+     * Things to look at before publishing: example words still there,
+     * buttons that go nowhere, pictures without a description, a video or
+     * pictures not chosen, a form or emails that are switched off. Nothing
+     * here stops anyone publishing.
+     *
+     * @return list<array{section: string|null, words: string}>
+     */
+    public function checks(PageBuild $page): array
+    {
+        $out = [];
+        $sections = $this->sectionsOf($page);
+        if ($sections === [] || ($page->isBlog() && count($sections) === 1)) {
+            $out[] = ['section' => null, 'words' => 'Nothing on the page yet.'];
+        }
+        foreach ($sections as $s) {
+            $kind = $this->builder->type($s['type']) ?? [];
+            $name = (string) ($kind['name'] ?? $s['type']);
+            $say = function (string $words) use (&$out, $s, $name): void {
+                $out[] = ['section' => $s['id'], 'words' => $name.': '.$words];
+            };
+            $fields = (array) ($kind['fields'] ?? []);
+            $start = (array) ($kind['start'] ?? []);
+            $example = null;
+            $nowhere = [];
+            $undescribed = 0;
+            $walk = function (array $specs, array $values, array $starts) use (&$walk, &$example, &$nowhere, &$undescribed): void {
+                foreach ($specs as $key => $spec) {
+                    $value = $values[$key] ?? null;
+                    switch ($spec['type'] ?? '') {
+                        case 'text':
+                        case 'words':
+                            $was = $starts[$key] ?? null;
+                            if ($example === null && is_string($value) && trim($value) !== '' && $value === $was && ! in_array($key, self::KEPT_AS_THEY_START, true)) {
+                                $example = $value;
+                            }
+                            break;
+                        case 'link':
+                            $label = trim((string) ($value['label'] ?? ''));
+                            $url = trim((string) ($value['url'] ?? ''));
+                            if ($label !== '' && ($url === '' || $url === '#')) {
+                                $nowhere[] = $label;
+                            }
+                            break;
+                        case 'picture':
+                            $pic = is_string($value) && $value !== '' ? Fields::pictureFor($value) : null;
+                            $undescribed += $pic && trim((string) $pic['alt']) === '' ? 1 : 0;
+                            break;
+                        case 'pictures':
+                            foreach ((array) $value as $path) {
+                                $pic = is_string($path) ? Fields::pictureFor($path) : null;
+                                $undescribed += $pic && trim((string) $pic['alt']) === '' ? 1 : 0;
+                            }
+                            break;
+                        case 'items':
+                            foreach (array_values(array_filter((array) $value, 'is_array')) as $i => $item) {
+                                $walk((array) ($spec['fields'] ?? []), $item, (array) (array_values(array_filter((array) ($starts[$key] ?? []), 'is_array'))[$i] ?? []));
+                            }
+                            break;
+                    }
+                }
+            };
+            $walk($fields, (array) $s['fields'], $start);
+
+            if ($example !== null) {
+                $say('still has its example words (“'.\Illuminate\Support\Str::limit(Fields::plain($example), 40, '…', true).'”).');
+            }
+            foreach (array_unique($nowhere) as $label) {
+                $say('the button “'.\Illuminate\Support\Str::limit($label, 30, '…').'” doesn’t go anywhere yet.');
+            }
+            if ($undescribed > 0) {
+                $say(($undescribed === 1 ? 'a picture has' : $undescribed.' pictures have').' no description, for people who can’t see them (add one in Media).');
+            }
+            if ($s['type'] === 'video' && trim((string) ($s['fields']['url'] ?? '')) === '') {
+                $say('no video chosen yet.');
+            }
+            if (in_array($s['type'], ['gallery', 'logos'], true) && array_filter((array) ($s['fields']['pictures'] ?? []), 'is_string') === []) {
+                $say('no pictures chosen yet.');
+            }
+            if ($s['type'] === 'hero' && ($s['fields']['layout'] ?? 'side') !== 'none' && trim((string) ($s['fields']['picture'] ?? '')) === '') {
+                $say('no picture yet (or choose No picture, under Where the picture goes).');
+            }
+            if ($s['type'] === 'banner' && trim((string) ($s['fields']['picture'] ?? '')) === '') {
+                $say('no picture yet.');
+            }
+            if ($s['type'] === 'contact' && ! rescue(fn () => \App\Support\Inbox::open(), true, false)) {
+                $say('the contact form is switched off, so readers won’t see it (Settings › Email).');
+            }
+            if ($s['type'] === 'subscribe' && ! rescue(fn () => \App\Support\Newsletter::enabled(), true, false)) {
+                $say('new posts by email aren’t switched on, so readers won’t see it (Settings › Email).');
+            }
+        }
+
+        return $out;
+    }
+
+    // Shared sections ------------------------------------------------------------------------
+
+    /** Every shared section, by id (looked up once a request). @return array<int, SharedSection> */
+    public function sharedAll(): array
+    {
+        $all = request()->attributes->get('booklet.builder.shared');
+        if (! is_array($all)) {
+            $all = rescue(fn () => SharedSection::query()->orderBy('name')->get()->keyBy('id')->all(), [], false);
+            request()->attributes->set('booklet.builder.shared', $all);
+        }
+
+        return $all;
+    }
+
+    protected function forgetShared(): void
+    {
+        request()->attributes->remove('booklet.builder.shared');
+        request()->attributes->remove('booklet.builder.uses');
+    }
+
+    /** Can this kind of section be shared? (Not the blog's own: they belong to the blog page.) */
+    public function shareable(string $type): bool
+    {
+        $kind = $this->builder->type($type);
+
+        return $kind !== null && empty($kind['blog']);
+    }
+
+    /**
+     * Sections as drawn: a shared one wears its words and look from where
+     * they're kept (the draft, or what's published). One never published
+     * shows what this page had when it was published.
+     */
+    public function resolve(array $sections, bool $draft): array
+    {
+        $all = $this->sharedAll();
+        foreach ($sections as $i => $s) {
+            if (! isset($s['shared'])) {
+                continue;
+            }
+            $shared = $all[$s['shared']] ?? null;
+            if (! $shared || ! $this->builder->type($shared->type)) {
+                unset($sections[$i]['shared']); // gone: this page's own copy stays
+                continue;
+            }
+            $content = $draft ? $shared->draft : $shared->published;
+            if ($content === null) {
+                continue;
+            }
+            $sections[$i] = $this->builder->clean([['id' => $s['id'], 'type' => $shared->type, 'fields' => $content['fields'] ?? [], 'look' => $content['look'] ?? []]])[0]
+                + ['shared' => $shared->id];
+        }
+
+        return array_values($sections);
+    }
+
+    /** The words and look of the shared sections among these, kept for every page that uses them (and, publishing, put live). */
+    protected function keepShared(array $sections, bool $publish = false): void
+    {
+        $all = $this->sharedAll();
+        foreach ($sections as $s) {
+            $shared = isset($s['shared']) ? ($all[$s['shared']] ?? null) : null;
+            if (! $shared) {
+                continue;
+            }
+            $content = ['fields' => $s['fields'], 'look' => $s['look']];
+            $changes = array_filter(['draft' => $shared->draft != $content ? $content : null, 'published' => $publish && $shared->published != $content ? $content : null]);
+            if ($changes !== []) {
+                $shared->fill($changes)->save();
+            }
+        }
+    }
+
+    /** How many pages (drafts or what's published) use a shared section. */
+    public function usesOf(int $id): int
+    {
+        $uses = request()->attributes->get('booklet.builder.uses');
+        if (! is_array($uses)) {
+            $uses = [];
+            foreach (rescue(fn () => PageBuild::query()->get(['id', 'draft', 'published']), collect(), false) as $build) {
+                $here = [];
+                foreach ([(array) $build->draft, (array) $build->published] as $list) {
+                    foreach ($list as $s) {
+                        if (is_array($s) && is_int($s['shared'] ?? null)) {
+                            $here[$s['shared']] = true;
+                        }
+                    }
+                }
+                foreach (array_keys($here) as $sid) {
+                    $uses[$sid] = ($uses[$sid] ?? 0) + 1;
+                }
+            }
+            request()->attributes->set('booklet.builder.uses', $uses);
+        }
+
+        return (int) ($uses[$id] ?? 0);
+    }
+
+    /** The shared sections a page could add, for the list. @return list<array{id: int, name: string, kind: string, type: string, uses: int}> */
+    public function sharedFor(PageBuild $page): array
+    {
+        $types = $this->typesFor($page);
+
+        return array_values(array_map(fn (SharedSection $s) => [
+            'id' => $s->id, 'name' => $s->name, 'type' => $s->type, 'kind' => (string) ($types[$s->type]['name'] ?? $s->type), 'uses' => $this->usesOf($s->id),
+        ], array_filter($this->sharedAll(), fn (SharedSection $s) => isset($types[$s->type]) && $this->shareable($s->type))));
     }
 
     /**

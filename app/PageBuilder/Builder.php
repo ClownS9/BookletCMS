@@ -91,7 +91,7 @@ class Builder
                 'type' => $s['type'],
                 'fields' => is_array($s['fields'] ?? null) ? $s['fields'] : [],
                 'look' => $look,
-            ];
+            ] + (is_int($s['shared'] ?? null) && $s['shared'] > 0 ? ['shared' => $s['shared']] : []); // used on other pages too
         }
 
         return $out;

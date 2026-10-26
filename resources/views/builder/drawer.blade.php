@@ -49,6 +49,23 @@
             <h2 class="d-h">Add a section{{ $selected ? ' after “'.($types[$selected['type']]['name'] ?? '').'”' : '' }}</h2>
             <button type="button" class="d-btn" data-do="adding" data-payload="false">Cancel</button>
         </div>
+        @if ($shared !== [])
+            {{-- Sections used on other pages too: the same one, here --}}
+            <h3 class="d-group">Shared</h3>
+            <ul class="d-kinds">
+                @foreach ($shared as $one)
+                    <li class="d-kinds__shared">
+                        <button type="button" class="d-kind" data-do="add" data-payload="{{ $j('shared:'.$one['id']) }}">
+                            <span class="d-kind__icon d-kind__icon--{{ $one['type'] }} d-kind__icon--shared" aria-hidden="true"></span>
+                            <span><b>{{ $one['name'] }}</b><small>{{ $one['kind'] }} · {{ $one['uses'] === 0 ? 'on no pages yet' : 'on '.$one['uses'].' '.str('page')->plural($one['uses']) }}</small></span>
+                        </button>
+                        @if ($one['uses'] === 0)
+                            <button type="button" class="d-icon d-danger" data-do="forget-shared" data-payload="{{ $one['id'] }}" data-confirm="Forget the shared section “{{ $one['name'] }}”? No page uses it." aria-label="Forget “{{ $one['name'] }}”">×</button>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
         @foreach (collect($types)->groupBy('group', true) as $group => $kinds)
             <h3 class="d-group">{{ $group }}</h3>
             <ul class="d-kinds">
@@ -67,6 +84,7 @@
     @elseif ($state['tab'] === 'page' && $isBlog)
         {{-- The blog page: it lives where the blog does, and is never deleted --}}
         <p class="d-note">The blog page lives at <code>{{ $address }}</code>. Its posts are always on it; everything around them is yours to arrange.</p>
+        @include('builder.checks')
         @include('builder.status')
         @include('builder.history')
         @if ($changed)
@@ -76,6 +94,7 @@
         @endif
 
     @elseif ($state['tab'] === 'page')
+        @include('builder.checks')
         @include('builder.status')
         @include('builder.history')
 
@@ -132,7 +151,7 @@
                     <li data-id="{{ $s['id'] }}" data-at="{{ $i }}" draggable="true" @class(['is-selected' => $s['id'] === $sid])>
                         <span class="d-grip" aria-hidden="true">⋮⋮</span>
                         <button type="button" class="d-outline__pick" data-do="select" data-payload="{{ $j($s['id']) }}">
-                            <b>{{ $types[$s['type']]['name'] ?? $s['type'] }}</b>
+                            <b>{{ $types[$s['type']]['name'] ?? $s['type'] }}@if (isset($s['shared'])) <span class="d-tag">shared</span>@endif</b>
                             @if ($summary !== '') <small>{{ $summary }}</small> @endif
                         </button>
                         <button type="button" class="d-icon" data-do="move" data-payload="{{ $j(['id' => $s['id'], 'step' => -1]) }}" @disabled($loop->first) aria-label="Move up">↑</button>
@@ -150,6 +169,29 @@
             <h2 class="d-h">{{ $kind['name'] }}</h2>
         </div>
         <p class="d-note">{{ $kind['fields'] === [] ? 'It draws itself: there’s nothing to fill in. How it looks is below.' : 'Click words on the page to type into them. Everything else is here.' }}</p>
+
+        @if ($sharedNow)
+            {{-- Used on other pages too --}}
+            <div class="d-shared">
+                <p class="d-note"><b>Shared: “{{ $sharedNow['name'] }}”</b> · on {{ $sharedNow['uses'] }} {{ str('page')->plural($sharedNow['uses']) }}.
+                    {{ $sharedNow['uses'] > 1 ? 'Changes here show on all of them when this page is published.' : 'Add it to other pages from Add a section › Shared; changes then show on all of them.' }}</p>
+                <button type="button" class="d-link" data-do="unshare" data-payload="{{ $j($sid) }}">Make it this page’s own</button>
+            </div>
+        @elseif ($canShare)
+            <details class="d-share" @if (! empty($errors['share'])) open @endif>
+                <summary>Use it on other pages too</summary>
+                <form class="d-form" data-form="share">
+                    <input type="hidden" name="id" value="{{ $sid }}">
+                    <label class="d-field">
+                        <span>Its name (to find it by)</span>
+                        <input type="text" name="name" maxlength="80" placeholder="Opening hours, Our call to action…" value="{{ request()->input('payload.name') }}">
+                        @if (! empty($errors['share'])) <em class="d-error">{{ $errors['share'] }}</em> @endif
+                        <small>Then add it to any page from Add a section › Shared. Change it once, and it changes everywhere.</small>
+                    </label>
+                    <button type="submit" class="d-btn">Share it</button>
+                </form>
+            </details>
+        @endif
 
         @foreach ($kind['fields'] as $name => $spec)
             @include('builder.field', ['spec' => $spec, 'path' => $name, 'value' => $selected['fields'][$name] ?? null])

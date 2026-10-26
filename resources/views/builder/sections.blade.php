@@ -20,7 +20,7 @@
             'pb-space--'.$look['space'], 'pb-align--'.$look['align'], 'pb-width--'.$look['width'],
         ])
         @if ($bg) style="--pb-picture: url(&quot;{{ addcslashes($bg['url'], '"\\') }}&quot;); --pb-focus: {{ $bg['focus'] }}" @endif
-        @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ $types[$s['type']]['name'] ?? $s['type'] }}" @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>
+        @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ ($types[$s['type']]['name'] ?? $s['type']).(isset($s['shared']) ? ' · shared' : '') }}" @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>
         <div class="pb__inner">
             @include('builder.sections.'.$s['type'], ['f' => $f, 's' => $s, 'h1' => $h1, 'first' => $loop->first])
         </div>

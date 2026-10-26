@@ -263,3 +263,20 @@ a.d-link { color: inherit; display: inline-flex; align-items: center; }
 .fmt__link .fmt__add { font-weight: 700; font-size: 13px; }
 .fmt__link .fmt__off { font-size: 13px; opacity: .85; }
 .fmt { font: 14px/1 "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; } .fmt button, .fmt input { font-family: inherit; } .fmt > button b, .fmt > button i { font-family: Georgia, serif; font-size: 16px; }
+.d-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--lilac) 45%, transparent); font-size: 11px; font-weight: 600; vertical-align: 1px; }
+.d-shared { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--lilac) 22%, var(--paper-3)); }
+.d-shared .d-note { color: var(--muted); }
+.d-shared .d-note b { color: var(--ink); font-weight: 600; }
+.d-share summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 30px; }
+.d-share .d-form { margin-top: 8px; }
+.d-kinds__shared { display: flex; align-items: center; gap: 4px; }
+.d-kinds__shared .d-kind { flex: 1; min-width: 0; }
+.d-kind__icon--shared { box-shadow: inset 0 0 0 2px var(--lilac); }
+.d-checks { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 26%, var(--paper-3)); }
+.d-checks__head { margin: 0 0 6px; font-weight: 600; font-size: 14px; }
+.d-checks__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.d-checks__list li { font-size: 13px; line-height: 1.4; color: var(--muted); }
+.d-checks__go { display: block; width: 100%; padding: 4px 0 4px 16px; border: 0; background: none; text-align: left; font-size: 13px; line-height: 1.4; color: var(--muted); position: relative; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 2px; }
+.d-checks__go::before { content: "→"; position: absolute; left: 0; }
+.d-checks__go:hover { color: var(--ink); text-decoration-color: currentColor; }
+.d-checks__ok::before { content: "✓ "; color: var(--ink); }
