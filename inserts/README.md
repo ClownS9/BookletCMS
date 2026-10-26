@@ -4,9 +4,11 @@ Extras tucked into the book. Each insert is a folder here with an `insert.php`
 that describes what it adds. Add them, switch them on and off, and update them in
 **Settings › Inserts**.
 
-Three come with Booklet: **Gallery** (albums from Media), **Events** (a page at
-/events, calendar files, and a list for posts) and **Guard** (a “prove you’re human”
-check on the site’s forms, words and addresses to turn away, and a log).
+**Gallery** (albums from Media), **Events** (a page at /events, calendar files, and
+a list for posts) and **Guard** (a “prove you’re human” check on the site’s forms,
+words and addresses to turn away, and a log) are inserts of their own, each in its
+own repository: add them from Settings › Inserts › Add. (Copies of them live in
+`tests/Fixtures/inserts/`, for Booklet’s tests only.)
 
 ## Making one
 
