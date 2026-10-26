@@ -340,6 +340,99 @@ class PageBuilderTest extends TestCase
         $this->assertSame('<a href="https://example.com" rel="noopener">out</a>', \App\PageBuilder\Fields::format('[out](https://example.com)'));
     }
 
+    public function test_shared_sections_change_everywhere_when_published(): void
+    {
+        $about = $this->about();
+        $contact = Booklet::entries()->findBySlug('pages', 'contact');
+        $this->startAbout();
+        $this->act($about->id(), 'add', 'hours');
+        $hours = collect($this->build($about)->draft)->firstWhere('type', 'hours')['id'];
+        $this->act($about->id(), 'publish');
+
+        // Shared: named, then on another page too.
+        $this->assertSame(['share' => 'Give it a name, to find it by on other pages.'],
+            $this->act($about->id(), 'share', ['id' => $hours, 'name' => ' '], ['section' => $hours])->assertStatus(422)->json('errors'));
+        $this->act($about->id(), 'share', ['id' => $hours, 'name' => 'Our hours'], ['section' => $hours])
+            ->assertJsonPath('stamp', 'Shared as “Our hours”. Add it to other pages from Add a section › Shared.');
+        $this->act($about->id(), 'publish'); // on the site as the shared one now
+        $shared = \App\Models\SharedSection::firstOrFail();
+        $this->assertSame('hours', $shared->type);
+        $this->assertNotNull($shared->published);
+        $this->assertStringContainsString('Shared: “Our hours”', (string) $this->act($about->id(), 'select', $hours, ['section' => $hours])->json('drawer'));
+
+        $this->actingAs($this->admin)->postJson(route('builder.start', $contact->id()))->assertOk();
+        $this->assertStringContainsString('Our hours', (string) $this->act($contact->id(), 'adding', true, ['adding' => true])->json('drawer'));
+        $this->act($contact->id(), 'add', 'shared:'.$shared->id);
+        $there = collect($this->build($contact)->draft)->firstWhere('type', 'hours');
+        $this->assertSame($shared->id, $there['shared']);
+        $this->assertStringContainsString('data-pb-name="Opening hours · shared"', (string) $this->act($contact->id(), 'tab', 'outline')->json('page'));
+
+        // Changed on one page: in both drafts at once; on the site when published (everywhere).
+        $this->act($contact->id(), 'set', ['id' => $there['id'], 'field' => 'title', 'value' => 'Opening times']);
+        $this->assertSame('Opening times', collect(app(\App\PageBuilder\PageBuilder::class)->sectionsOf($this->build($about)))->firstWhere('type', 'hours')['fields']['title']);
+        $this->act($about->id(), 'tab', 'page')->assertJsonPath('bar.status', 'changed');
+        $this->reader('/about')->assertSee('Come and see us')->assertDontSee('Opening times');
+        $this->act($contact->id(), 'publish');
+        $this->reader('/about')->assertSee('Opening times')->assertDontSee('Come and see us');
+        $this->reader('/contact')->assertSee('Opening times');
+        $this->act($about->id(), 'tab', 'page')->assertJsonPath('bar.status', 'live');
+
+        // Undo puts the shared one back too.
+        $this->travel(1)->minutes(); // a new Undo step, not more of the same typing
+        $this->act($contact->id(), 'set', ['id' => $there['id'], 'field' => 'title', 'value' => 'Hours']);
+        $this->act($contact->id(), 'undo');
+        $this->assertSame('Opening times', $shared->fresh()->draft['fields']['title']);
+
+        // A copy is the page's own; so is one made its own again.
+        $this->act($contact->id(), 'copy', $there['id']);
+        $this->assertSame(1, collect($this->build($contact)->draft)->filter(fn ($s) => isset($s['shared']))->count());
+        $this->act($about->id(), 'unshare', $hours)->assertJsonPath('stamp', 'It’s this page’s own now: changes here stay here.');
+        $this->act($about->id(), 'set', ['id' => $hours, 'field' => 'title', 'value' => 'About’s own hours']);
+        $this->assertSame('Opening times', $shared->fresh()->draft['fields']['title']);
+
+        // Forgotten only when no page uses it.
+        $this->act($contact->id(), 'forget-shared', $shared->id)->assertJsonPath('stamp', 'It’s still on a page. Take it off the pages first.');
+        $this->act($contact->id(), 'remove', $there['id']);
+        $this->act($contact->id(), 'publish');
+        $this->act($about->id(), 'publish');
+        $this->act($contact->id(), 'forget-shared', $shared->id)->assertJsonPath('stamp', '“Our hours” is gone.');
+        $this->assertSame(0, \App\Models\SharedSection::count());
+        $this->reader('/about')->assertSee('About’s own hours');
+    }
+
+    public function test_checks_before_publishing(): void
+    {
+        $entry = Booklet::entries()->make(['collection' => 'pages', 'published' => false], ['title' => 'Spring offer', 'content' => ''])->save();
+        $this->actingAs($this->admin)->postJson(route('builder.start', $entry->id()))->assertOk();
+        $pages = app(\App\PageBuilder\PageBuilder::class);
+        $build = $this->build($entry);
+        $this->act($entry->id(), 'add', 'video');
+        $this->act($entry->id(), 'add', 'gallery');
+        $words = array_column($pages->checks($build->fresh()), 'words');
+        foreach (['Hero: no picture yet (or choose No picture, under Where the picture goes).', 'Hero: the button “Get started” doesn’t go anywhere yet.',
+            'Columns: still has its example words (“Why people choose it”).', 'Quotes: still has its example words (“Something a real person said about it.…”).',
+            'Video: no video chosen yet.', 'Pictures: no pictures chosen yet.'] as $expected) {
+            $this->assertContains($expected, $words);
+        }
+        $this->assertNotContains('Hero: still has its example words (“Spring offer”).', $words, 'its own title, not an example');
+
+        // In the Page tab, each going to its section.
+        $drawer = (string) $this->act($entry->id(), 'tab', 'page')->json('drawer');
+        $this->assertStringContainsString('Before you publish · '.count($words).' to look at', $drawer);
+        $hero = $build->fresh()->draft[0]['id'];
+        $this->assertStringContainsString('data-do="select" data-payload="&quot;'.$hero.'&quot;"', $drawer);
+
+        // Seen to: the list goes.
+        $this->act($entry->id(), 'set', ['id' => $hero, 'field' => 'button.url', 'value' => '/menu']);
+        $this->act($entry->id(), 'set', ['id' => $hero, 'field' => 'layout', 'value' => 'none']);
+        $this->assertNotContains('Hero: the button “Get started” doesn’t go anywhere yet.', array_column($pages->checks($build->fresh()), 'words'));
+        $this->assertNotContains('Hero: no picture yet (or choose No picture, under Where the picture goes).', array_column($pages->checks($build->fresh()), 'words'));
+        $build->fresh()->put(['draft' => [app(\App\PageBuilder\Builder::class)->make('divider')]]);
+        $this->assertSame([], $pages->checks($build->fresh()));
+        $this->assertStringContainsString('Nothing to look at before publishing.', (string) $this->act($entry->id(), 'tab', 'page')->json('drawer'));
+        $this->act($entry->id(), 'publish')->assertOk(); // never stopped
+    }
+
     public function test_the_slip_and_who_can_build(): void
     {
         $about = $this->about();
