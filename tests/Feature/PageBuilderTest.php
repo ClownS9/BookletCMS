@@ -292,7 +292,7 @@ class PageBuilderTest extends TestCase
         $drawer = $this->act($about->id(), 'tab', 'page')->json('drawer');
         $this->assertStringContainsString('Published before · 3', $drawer);
         $this->assertSame(1, substr_count($drawer, 'on the site now'));
-        $this->assertStringContainsString('by '.$this->admin->name, $drawer);
+        $this->assertStringContainsString('by '.e($this->admin->name), $drawer);
         $first = $versions[2];
         $this->actingAs($this->admin)->get(route('builder.preview', $about->id()).'?version='.$first->id)
             ->assertRedirect(route('preview', $about->id()).'?preview=1&version='.$first->id);
@@ -555,6 +555,79 @@ class PageBuilderTest extends TestCase
         // Asked for nothing: said under the box.
         $this->assertSame(['stacy' => 'Say what it should be about, and I’ll write it.'],
             $this->act($about->id(), 'stacy', ['id' => $faq, 'ask' => ' '], ['section' => $faq])->assertStatus(422)->json('errors'));
+    }
+
+    public function test_two_people_building_one_page_never_undo_each_other(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $hero = $page->draft[0]['id'];
+        $hana = User::factory()->create(['role' => 'editor', 'name' => 'Hana']);
+        $post = fn (User $who, string $action, mixed $payload, ?int $rev) => $this->actingAs($who)->postJson(route('builder.act', $about->id()),
+            ['action' => $action, 'payload' => $payload, 'state' => ['section' => $hero], 'rev' => $rev]);
+
+        // Both open it: each sees the other, and which change it's at.
+        $mine = $this->actingAs($this->admin)->getJson(route('builder.edit', $about->id()))->json();
+        $hers = $this->actingAs($hana)->getJson(route('builder.edit', $about->id()))->json();
+        $this->assertSame([$this->admin->name], $hers['bar']['others']);
+        $this->assertSame(['rev' => $mine['rev'], 'others' => ['Hana']], $this->actingAs($this->admin)->postJson(route('builder.here', $about->id()))->json());
+
+        // Hana changes it first. Mine, made on what I saw before, isn't done over hers:
+        $rev = $post($hana, 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Hana’s title'], $hers['rev'])->assertOk()->json('rev');
+        $this->assertSame($mine['rev'] + 1, $rev);
+        $stale = $post($this->admin, 'set', ['id' => $hero, 'field' => 'title', 'value' => 'My title'], $mine['rev'])->assertStatus(409);
+        $this->assertSame('Hana changed this page a moment ago, so it’s brought up to date here. Make your change again.', $stale->json('stamp'));
+        $this->assertTrue($stale->json('stale'));
+        $this->assertStringContainsString('Hana’s title', (string) $stale->json('page'));
+        $this->assertSame('Hana’s title', $this->build($about)->draft[0]['fields']['title']);
+
+        // Made again, now it's up to date: done.
+        $post($this->admin, 'set', ['id' => $hero, 'field' => 'title', 'value' => 'My title'], $stale->json('rev'))->assertOk();
+        $this->assertSame('My title', $this->build($about)->draft[0]['fields']['title']);
+        // Only looking is never too late; and my other window is named as mine.
+        $post($hana, 'tab', 'page', $hers['rev'])->assertOk();
+        $this->assertStringStartsWith('You changed it in another window', (string) $post($this->admin, 'set', ['id' => $hero, 'field' => 'lede', 'value' => 'x'], $mine['rev'])->json('stamp'));
+
+        // Leaving: gone from the others' bar.
+        $this->actingAs($hana)->post(route('builder.here', $about->id()), ['leaving' => 1])->assertOk();
+        $this->assertSame([], $this->actingAs($this->admin)->postJson(route('builder.here', $about->id()))->json('others'));
+    }
+
+    public function test_a_pictures_description_and_focus_from_the_drawer(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $path = (new \App\Booklet\Support\AssetUploader('media'))->store(\Illuminate\Http\UploadedFile::fake()->image('cake.jpg', 1200, 800), 'blog')->path();
+        $about = $this->about();
+        $page = $this->startAbout();
+        $hero = $page->draft[0]['id'];
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'picture', 'value' => $path]);
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'layout', 'value' => 'side']);
+        $pages = app(\App\PageBuilder\PageBuilder::class);
+        $this->assertContains('Hero: a picture has no description, for people who can’t see them (add one in Media).', array_column($pages->checks($this->build($about)), 'words'));
+
+        // Under the chosen picture: where it's focused, and its description.
+        $drawer = (string) $this->act($about->id(), 'select', $hero, ['section' => $hero])->json('drawer');
+        $this->assertStringContainsString('data-focus="'.$path.'"', $drawer);
+        $this->assertStringContainsString('data-alt="'.$path.'"', $drawer);
+        $this->assertStringContainsString('Not described yet.', $drawer);
+
+        $this->act($about->id(), 'alt', ['path' => $path, 'alt' => 'A slice of <b>pandan</b> cake'], ['section' => $hero])
+            ->assertJsonPath('stamp', 'Description saved, for everywhere it’s used.');
+        $asset = Booklet::assets()->find(['container' => 'media', 'path' => $path]);
+        $this->assertSame('A slice of pandan cake', $asset->get('alt'), 'kept in Media, as words only');
+        $this->act($about->id(), 'focus', ['path' => $path, 'x' => 30, 'y' => 70], ['section' => $hero])
+            ->assertJsonPath('stamp', 'That spot stays in view, everywhere it’s used.');
+        $this->assertSame('30-70-1', Booklet::assets()->find(['container' => 'media', 'path' => $path])->get('focus'));
+        $page = (string) $this->act($about->id(), 'tab', 'outline')->json('page');
+        $this->assertStringContainsString('object-position: 30% 70%', $page);
+        $this->assertStringContainsString('alt="A slice of pandan cake"', $page);
+        $this->assertNotContains('Hero: a picture has no description, for people who can’t see them (add one in Media).', array_column($pages->checks($this->build($about)->fresh()), 'words'));
+
+        // Only people who can change Media can change them.
+        $card = \App\Models\Role::create(['key' => 'no_media', 'name' => 'No media', 'tone' => 'sky', 'base' => 'editor', 'chapters' => ['pages' => 'publish'], 'media' => false, 'stacy' => false]);
+        $nomedia = User::factory()->create(['role' => $card->key]);
+        $this->act($about->id(), 'alt', ['path' => $path, 'alt' => 'Changed'], ['section' => $hero], $nomedia)->assertOk()->assertJsonPath('stamp', null);
+        $this->assertSame('A slice of pandan cake', Booklet::assets()->find(['container' => 'media', 'path' => $path])->get('alt'));
     }
 
     public function test_the_slip_and_who_can_build(): void
