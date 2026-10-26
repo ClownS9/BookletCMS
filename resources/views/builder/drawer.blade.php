@@ -68,6 +68,7 @@
         {{-- The blog page: it lives where the blog does, and is never deleted --}}
         <p class="d-note">The blog page lives at <code>{{ $address }}</code>. Its posts are always on it; everything around them is yours to arrange.</p>
         @include('builder.status')
+        @include('builder.history')
         @if ($changed)
             <div class="d-more">
                 <button type="button" class="d-link" data-do="discard" data-confirm="Throw away the changes since you last published?">Go back to what readers see</button>
@@ -76,6 +77,7 @@
 
     @elseif ($state['tab'] === 'page')
         @include('builder.status')
+        @include('builder.history')
 
         {{-- The page's (or post's) own details: they're its own, in the book too --}}
         @php

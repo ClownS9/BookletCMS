@@ -273,6 +273,73 @@ class PageBuilderTest extends TestCase
         $this->assertSame(['hero', 'stats', 'team', 'steps'], array_column($builder->starter('team'), 'type'));
     }
 
+    public function test_what_was_published_is_kept_to_look_at_and_put_back(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $hero = $page->draft[0]['id'];
+        foreach (['First version', 'Second version', 'Third version'] as $i => $title) {
+            $this->travel(1)->minutes();
+            $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => $title]);
+            $this->act($about->id(), 'publish');
+        }
+        $versions = $this->build($about)->versions()->get();
+        $this->assertCount(3, $versions);
+        $this->assertSame('Third version', $versions[0]->sections[0]['fields']['title'], 'newest first');
+        $this->assertSame($this->admin->id, $versions[0]->user_id);
+
+        // In the Page tab: when, who, which is on the site; look at one; put one back.
+        $drawer = $this->act($about->id(), 'tab', 'page')->json('drawer');
+        $this->assertStringContainsString('Published before · 3', $drawer);
+        $this->assertSame(1, substr_count($drawer, 'on the site now'));
+        $this->assertStringContainsString('by '.$this->admin->name, $drawer);
+        $first = $versions[2];
+        $this->actingAs($this->admin)->get(route('builder.preview', $about->id()).'?version='.$first->id)
+            ->assertRedirect(route('preview', $about->id()).'?preview=1&version='.$first->id);
+        $this->actingAs($this->admin)->get(route('preview', $about->id()).'?preview=1&version='.$first->id)
+            ->assertSee('<h1 class="pb-title pb-title--big">First version</h1>', false)->assertDontSee('id="pb-editor"', false);
+        $this->reader('/about?preview=1&version='.$first->id)->assertSee('<h1 class="pb-title pb-title--big">Third version</h1>', false)->assertDontSee('First version');
+
+        $this->act($about->id(), 'restore', $first->id)->assertJsonPath('bar.status', 'changed');
+        $this->assertSame('First version', $this->build($about)->draft[0]['fields']['title']);
+        $this->reader('/about')->assertSee('Third version');
+        $this->act($about->id(), 'undo');
+        $this->assertSame('Third version', $this->build($about)->draft[0]['fields']['title'], 'Undo takes it back');
+        $this->act($about->id(), 'restore', 999999)->assertJsonPath('stamp', 'That version isn’t kept any more.');
+
+        // Only so many are kept.
+        $build = $this->build($about);
+        for ($i = 0; $i < \App\Models\PageBuildVersion::KEEP + 3; $i++) {
+            app(\App\PageBuilder\PageBuilder::class)->goLive($build, $build->draft, now()->addMinutes($i + 10));
+        }
+        $this->assertSame(\App\Models\PageBuildVersion::KEEP, $build->versions()->count());
+
+        // Scheduled ones say so.
+        app(\App\PageBuilder\PageBuilder::class)->goLive($build, $build->draft, now()->addHour(), true);
+        $this->assertStringContainsString('Went live as scheduled', (string) $this->act($about->id(), 'tab', 'page')->json('drawer'));
+    }
+
+    public function test_words_keep_bold_italic_and_links(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $hero = $page->draft[0]['id'];
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'lede', 'value' => 'Fresh **every morning**, *mostly*. See [the menu](/menu) or [write](hello@example.com). 2 \\* 3 = 6, <b>not html</b>'])->assertOk();
+        $this->assertSame('Fresh **every morning**, *mostly*. See [the menu](/menu) or [write](mailto:hello@example.com). 2 \\* 3 = 6, <b>not html</b>', $this->build($about)->draft[0]['fields']['lede']);
+
+        $this->assertSame(['field:lede' => 'The link on “anywhere” doesn’t go anywhere: use /about, https://example.com or an email address.'],
+            $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'lede', 'value' => 'Go [anywhere](javascript:alert)'])->assertStatus(422)->json('errors'));
+
+        $this->act($about->id(), 'publish');
+        $this->reader('/about')->assertSee('Fresh <strong>every morning</strong>, <em>mostly</em>. See <a href="/menu">the menu</a> or <a href="mailto:hello@example.com">write</a>. 2 * 3 = 6, &lt;b&gt;not html&lt;/b&gt;', false);
+        $this->assertStringContainsString('Fresh every morning, mostly. See the menu or write. 2 * 3 = 6', app(\App\Booklet\Site::class)->excerpt($this->about(), 300));
+        $this->reader('/search?q=every+morning')->assertSee('1 result for');
+
+        // A link that isn't safe never becomes one, however it got there.
+        $this->assertSame('a bad) link', \App\PageBuilder\Fields::format('a [bad](javascript:alert(1)) link'));
+        $this->assertSame('<a href="https://example.com" rel="noopener">out</a>', \App\PageBuilder\Fields::format('[out](https://example.com)'));
+    }
+
     public function test_the_slip_and_who_can_build(): void
     {
         $about = $this->about();

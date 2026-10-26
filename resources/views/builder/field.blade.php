@@ -24,7 +24,9 @@
     @case ('words')
         <label class="d-field">
             <span>{{ $spec['label'] }}</span>
-            <textarea data-set="{{ $path }}" rows="{{ $path === 'body' ? 6 : 3 }}" maxlength="{{ $spec['max'] ?? 2000 }}">{{ is_scalar($value) ? $value : '' }}</textarea>
+            @php $shown = $typed($path, $value); @endphp
+            <textarea data-set="{{ $path }}" rows="{{ $path === 'body' ? 6 : 3 }}" maxlength="{{ $spec['max'] ?? 2000 }}" @if ($why($path)) aria-invalid="true" @endif>{{ is_scalar($shown) ? $shown : '' }}</textarea>
+            <small>**bold**, *italic*, [a link](/about) · or select words on the page</small>
             @if ($why($path)) <em class="d-error">{{ $why($path) }}</em> @endif
         </label>
         @break
