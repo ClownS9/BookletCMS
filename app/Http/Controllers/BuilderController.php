@@ -17,6 +17,11 @@ use Throwable;
  */
 class BuilderController extends Controller
 {
+    /** What only looks, or changes nothing on the page: never too late. */
+    protected const LOOKING = ['select', 'tab', 'adding', 'pick', 'unpick', 'proof', 'proof-stop', 'proof-note', 'save-layout', 'forget-layout', 'forget-shared', 'alt', 'focus'];
+
+    /** How long someone counts as still here after their last word from the page (seconds). */
+    protected const HERE_FOR = 60;
     public function __construct(protected PageBuilder $pages) {}
 
     /** "Build this page": start building it (from its own words), then open it to build. */
@@ -45,6 +50,16 @@ class BuilderController extends Controller
         abort_unless($this->pages->can($action), 404);
 
         $state = $this->pages->stateFrom((array) $request->input('state', []));
+
+        // Changed since this editor last saw it (by someone else, or in another window): not
+        // done over it; the page is brought up to date instead, to make the change again.
+        if ($request->filled('rev') && (int) $request->input('rev') !== (int) $page->rev && ! in_array($action, self::LOOKING, true)) {
+            $by = $page->edited_by === $request->user()?->id ? 'You changed it in another window'
+                : ((string) (\App\Models\User::query()->whereKey($page->edited_by)->value('name') ?: 'Someone else')).' changed this page';
+
+            return $this->respond($page, $state, $by.' a moment ago, so it’s brought up to date here. Make your change again.', false, [], ['stale' => true])->setStatusCode(409);
+        }
+
         try {
             $result = $this->pages->act($page, $action, $state, $request->input('payload'));
         } catch (ValidationException $e) {
@@ -71,6 +86,46 @@ class BuilderController extends Controller
         }
 
         return $this->respond($page, $state, $stamp, $request->boolean('quiet'), [], $extra);
+    }
+
+    /**
+     * Still here (every 20 seconds while building): who else is building
+     * this page, and which change it's at. Leaving says so too.
+     */
+    public function ping(Request $request, string $target): JsonResponse
+    {
+        $page = $this->find($request, $target);
+        if ($request->boolean('leaving')) {
+            $this->here($page, false);
+
+            return response()->json(['ok' => true]);
+        }
+
+        return response()->json(['rev' => (int) $page->rev, 'others' => $this->here($page)])->header('Cache-Control', 'no-store, private');
+    }
+
+    /**
+     * Note that this person is building the page (or has left it), and
+     * say who else is.
+     *
+     * @return list<string>
+     */
+    protected function here(PageBuild $page, bool $here = true): array
+    {
+        $user = request()->user();
+        $key = 'booklet.builder.here.'.$page->target;
+        $now = now()->timestamp;
+        $all = array_filter((array) \Illuminate\Support\Facades\Cache::get($key, []), fn ($p) => is_array($p) && ($p['at'] ?? 0) > $now - self::HERE_FOR);
+        if ($user) {
+            if ($here) {
+                $all[$user->id] = ['name' => (string) $user->name, 'at' => $now];
+            } else {
+                unset($all[$user->id]);
+            }
+        }
+        \Illuminate\Support\Facades\Cache::put($key, $all, self::HERE_FOR * 2);
+
+        return array_values(array_map(fn ($p) => (string) $p['name'], array_filter($all, fn ($p, $id) => $id !== $user?->id, ARRAY_FILTER_USE_BOTH)));
     }
 
     /** The draft as a phone shows it (the editor's Phone view): the page itself, with ?preview=1. */
@@ -133,7 +188,9 @@ class BuilderController extends Controller
             'stamp' => $stamp,
             'errors' => $errors,
             'state' => $state,
+            'rev' => (int) $page->rev,
             'bar' => [
+                'others' => $this->here($page),
                 'name' => $page->isBlog() ? 'The blog page' : (string) $entry?->title(),
                 'status' => $where,
                 'words' => $words,
@@ -163,6 +220,7 @@ class BuilderController extends Controller
                 ] : null,
                 'canShare' => $selected && ! isset($selected['shared']) && $pages->shareable($selected['type']),
                 'stacy' => $selected && request()->user() && \App\Stacy\Writer::available(request()->user()),
+                'canMedia' => (bool) request()->user()?->canChangeMedia(),
                 'canHome' => (bool) request()->user()?->isAdmin() && $entry && ! $entry->collection()?->dated(),
                 'pictures' => $state['picking'] ? Booklet::assets()->inContainer('media')->filter(fn ($a) => $a->isImage())
                     ->mapWithKeys(fn ($a) => [$a->path() => [

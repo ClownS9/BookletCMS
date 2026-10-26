@@ -33,14 +33,15 @@ class PageBuilder
     public function __construct(public readonly Builder $builder)
     {
         // Pictures come from Media only.
+        // Remembered for this request (a page of cards asks about the same pictures).
         Fields::$pictures ??= function (string $path): ?array {
-            static $seen = [];
-            if (! array_key_exists($path, $seen)) {
+            $key = 'booklet.builder.picture::'.$path;
+            if (! request()->attributes->has($key)) {
                 $asset = rescue(fn () => Booklet::assets()->find(['container' => 'media', 'path' => $path]), null, false);
-                $seen[$path] = $asset && $asset->isImage() ? \App\Support\Blocks::picture($path) : null;
+                request()->attributes->set($key, $asset && $asset->isImage() ? \App\Support\Blocks::picture($path) : null);
             }
 
-            return $seen[$path];
+            return request()->attributes->get($key);
         };
     }
 
@@ -1151,6 +1152,33 @@ class PageBuilder
                 return 'Stacy wrote it. Read it over and change anything that isn’t right (anything in [brackets] is yours to fill in). Undo takes it back.';
             },
 
+            // Pictures ------------------------------------------------------------------------
+            // A picture's description (for people who can't see it), kept in Media: right everywhere it's used.
+            'alt' => function (array $form, $payload, PageBuild $page) {
+                $asset = $this->mediaPicture(is_array($payload) ? ($payload['path'] ?? null) : null);
+                if (! $asset) {
+                    return null;
+                }
+                $alt = trim(mb_substr(strip_tags((string) ($payload['alt'] ?? '')), 0, 500));
+                $alt === '' ? $asset->remove('alt') : $asset->set('alt', $alt);
+                Booklet::assets()->save($asset);
+                $this->forgetPicture($asset->path());
+
+                return $alt === '' ? 'Description taken out.' : 'Description saved, for everywhere it’s used.';
+            },
+            // The spot that matters in it (a face, the cake): kept in view wherever it's cropped.
+            'focus' => function (array $form, $payload, PageBuild $page) {
+                $asset = $this->mediaPicture(is_array($payload) ? ($payload['path'] ?? null) : null);
+                if (! $asset || ! is_numeric($payload['x'] ?? null) || ! is_numeric($payload['y'] ?? null)) {
+                    return null;
+                }
+                $asset->set('focus', \App\Support\Focus::store((float) $payload['x'], (float) $payload['y']));
+                Booklet::assets()->save($asset);
+                $this->forgetPicture($asset->path());
+
+                return 'That spot stays in view, everywhere it’s used.';
+            },
+
             // Layouts -------------------------------------------------------------------------
             // Start again from a layout: one Booklet comes with ("starter:shop"), or a saved one ("saved:3").
             'layout' => function (array $form, $key, PageBuild $page) {
@@ -1344,6 +1372,27 @@ class PageBuilder
         }
 
         return $section;
+    }
+
+    // Pictures --------------------------------------------------------------------------------
+
+    /** A picture in Media this person may change (descriptions and focus are Media's), or null. */
+    protected function mediaPicture(mixed $path): ?\App\Booklet\Data\Asset
+    {
+        if (! is_string($path) || $path === '' || ! request()->user()?->canChangeMedia()) {
+            return null;
+        }
+        $asset = rescue(fn () => Booklet::assets()->find(['container' => 'media', 'path' => $path]), null, false);
+
+        return $asset && $asset->isImage() ? $asset : null;
+    }
+
+    /** What's remembered about a picture for this request, forgotten (it just changed). */
+    protected function forgetPicture(string $path): void
+    {
+        request()->attributes->remove('booklet.builder.picture::'.$path);
+        request()->attributes->remove('booklet.focus.media::'.$path);
+        \App\Support\PageCache::flush(); // readers' pages show it too
     }
 
     // Layouts ---------------------------------------------------------------------------------

@@ -22,12 +22,14 @@ use Illuminate\Support\Carbon;
  * @property array<int, mixed>|null $history
  * @property array<string, mixed>|null $history_mark
  * @property bool $fresh
+ * @property int $rev which change it's at (every change to it counts one)
+ * @property int|null $edited_by who made the last one
  */
 class PageBuild extends Model
 {
     public const BLOG = 'blog';
 
-    protected $fillable = ['target', 'draft', 'published', 'published_at', 'scheduled', 'scheduled_at', 'history', 'history_mark', 'fresh'];
+    protected $fillable = ['target', 'draft', 'published', 'published_at', 'scheduled', 'scheduled_at', 'history', 'history_mark', 'fresh', 'rev', 'edited_by'];
 
     protected function casts(): array
     {
@@ -87,6 +89,11 @@ class PageBuild extends Model
     {
         if (array_key_exists('scheduled', $changes)) {
             $changes['scheduled_at'] = is_array($changes['scheduled']) ? Carbon::parse((string) $changes['scheduled']['at']) : null;
+        }
+        // A change to what it is (not just to Undo's notes): one more, and whose.
+        if (array_intersect_key($changes, array_flip(['draft', 'published', 'scheduled'])) !== []) {
+            $changes['rev'] = (int) $this->rev + 1;
+            $changes['edited_by'] = request()->user()?->id;
         }
         $this->fill($changes)->save();
 
