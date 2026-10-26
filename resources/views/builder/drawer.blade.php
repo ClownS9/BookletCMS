@@ -212,6 +212,28 @@
             </details>
         @endif
 
+        @if ($sendTo !== [])
+            {{-- A copy of it on another page --}}
+            <details class="d-share d-send" @if (! empty($errors['send'])) open @endif>
+                <summary>Send a copy to another page</summary>
+                <form class="d-form" data-form="send">
+                    <input type="hidden" name="id" value="{{ $sid }}">
+                    <label class="d-field">
+                        <span>To</span>
+                        <select name="to">
+                            <option value="">Choose a page…</option>
+                            @foreach ($sendTo as $to => $name)
+                                <option value="{{ $to }}" @selected(request()->input('payload.to') === (string) $to)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        @if (! empty($errors['send'])) <em class="d-error">{{ $errors['send'] }}</em> @endif
+                        <small>It goes at the end of that page’s draft, to move where you like. Nothing changes for readers until that page is published.</small>
+                    </label>
+                    <button type="submit" class="d-btn">Send a copy</button>
+                </form>
+            </details>
+        @endif
+
         @foreach ($kind['fields'] as $name => $spec)
             @include('builder.field', ['spec' => $spec, 'path' => $name, 'value' => $selected['fields'][$name] ?? null])
         @endforeach

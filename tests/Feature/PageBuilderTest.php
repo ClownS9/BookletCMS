@@ -630,6 +630,57 @@ class PageBuilderTest extends TestCase
         $this->assertSame('A slice of pandan cake', Booklet::assets()->find(['container' => 'media', 'path' => $path])->get('alt'));
     }
 
+    public function test_redo_and_sending_a_section_to_another_page(): void
+    {
+        $about = $this->about();
+        $contact = Booklet::entries()->findBySlug('pages', 'contact');
+        $hero = $this->startAbout()->draft[0]['id'];
+
+        // Redo brings back what Undo took, until the next change.
+        $this->act($about->id(), 'add', 'faq');
+        $this->act($about->id(), 'redo')->assertJsonPath('stamp', 'Nothing to redo.')->assertJsonPath('bar.redoable', false);
+        $this->act($about->id(), 'undo')->assertJsonPath('bar.redoable', true);
+        $this->assertCount(1, $this->build($about)->draft);
+        $this->act($about->id(), 'redo')->assertJsonPath('bar.redoable', false)->assertJsonPath('bar.undoable', true);
+        $this->assertSame(['hero', 'faq'], array_column($this->build($about)->draft, 'type'));
+        $this->act($about->id(), 'undo');
+        $this->act($about->id(), 'copy', $hero);
+        $this->act($about->id(), 'redo')->assertJsonPath('stamp', 'Nothing to redo.');
+        $this->assertSame(['hero', 'hero'], array_column($this->build($about)->draft, 'type'));
+        $this->act($about->id(), 'undo');
+
+        // Sending: only to pages being built (the blog page too, once it is).
+        $drawer = (string) $this->act($about->id(), 'select', $hero, ['section' => $hero])->json('drawer');
+        $this->assertStringNotContainsString('Send a copy to another page', $drawer);
+        $this->actingAs($this->admin)->postJson(route('builder.start', $contact->id()))->assertOk();
+        $this->actingAs($this->admin)->getJson(route('builder.edit', 'blog'))->assertOk();
+        $drawer = (string) $this->act($about->id(), 'select', $hero, ['section' => $hero])->json('drawer');
+        $this->assertStringContainsString('Send a copy to another page', $drawer);
+        $this->assertStringContainsString('<option value="'.$contact->id().'"', $drawer);
+        $this->assertStringContainsString('<option value="blog"', $drawer);
+
+        $this->assertSame(['send' => 'Choose a page to send it to.'],
+            $this->act($about->id(), 'send', ['id' => $hero, 'to' => ''], ['section' => $hero])->assertStatus(422)->json('errors'));
+        $before = count($this->build($contact)->draft);
+        $rev = (int) $this->build($contact)->rev;
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Sent along']);
+        $this->act($about->id(), 'send', ['id' => $hero, 'to' => (string) $contact->id()], ['section' => $hero])->assertOk()
+            ->assertJsonPath('stamp', 'A copy is at the end of “Contact” (a draft change there, until it’s published).')
+            ->assertJsonPath('open', url('/contact').'?edit=1');
+        $there = $this->build($contact)->draft;
+        $this->assertCount($before + 1, $there);
+        $this->assertSame('Sent along', end($there)['fields']['title']);
+        $this->assertNotSame($hero, end($there)['id']);
+        $this->assertGreaterThan($rev, (int) $this->build($contact)->rev, 'anyone building it there is brought up to date');
+        $this->reader('/contact')->assertDontSee('Sent along');
+        $this->act($contact->id(), 'undo'); // its own Undo takes it back there
+        $this->assertCount($before, $this->build($contact)->draft);
+
+        // A kind the other page can't have, or nowhere it may go.
+        $this->assertSame([], app(\App\PageBuilder\PageBuilder::class)->sendTargets($this->build($about), 'blog-posts'));
+        $this->act($about->id(), 'send', ['id' => $hero, 'to' => 'nowhere'], ['section' => $hero])->assertStatus(422);
+    }
+
     public function test_the_slip_and_who_can_build(): void
     {
         $about = $this->about();

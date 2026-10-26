@@ -67,6 +67,7 @@
             <span class="bar__who"><b class="bar__name"></b><span class="bar__state"></span><span class="bar__others" hidden></span></span>
             <span class="bar__do">
                 <button type="button" data-bar="undo" title="Undo (Ctrl+Z)">Undo</button>
+                <button type="button" data-bar="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
                 <button type="button" data-bar="phone">Phone view</button>
                 <button type="button" data-bar="drawer" aria-pressed="false">Drawer</button>
                 <button type="button" data-bar="publish" class="ink">Publish</button>
@@ -139,7 +140,7 @@
         }
         if (data.rev !== undefined) rev = data.rev;
         if (data.copy) copyLink(data.copy, data.stamp);
-        else if (data.stamp) toast(data.stamp, !!data.stale);
+        else if (data.stamp) toast(data.stamp, !!data.stale, data.open ? { href: data.open, words: 'Go to it' } : null);
         else if (data.errors && Object.keys(data.errors).length) toast(Object.values(data.errors)[0], true);
         markSelected(opts.scroll);
     };
@@ -601,6 +602,7 @@
         st.dataset.status = b.status;
         bar.dataset.live = b.live ? '1' : '0';
         bar.querySelector('[data-bar="undo"]').disabled = !b.undoable;
+        bar.querySelector('[data-bar="redo"]').disabled = !b.redoable;
         const pub = bar.querySelector('[data-bar="publish"]');
         pub.disabled = b.status === 'live';
         pub.textContent = { draft: 'Publish', changed: 'Publish changes', scheduled: 'Publish now' }[b.status] || 'Published';
@@ -639,6 +641,7 @@
         if (!b || b.disabled) return;
         const what = b.dataset.bar;
         if (what === 'undo') act('undo');
+        else if (what === 'redo') act('redo');
         else if (what === 'publish') act('publish', null, { quiet: true });
         else if (what === 'drawer') openDrawer(drawer.hidden);
         else if (what === 'phone') showPhone(true);
@@ -677,12 +680,20 @@
     });
 
     let toastTimer = null;
-    const toast = (words, bad = false) => {
+    const toast = (words, bad = false, link = null) => {
         toastEl.textContent = words;
+        if (link) {
+            // Somewhere to go and look (a page a section was sent to).
+            const a = document.createElement('a');
+            a.className = 'toast__go';
+            a.href = link.href;
+            a.textContent = link.words;
+            toastEl.append(' ', a);
+        }
         toastEl.classList.toggle('is-bad', bad);
         toastEl.hidden = false;
         clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { toastEl.hidden = true; }, bad ? 7000 : 3500);
+        toastTimer = setTimeout(() => { toastEl.hidden = true; }, bad || link ? 7000 : 3500);
     };
 
     // Starting and finishing ---------------------------------------------------------------
@@ -716,7 +727,9 @@
         if (!editing) return;
         if (e.key === 'Escape' && !phone.hidden) { showPhone(false); return; }
         const typing = (document.activeElement && (document.activeElement.isContentEditable || document.activeElement.matches('input, textarea, select'))) || (ui.activeElement && ui.activeElement.matches('input, textarea, select'));
-        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); act('undo'); }
+        const k = e.key.toLowerCase();
+        if ((e.metaKey || e.ctrlKey) && !typing && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); act('redo'); return; }
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && k === 'z' && !typing) { e.preventDefault(); act('undo'); }
     });
     addEventListener('beforeunload', (e) => { if (busy > 0) { e.preventDefault(); e.returnValue = ''; } });
 

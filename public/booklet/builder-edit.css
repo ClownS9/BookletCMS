@@ -215,6 +215,7 @@ code { font: 12px ui-monospace, "JetBrains Mono", monospace; background: var(--p
     box-shadow: 0 10px 30px rgba(30, 28, 24, .2); font-weight: 500;
 }
 .toast.is-bad { border-color: var(--danger); color: var(--danger); }
+.toast__go { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
 @media (max-width: 760px) { .toast { bottom: 128px; } }
 
 /* Phone view: the draft at phone size, over the page */
