@@ -130,7 +130,24 @@ class PageBuilderTest extends TestCase
         $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Draft title']);
         $this->actingAs($this->admin)->get(route('builder.preview', $about->id()))->assertRedirect(route('preview', $about->id()).'?preview=1');
         $this->actingAs($this->admin)->get(route('preview', $about->id()).'?preview=1')->assertSee('Draft title')->assertDontSee('id="pb-editor"', false);
-        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'nope', 'value' => 'x'])->assertOk();
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'nope', 'value' => 'x'])->assertStatus(422)
+            ->assertJsonPath('errors', ['field:nope' => 'That isn’t part of this section.']);
+
+        // A value that can't go there: said under its field, kept as typed to fix.
+        $r = $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'button.url', 'value' => 'javascript:alert(1)'], ['section' => $hero])->assertStatus(422);
+        $this->assertSame(['field:button.url' => 'Use an address like /about, https://example.com, or an email address.'], $r->json('errors'));
+        $drawer = $r->json('drawer');
+        $this->assertStringContainsString('value="javascript:alert(1)"', $drawer);
+        $this->assertStringContainsString('aria-invalid="true"', $drawer);
+        $this->assertSame('', (string) ($this->build($about)->draft[0]['fields']['button']['url'] ?? ''), 'nothing kept');
+
+        // A list's things are only the ones there (no gaps past the end).
+        $this->act($about->id(), 'add', 'faq');
+        $faq = collect($this->build($about)->draft)->firstWhere('type', 'faq')['id'];
+        $this->assertSame(['field:items.7.question' => 'That isn’t in the list any more.'],
+            $this->act($about->id(), 'set', ['id' => $faq, 'field' => 'items.7.question', 'value' => 'Far away?'])->assertStatus(422)->json('errors'));
+        $this->act($about->id(), 'set', ['id' => $faq, 'field' => 'items.1.question', 'value' => 'Second?'])->assertOk();
+        $this->assertSame(['A question people ask?', 'Second?'], array_column(collect($this->build($about)->draft)->firstWhere('type', 'faq')['fields']['items'], 'question'));
         $this->act($about->id(), 'whatever')->assertNotFound();
     }
 
@@ -205,6 +222,55 @@ class PageBuilderTest extends TestCase
         $this->assertStringNotContainsString('prose--dropcap', $html);
         $this->assertFalse($this->act($post->id(), 'tab', 'page')->json('bar.blog'));
         $this->assertStringNotContainsString('Use it as the home page', (string) $this->act($post->id(), 'tab', 'page')->json('drawer'));
+    }
+
+    public function test_search_excerpts_and_reading_time_read_what_readers_see(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $this->act($about->id(), 'set', ['id' => $page->draft[0]['id'], 'field' => 'lede', 'value' => 'Pandan chiffon every morning']);
+        $this->reader('/search?q=pandan')->assertSee('0 results');
+        $this->act($about->id(), 'publish');
+
+        $this->reader('/search?q=pandan')->assertSee('1 result for')->assertSee('Pandan chiffon every morning');
+        $this->reader('/search?q=writes+here')->assertSee('0 results', false);
+        $this->assertStringContainsString('Pandan chiffon every morning', app(\App\Booklet\Site::class)->excerpt($this->about()));
+    }
+
+    public function test_every_section_draws_for_readers_and_while_building(): void
+    {
+        $builder = app(\App\PageBuilder\Builder::class);
+        $types = $builder->types();
+        $this->assertGreaterThanOrEqual(23, count($types));
+        foreach (array_keys($types) as $type) {
+            $section = $builder->make($type);
+            foreach ([true, false] as $live) {
+                $html = view('builder.sections', ['sections' => [$section], 'types' => $types, 'live' => $live, 'embedded' => false]
+                    + app(\App\PageBuilder\PageBuilder::class)->blogContext(\Illuminate\Http\Request::create('/'), [$section]))->render();
+                $this->assertStringContainsString('pb--'.$type, $html, $type);
+                $this->assertSame($live, str_contains($html, 'data-pb-section'), $type);
+            }
+            $this->assertNotSame('', app(\App\PageBuilder\PageBuilder::class)->asText([$section]) ?: $type, $type);
+        }
+
+        // The new ones, as readers see them.
+        $html = view('builder.sections', ['sections' => array_map(fn ($t) => $builder->make($t), ['banner', 'notice', 'divider', 'stats', 'steps', 'team', 'menu', 'hours']),
+            'types' => $types, 'live' => false, 'embedded' => false])->render();
+        foreach (['<h1 class="pb-title pb-title--big">Something worth stopping for</h1>', 'pb-notice__sticker', '<hr class="pb-divider pb-divider--line">',
+            '<p class="pb-stat__number">40+</p>', '<span class="pb-step__n" aria-hidden="true">3</span>', 'pb-person__name', '<h3 class="pb-menu__group">Another group</h3>',
+            '<span class="pb-menu__price">$5</span>', '<dt><span>Sunday</span></dt>', 'Your street'] as $bit) {
+            $this->assertStringContainsString($bit, $html);
+        }
+        $this->assertStringNotContainsString('Choose a picture', $html, 'pickers only while building');
+        $this->assertStringNotContainsString('Get directions', $html, 'a button with nowhere to go isn’t shown to readers');
+
+        // A new thing on a menu joins the group it's added to.
+        $menu = $builder->items($builder->make('menu'), 'items', 'add', 0);
+        $this->assertSame(['A group', '', '', 'Another group', ''], array_column($menu['fields']['items'], 'group'));
+
+        // Two more layouts to start from.
+        $this->assertSame(['hero', 'menu', 'hours', 'quotes', 'cta'], array_column($builder->starter('shop'), 'type'));
+        $this->assertSame(['hero', 'stats', 'team', 'steps'], array_column($builder->starter('team'), 'type'));
     }
 
     public function test_the_slip_and_who_can_build(): void
