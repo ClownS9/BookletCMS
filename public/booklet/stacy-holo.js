@@ -74,6 +74,8 @@
     class StacyHoloElement extends HTMLElement {
         connectedCallback() {
             if (this._canvas) return;
+            // A copy on a turning page (booklet.js): a still picture of her, not a second Stacy.
+            if (this.closest('.leaf-stage, .leaf__pages')) return;
             this._canvas = document.createElement('canvas');
             this._canvas.setAttribute('aria-hidden', 'true');
             this.appendChild(this._canvas);

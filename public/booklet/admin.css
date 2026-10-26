@@ -1258,7 +1258,7 @@ body.night .chat__mine p { background: #EDE6D6; color: #1E1C18; }
 }
 
 .chat__box input { flex: 1 1 auto; min-width: 0; min-height: 44px; border: 0; background: transparent; outline: none; font-size: 15px; color: var(--ink); }
-.chat__box button {
+.chat__box > button {
     flex: none;
     width: 44px;
     height: 44px;
@@ -1272,7 +1272,7 @@ body.night .chat__mine p { background: #EDE6D6; color: #1E1C18; }
     justify-content: center;
 }
 
-.chat__box button[disabled] { opacity: .4; cursor: default; }
+.chat__box > button[disabled] { opacity: .4; cursor: default; }
 
 .svc-light { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 2px #B9AF9B; }
 .svc-light--on { background: var(--online); box-shadow: none; }
@@ -1435,7 +1435,7 @@ kbd {
 .chat__via { display: inline-flex; vertical-align: -2px; margin-right: 6px; opacity: .6; }
 .chat__mine--live p { opacity: .72; }
 
-.chat__box .chat__tool {
+.chat__box > .chat__tool {
     width: 40px;
     height: 40px;
     background: transparent;
@@ -1443,17 +1443,17 @@ kbd {
     transition: background .15s ease, color .15s ease;
 }
 
-.chat__box .chat__tool:hover { background: var(--hover); color: var(--ink); }
-.chat__box .chat__tool.is-on { background: color-mix(in srgb, var(--mint) 45%, transparent); color: var(--ink); }
+.chat__box > .chat__tool:hover { background: var(--hover); color: var(--ink); }
+.chat__box > .chat__tool.is-on { background: color-mix(in srgb, var(--mint) 45%, transparent); color: var(--ink); }
 
-.chat__box .chat__mic {
+.chat__box > .chat__mic {
     position: relative;
     background: var(--coral);
     color: #1E1C18;
     transition: transform .15s ease;
 }
 
-.chat__box .chat__mic:hover { transform: scale(1.06); }
+.chat__box > .chat__mic:hover { transform: scale(1.06); }
 
 .chat__mic-ring {
     position: absolute;
@@ -1787,7 +1787,7 @@ html { scrollbar-color: var(--rule-2) transparent; }
 
 /* Buttons feel pressable. */
 .btn, .pill, .icon-btn, .row, .pick, .toc a, .hit, .suggestion { transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .12s ease, box-shadow .15s ease; }
-.btn:active, .pill:active, .icon-btn:active, .orb__tool:active, .chat__box button:active { transform: translateY(1px) scale(.98); }
+.btn:active, .pill:active, .icon-btn:active, .orb__tool:active, .chat__box > button:active { transform: translateY(1px) scale(.98); }
 .btn--ink:hover { box-shadow: 0 6px 14px rgba(30, 28, 24, .22); }
 
 /* While Livewire is working on something a button started. */
@@ -1854,7 +1854,7 @@ html { scrollbar-color: var(--rule-2) transparent; }
     .heading { font-size: 26px; }
     .chat__text { font-size: 17px; }
     .chat__box { padding-left: 14px; gap: 4px; }
-    .chat__box .chat__tool { width: 36px; height: 36px; }
+    .chat__box > .chat__tool { width: 36px; height: 36px; }
     .toast { bottom: 92px; max-width: calc(100vw - 32px); }
 }
 

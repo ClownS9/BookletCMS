@@ -380,6 +380,17 @@
     const copy = (page) => {
         const clone = page.cloneNode(true);
         clone.querySelectorAll('script').forEach((s) => s.remove());
+        // A drawing (Stacy's hologram) copies blank: keep it as a still picture of how it looks now,
+        // so the turning page shows her where she was (and copies of the copy keep her too).
+        const drawn = page.querySelectorAll('canvas');
+        clone.querySelectorAll('canvas').forEach((c, i) => {
+            const still = document.createElement('img');
+            still.alt = '';
+            still.style.cssText = c.style.cssText;
+            still.className = c.className;
+            try { still.src = drawn[i].toDataURL(); } catch (e) { /* tainted: leave it out */ }
+            c.replaceWith(still);
+        });
         [clone, ...clone.querySelectorAll('*')].forEach((el) => {
             for (const attr of Array.from(el.attributes)) {
                 if (/^(x-|wire:|@|:|id$|for$|name$|autofocus)/.test(attr.name)) el.removeAttribute(attr.name);
