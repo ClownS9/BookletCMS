@@ -74,7 +74,7 @@ class BuilderController extends Controller
     public function preview(Request $request, string $target)
     {
         $page = $this->find($request, $target);
-        $query = http_build_query(['preview' => 1] + array_filter($request->only('category', 'page')));
+        $query = http_build_query(['preview' => 1] + array_filter($request->only('category', 'page', 'version')));
         if ($page->isBlog()) {
             return redirect()->to(app(\App\Booklet\Site::class)->blogUrl().'?'.$query);
         }
@@ -150,6 +150,7 @@ class BuilderController extends Controller
                     'stale' => (array) ($page->scheduled['sections'] ?? []) !== $sections,
                 ] : null,
                 'categories' => $selected && $selected['type'] === 'posts' ? $pages->categories() : [],
+                'history' => $state['tab'] === 'page' ? $pages->history($page) : [],
                 'canHome' => (bool) request()->user()?->isAdmin() && $entry && ! $entry->collection()?->dated(),
                 'pictures' => $state['picking'] ? Booklet::assets()->inContainer('media')->filter(fn ($a) => $a->isImage())
                     ->mapWithKeys(fn ($a) => [$a->path() => [

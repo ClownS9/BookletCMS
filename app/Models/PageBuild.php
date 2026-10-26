@@ -55,6 +55,12 @@ class PageBuild extends Model
         });
     }
 
+    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<PageBuildVersion, $this> what was published, newest first */
+    public function versions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PageBuildVersion::class)->orderByDesc('published_at')->orderByDesc('id');
+    }
+
     public static function forEntry(Entry $entry): ?self
     {
         return $entry->id() ? static::query()->where('target', $entry->id())->first() : null;

@@ -194,7 +194,7 @@ class SiteController extends Controller
         // Built of sections, on the page itself: its head, the sections, then what follows a post.
         if ($drawn = $this->builder()->drawing($entry, request())) {
             [$build, $draft, $editable] = $drawn;
-            $data['sections'] = $this->builder()->sectionsOf($build, $draft);
+            $data['sections'] = $this->builder()->shown($build, $draft, request());
             $data['types'] = $this->builder()->builder->types();
             $data['builder'] = $editable ? ['target' => $entry->id(), 'start' => request()->boolean('edit') || $build->published === null,
                 'draft' => ! $entry->published(), 'back' => route('admin.entries', $entry->collectionHandle())] : null;
@@ -215,7 +215,7 @@ class SiteController extends Controller
                 'site' => $this->site(),
                 'entry' => $entry,
                 'build' => $build,
-                'sections' => $this->builder()->sectionsOf($build, $draft),
+                'sections' => $this->builder()->shown($build, $draft, request()),
                 'types' => $this->builder()->builder->types(),
                 'draft' => $draft,
                 'editable' => $editable,
