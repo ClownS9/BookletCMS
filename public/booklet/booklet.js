@@ -1647,23 +1647,42 @@ window.bookletPasskeys = (() => {
 window.bookletPasskey = (what) => ({
     busy: false,
     available: window.bookletPasskeys.available(),
+    // Options fetched ahead, so the device is asked the moment the button is
+    // pressed: Safari (and iPhones) refuse with "cancelled" when the click
+    // waited on the server first. A challenge is good for 5 minutes.
+    ready: null,
+    readyAt: 0,
+    init() {
+        if (what === 'signin' && this.available) this.prepare();
+    },
+    async prepare() {
+        try {
+            const options = await this.$wire.passkeyOptions();
+            if (options && options.challenge) { this.ready = options; this.readyAt = Date.now(); }
+        } catch (error) { /* asked for again on the click */ }
+    },
     async go() {
         if (this.busy) return;
         const why = window.bookletPasskeys.reason();
         if (why) { this.$wire.passkeyFailed(why); return; }
         this.busy = true;
+        let done = false;
         try {
-            const options = await this.$wire.passkeyOptions();
+            let options = this.ready && Date.now() - this.readyAt < 240000 ? this.ready : null;
+            this.ready = null;
+            if (!options) options = await this.$wire.passkeyOptions();
             if (!options || !options.challenge) return; // the server said why
             if (what === 'make') {
                 await this.$wire.addPasskey(await window.bookletPasskeys.make(options));
             } else {
                 await this.$wire.passkeySignIn(await window.bookletPasskeys.sign(options));
             }
+            done = true;
         } catch (error) {
             this.$wire.passkeyFailed(error && error.name ? String(error.name) : 'Error');
         } finally {
             this.busy = false;
+            if (!done) this.prepare(); // ready for another try
         }
     },
 });

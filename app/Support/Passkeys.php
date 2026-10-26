@@ -179,7 +179,11 @@ class Passkeys
     public static function failure(string $name, bool $making = false): string
     {
         return match ($name) {
-            'NotAllowedError', 'AbortError' => __('Cancelled, or your device didn’t answer in time. Try again when you’re ready.'),
+            // Browsers say only this, whether the person pressed Cancel, no passkey for this
+            // site was found, or the device couldn't check a face, finger or PIN.
+            'NotAllowedError', 'AbortError' => $making
+                ? __('Your device didn’t make the passkey. It was cancelled, or the device couldn’t check it was you: on a computer, make sure Windows Hello or Touch ID is set up, or choose to use a phone instead.')
+                : __('No passkey was used. Either it was cancelled, or this device has no passkey for this book yet: sign in with your password, then add one in Your account › Signing in.'),
             'InvalidStateError' => $making ? __('This device already keeps a passkey for you here.') : __('Something went wrong with the passkey. Try again.'),
             'SecurityError', 'insecure' => __('Passkeys only work on a secure (https) address.'),
             'NotSupportedError', 'unsupported' => __('This browser can’t use passkeys. Try a recent Safari, Chrome, Edge or Firefox.'),

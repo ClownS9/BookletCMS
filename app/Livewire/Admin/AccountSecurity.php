@@ -144,8 +144,8 @@ class AccountSecurity extends Component
     /** What the browser hands the device to make a passkey (empty when it isn't the moment). */
     public function passkeyOptions(): array
     {
-        $this->resetErrorBag();
-        $this->validate(['passkeyName' => ['required', 'string', 'max:80']], [], ['passkeyName' => __('name')]);
+        // Fetched as the naming form opens, so the device is asked the moment
+        // the button is pressed (Safari won't ask it after a wait).
         if (! $this->addingPasskey || ! $this->confirmedRecently()) {
             $this->cancelPasskey();
 
@@ -158,6 +158,7 @@ class AccountSecurity extends Component
     /** What the device made: check it and keep it. */
     public function addPasskey(array $credential): void
     {
+        $this->resetErrorBag();
         $user = request()->user();
         if (! $this->addingPasskey || ! $this->confirmedRecently()) {
             $this->cancelPasskey();

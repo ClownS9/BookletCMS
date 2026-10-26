@@ -195,7 +195,8 @@ class Login extends Component
     /** Signing in with a passkey, step one: a fresh challenge for the device to sign. */
     public function passkeyOptions(): array
     {
-        $this->resetErrorBag();
+        // Fetched as the page opens (so the device can be asked the moment the button
+        // is pressed: Safari won't ask it after a wait), so it leaves any message alone.
         $throttle = 'passkey|'.request()->ip();
         if (RateLimiter::tooManyAttempts($throttle, 10)) {
             $this->addError('passkey', __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)]));
@@ -212,6 +213,7 @@ class Login extends Component
      */
     public function passkeySignIn(array $credential)
     {
+        $this->resetErrorBag();
         $throttle = 'passkey|'.request()->ip();
         if (RateLimiter::tooManyAttempts($throttle, 10)) {
             $this->addError('passkey', __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)]));
