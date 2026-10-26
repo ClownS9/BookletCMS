@@ -5,6 +5,7 @@ namespace App\Stacy;
 use App\Models\StacyConversation;
 use App\Models\StacyMessage;
 use App\Models\User;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -97,7 +98,7 @@ class Chat
             $answer = (new Stacy($user))->answer($history, $text, $context + ['spoken' => $via === 'voice']);
             $reply = $conversation->messages()->create([
                 'role' => 'assistant',
-                'content' => static::tidy($answer['text']),
+                'content' => trim($answer['text']), // as she wrote it: drawn with html(), copied and read aloud with tidy()
                 'meta' => array_filter([
                     'links' => $answer['links'] ?: null,
                     'pending' => $answer['pending'],
@@ -243,6 +244,77 @@ class Chat
         $text = preg_replace('/ +([.,!?])/u', '$1', (string) $text);
 
         return trim(preg_replace('/\n{3,}/u', "\n\n", (string) $text));
+    }
+
+    /**
+     * Stacy's answer, drawn. She's asked for plain sentences, but models
+     * slip into Markdown: rather than lose it (a list run together into one
+     * paragraph), paragraphs, lists, a heading line, a quote, **bold**,
+     * *italic* and `code` are drawn as such. Links aren't: the places she
+     * found show underneath, and one she wrote herself may lead nowhere, so
+     * only its words stay (as when she's read aloud). Nothing she writes
+     * becomes HTML of its own.
+     */
+    public static function html(string $text): HtmlString
+    {
+        $text = str_replace("\r\n", "\n", $text);
+        $text = (string) preg_replace('/!?\[([^\]]+)\]\([^)]*\)/u', '$1', $text);                       // [Pages](go_to_pages) → Pages
+        $text = (string) preg_replace('/https?:\/\/\S+/u', '', $text);                                     // bare URLs
+        $text = (string) preg_replace('/[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{FE0F}\x{200D}]/u', '', $text); // emoji
+        // Each line, as what it is: ['ul'|'ol', item], ['p', line], ['h', words], ['q', words] or ['gap'].
+        $parts = [];
+        foreach (explode("\n", trim($text)) as $line) {
+            $last = $parts === [] ? null : $parts[array_key_last($parts)];
+            if (trim($line) === '') {
+                $parts[] = ['gap', ''];
+            } elseif (preg_match('/^\s{0,3}([-*•]|\d{1,3}[.)])\s+(.*)$/u', $line, $m)) {
+                $parts[] = [ctype_digit($m[1][0]) ? 'ol' : 'ul', $m[2]];
+            } elseif ($last !== null && in_array($last[0], ['ul', 'ol'], true) && preg_match('/^\s{2,}\S/u', $line)) {
+                $parts[array_key_last($parts)][1] .= ' '.trim($line); // a list item carrying on
+            } elseif (preg_match('/^\s{0,3}#{1,6}\s+(.*)$/u', $line, $m)) {
+                $parts[] = ['h', $m[1]];
+            } elseif (preg_match('/^\s{0,3}>\s?(.*)$/u', $line, $m)) {
+                $parts[] = ['q', $m[1]];
+            } else {
+                $parts[] = ['p', $line];
+            }
+        }
+
+        // Runs of the same kind together: a list, or a paragraph's lines.
+        $out = '';
+        $run = [];
+        $kind = null;
+        foreach ([...$parts, ['end', '']] as [$is, $words]) {
+            if ($is !== $kind || in_array($is, ['h', 'q', 'gap', 'end'], true)) {
+                $out .= self::drawRun($kind, $run);
+                $run = [];
+            }
+            $kind = $is;
+            $run[] = $words;
+        }
+
+        return new HtmlString($out);
+    }
+
+    /** One run of lines, drawn. */
+    protected static function drawRun(?string $kind, array $lines): string
+    {
+        if ($lines === [] || in_array($kind, [null, 'gap', 'end'], true)) {
+            return '';
+        }
+        $inline = array_map(function (string $words): string {
+            $html = \App\PageBuilder\Fields::format(trim((string) preg_replace('/[ \t]+/u', ' ', $words)));
+            $html = (string) preg_replace('/`([^`\n]+)`/u', '<code>$1</code>', $html);
+
+            return (string) preg_replace('/__(?=\S)(.+?)(?<=\S)__/u', '<strong>$1</strong>', $html);
+        }, $lines);
+
+        return match ($kind) {
+            'ul', 'ol' => '<'.$kind.'>'.implode('', array_map(fn ($i) => '<li>'.$i.'</li>', $inline)).'</'.$kind.'>',
+            'h' => '<p class="chat__heading">'.implode(' ', $inline).'</p>',
+            'q' => '<blockquote>'.implode('<br>', $inline).'</blockquote>',
+            default => '<p>'.implode('<br>', $inline).'</p>',
+        };
     }
 
     /**
