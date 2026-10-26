@@ -607,6 +607,9 @@ class PageBuilder
     public function goLive(PageBuild $page, array $sections, Carbon $at, bool $scheduled = false): void
     {
         $page->put(['published' => $sections, 'published_at' => $at, 'scheduled' => null]);
+        // Kept, to look at again and to put back (the oldest go after a while).
+        $page->versions()->create(['sections' => $sections, 'published_at' => $at, 'user_id' => $scheduled ? null : request()->user()?->id, 'scheduled' => $scheduled]);
+        $page->versions()->skip(\App\Models\PageBuildVersion::KEEP)->take(1000)->get(['id'])->each->delete();
         $note = $scheduled ? ' (scheduled)' : '';
         if ($page->isBlog()) {
             ActivityLog::record('arranged the blog page'.$note, 'publishing', 'builder', PageBuild::BLOG, 'The blog');
@@ -720,7 +723,7 @@ class PageBuilder
             return null;
         }
 
-        return str_replace('## ', '', $this->asText($this->builder->clean($sections)));
+        return Fields::plain(str_replace('## ', '', $this->asText($this->builder->clean($sections))));
     }
 
     /** [[builder: about]]: a built page's published sections, in a post or another page. */
@@ -828,6 +831,16 @@ class PageBuilder
                 return ! $this->onSite($page)
                     ? ($page->isBlog() ? 'The arrangement goes live on ' : 'It goes live on ').$this->when($at).'.'
                     : 'Your changes go live on '.$this->when($at).'. Until then readers see what’s on the site now.';
+            },
+            // An earlier version (from the history) back in the draft, to publish again.
+            'restore' => function (array $form, $id, PageBuild $page) {
+                $version = is_numeric($id) ? $page->versions()->whereKey((int) $id)->first() : null;
+                if (! $version) {
+                    return 'That version isn’t kept any more.';
+                }
+                $this->change($page, fn () => $this->builder->clean($version->sections));
+
+                return 'Back as it was on '.$this->when($version->published_at).'. Publish to put it on the site. (Undo takes it back.)';
             },
             'reschedule' => function (array $form, $payload, PageBuild $page) {
                 $at = $page->scheduled['at'] ?? null;
@@ -1088,6 +1101,52 @@ class PageBuilder
         ];
     }
 
+    /**
+     * What was published, newest first, for the Page tab: when, who, and
+     * whether it's what's on the site now.
+     *
+     * @return list<array{id: int, when: string, who: string, current: bool, preview: string}>
+     */
+    public function history(PageBuild $page, int $take = 12): array
+    {
+        $live = $this->onSite($page) && $page->published !== null ? $this->sectionsOf($page, false) : null;
+        $out = [];
+        $current = false;
+        $versions = $page->versions()->take($take)->get();
+        $names = User::query()->whereIn('id', $versions->pluck('user_id')->filter()->unique())->pluck('name', 'id');
+        foreach ($versions as $version) {
+            $now = ! $current && $live !== null && $this->builder->clean($version->sections) == $live;
+            $current = $current || $now;
+            $out[] = [
+                'id' => $version->id,
+                'when' => $this->when($version->published_at),
+                'who' => $version->scheduled ? 'scheduled' : (string) ($names[$version->user_id] ?? 'someone'),
+                'current' => $now,
+                'preview' => route('builder.preview', $page->target).'?version='.$version->id,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** What to draw: what's published, the draft, or (the Phone view of the history) one kept version. */
+    public function shown(PageBuild $page, bool $draft, Request $request): array
+    {
+        if ($draft && $request->boolean('preview') && $request->filled('version')) {
+            return $this->version($page, $request->query('version')) ?? $this->sectionsOf($page);
+        }
+
+        return $this->sectionsOf($page, $draft);
+    }
+
+    /** The sections of one kept version of this page, for looking at (or null). */
+    public function version(PageBuild $page, mixed $id): ?array
+    {
+        $version = is_numeric($id) ? $page->versions()->whereKey((int) $id)->first() : null;
+
+        return $version ? $this->builder->clean($version->sections) : null;
+    }
+
     // Drawing -------------------------------------------------------------------------------
 
     /**
@@ -1131,7 +1190,7 @@ class PageBuilder
         $arranger = ! $static && $this->canBuild($request->user(), null);
         $preview = $arranger && $request->boolean('preview') && $page; // the editor's Phone view: the draft
         if ($preview) {
-            $sections = $this->sectionsOf($page);
+            $sections = $this->shown($page, true, $request);
         } elseif ($page && $page->published !== null) {
             $sections = $this->sectionsOf($page, false);
         } elseif ($arranger) {

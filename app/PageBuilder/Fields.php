@@ -83,7 +83,7 @@ class Fields
             .($this->live ? $this->editable($key, 'text', $this->label($key)) : '').'>'.e($value).'</'.$tag.'>');
     }
 
-    /** A few lines: paragraphs split by an empty line, kept as typed. */
+    /** A few lines: paragraphs split by an empty line, kept as typed, with **bold**, *italic* and [links](/about). */
     public function words(string $key, string $class = '', string $tag = 'div'): HtmlString
     {
         $value = trim((string) $this->get($key, ''));
@@ -93,7 +93,77 @@ class Fields
         }
         $class = trim('pb-words '.$class.($value === '' ? ' pb-empty' : ''));
 
-        return new HtmlString('<'.$tag.' class="'.e($class).'"'.($this->live ? $this->editable($key, 'words', $this->label($key)) : '').'>'.e($value).'</'.$tag.'>');
+        return new HtmlString('<'.$tag.' class="'.e($class).'"'.($this->live ? $this->editable($key, 'words', $this->label($key)) : '').'>'.self::format($value).'</'.$tag.'>');
+    }
+
+    /** One field's words, formatted, without anything around them. */
+    public function rich(string $key): HtmlString
+    {
+        return new HtmlString(self::format(trim((string) $this->get($key, ''))));
+    }
+
+    /** Some words (a line of a list, say), formatted. */
+    public function inline(string $words): HtmlString
+    {
+        return new HtmlString(self::format($words));
+    }
+
+    /*
+     * Words may hold a little formatting, typed as it looks in the editor:
+     * **bold**, *italic* and [a link](/about). A backslash keeps one of
+     * those marks as it is (\* is a star). Everything else is text: nothing
+     * typed becomes HTML, and a link only goes somewhere safe.
+     */
+
+    /** @return array{0: string, 1: array<string, string>} the words with escaped marks set aside */
+    protected static function setAside(string $words): array
+    {
+        $kept = [];
+        $words = (string) preg_replace_callback('/\\\\([\\\\*\[\]()])/', function ($m) use (&$kept) {
+            $key = "\u{E000}".count($kept)."\u{E001}";
+            $kept[$key] = $m[1];
+
+            return $key;
+        }, str_replace(["\u{E000}", "\u{E001}"], '', $words));
+
+        return [$words, $kept];
+    }
+
+    /** Words as HTML: escaped, with their bold, italic and links. */
+    public static function format(string $words): string
+    {
+        [$words, $kept] = self::setAside($words);
+        $html = e($words);
+        $html = (string) preg_replace_callback('/\[([^\]\n]+)\]\(([^)\s]+)\)/u', function ($m) {
+            $url = html_entity_decode($m[2], ENT_QUOTES | ENT_HTML5);
+            if (! self::safeUrl($url)) {
+                return $m[1];
+            }
+            $outside = (bool) preg_match('~^https?://~i', $url) && ! str_starts_with($url, url('/'));
+
+            return '<a href="'.e($url).'"'.($outside ? ' rel="noopener"' : '').'>'.$m[1].'</a>';
+        }, $html);
+        $html = (string) preg_replace('/\*\*(?=\S)(.+?)(?<=\S)\*\*/su', '<strong>$1</strong>', $html);
+        $html = (string) preg_replace('/(?<![*\w])\*(?=[^\s*])(.+?)(?<=[^\s*])\*(?![*\w])/su', '<em>$1</em>', $html);
+
+        return strtr($html, array_map(fn ($c) => e($c), $kept));
+    }
+
+    /** Words as plain text (for search, excerpts): the marks taken out. */
+    public static function plain(string $words): string
+    {
+        [$words, $kept] = self::setAside($words);
+        $words = (string) preg_replace('/\[([^\]\n]+)\]\(([^)\s]+)\)/u', '$1', $words);
+        $words = (string) preg_replace('/\*\*(?=\S)(.+?)(?<=\S)\*\*/su', '$1', $words);
+        $words = (string) preg_replace('/(?<![*\w])\*(?=[^\s*])(.+?)(?<=[^\s*])\*(?![*\w])/su', '$1', $words);
+
+        return strtr($words, $kept);
+    }
+
+    /** Somewhere a link may go: this site, the web, an email, a phone. Never javascript: and the like. */
+    public static function safeUrl(string $url): bool
+    {
+        return (bool) preg_match('~^(#|/(?!/)|\?|https?://[^\s/]+|mailto:[^\s]+@|tel:\+?[0-9 ()-]+$)~i', $url);
     }
 
     /** Lines, one each (what's in a plan; ways to reach you). */

@@ -241,3 +241,25 @@ a.d-link { color: inherit; display: inline-flex; align-items: center; }
 .d-kind__icon--blog-featured { background-image: linear-gradient(var(--coral), var(--coral)), linear-gradient(var(--g), var(--g)); background-size: 18px 20px, 10px 3px; background-position: 6px 7px, 27px 12px; }
 .d-kind__icon--blog-categories { background-image: linear-gradient(var(--k), var(--k)), linear-gradient(var(--g), var(--g)), linear-gradient(var(--g), var(--g)); background-size: 8px 6px, 8px 6px, 8px 6px; background-position: 6px 14px, 17px 14px, 28px 14px; }
 .d-kind__icon--blog-posts { background-image: linear-gradient(var(--sky), var(--sky)), linear-gradient(var(--sky), var(--sky)), linear-gradient(var(--g), var(--g)); background-size: 10px 9px, 10px 9px, 6px 18px; background-position: 6px 7px, 6px 18px, 30px 7px; }
+.d-history { border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+.d-history summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 30px; }
+.d-history__list { list-style: none; margin: 8px 0 10px; padding: 0; display: grid; gap: 6px; }
+.d-history__item { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-3); }
+.d-history__item.is-current { border-color: color-mix(in srgb, var(--mint) 70%, var(--rule)); background: color-mix(in srgb, var(--mint) 14%, var(--paper-3)); }
+.d-history__when { font-weight: 600; font-size: 14px; }
+.d-history__who { font-size: 12px; color: var(--faint); }
+.d-history__who b { color: var(--muted); font-weight: 600; }
+.d-history__do { display: flex; gap: 14px; margin-top: 2px; }
+.fmt { position: fixed; display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 10px; background: var(--ink); color: var(--paper); box-shadow: 0 8px 22px rgba(20, 18, 14, .28); z-index: 3; }
+.fmt[hidden] { display: none; }
+.fmt > button, .fmt__link button { display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 8px; border: 0; border-radius: 7px; background: transparent; color: inherit; font-size: 15px; }
+.fmt > button:hover, .fmt__link button:hover { background: rgba(251, 248, 241, .16); }
+.fmt > button[aria-pressed="true"] { background: rgba(251, 248, 241, .24); }
+.fmt.is-linking > button { display: none; }
+.fmt__link { display: flex; align-items: center; gap: 4px; }
+.fmt__link[hidden] { display: none; }
+.fmt__link input { width: min(260px, 60vw); height: 32px; padding: 0 10px; border: 0; border-radius: 7px; background: var(--paper); color: var(--ink); font: inherit; font-size: 14px; }
+.fmt__link input:focus { outline: 2px solid var(--pick); }
+.fmt__link .fmt__add { font-weight: 700; font-size: 13px; }
+.fmt__link .fmt__off { font-size: 13px; opacity: .85; }
+.fmt { font: 14px/1 "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif; } .fmt button, .fmt input { font-family: inherit; } .fmt > button b, .fmt > button i { font-family: Georgia, serif; font-size: 16px; }

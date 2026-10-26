@@ -351,3 +351,8 @@ h1.pb-eyebrow { font-family: inherit; }
     .pb-align--left .pb-step { flex-direction: row; align-items: flex-start; }
     .pb-align--left .pb-step__n { flex: none; }
 }
+
+/* Words with a little formatting */
+.pb-words a, .pb-plan__list a, .pb-contact a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.pb-words a:hover { text-decoration-thickness: 2px; }
+.pb-words strong { font-weight: 650; color: var(--pb-ink); }

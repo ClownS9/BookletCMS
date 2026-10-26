@@ -6,7 +6,7 @@
             {{ $f->words('details', 'pb-contact__details') }}
         @elseif ($f->lines('details') !== [])
             <ul class="pb-contact__details">
-                @foreach ($f->lines('details') as $line) <li>{{ $line }}</li> @endforeach
+                @foreach ($f->lines('details') as $line) <li>{{ $f->inline($line) }}</li> @endforeach
             </ul>
         @endif
     </div>

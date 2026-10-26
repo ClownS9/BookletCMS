@@ -30,7 +30,7 @@
                         {{ $f->words('about_words', '', 'p') }}
                         @if (! $f->filled('about_words') && $about !== '') <p class="pb-note-hint">(Empty: readers see the site’s tagline, “{{ $about }}”)</p> @endif
                     @else
-                        <p>{{ $about }}</p>
+                        <p class="pb-words">{{ $f->filled('about_words') ? $f->rich('about_words') : $about }}</p>
                     @endif
                 </div>
             @endif

@@ -155,7 +155,7 @@ class Builder
 
         $value = match ($kind) {
             'text', 'label' => $this->line($value, (int) ($spec['max'] ?? ($kind === 'label' ? 60 : 200))),
-            'words' => $this->words($value, (int) ($spec['max'] ?? 2000)),
+            'words' => $this->links($this->words($value, (int) ($spec['max'] ?? 2000))),
             'href', 'url' => ! empty($spec['video']) ? $this->videoUrl($value) : $this->url($value),
             'select' => $this->choice($value, is_array($spec['options']) ? $spec['options'] : $choices),
             'toggle' => (bool) $value,
@@ -247,6 +247,20 @@ class Builder
         $value = (string) preg_replace("/\n{3,}/", "\n\n", $value);           // a blank line at most
 
         return Str::limit(trim($value), $max, '');
+    }
+
+    /** Links in words ([its words](/about)): each to an address a reader can be sent to (example.com becomes https://example.com). */
+    public function links(string $words): string
+    {
+        return (string) preg_replace_callback('/(?<!\\\\)\[([^\]\n]+)\]\(([^)\s]*)\)/u', function ($m) {
+            try {
+                $url = $this->url($m[2]);
+            } catch (InvalidArgumentException) {
+                throw new InvalidArgumentException('The link on “'.Str::limit($m[1], 30).'” doesn’t go anywhere: use /about, https://example.com or an email address.');
+            }
+
+            return $url === '' ? $m[1] : '['.$m[1].']('.$url.')';
+        }, $words);
     }
 
     /** An address a reader can be sent to: on this site, or http(s), mail, phone. Never javascript: and friends. */

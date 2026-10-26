@@ -72,6 +72,16 @@
                 <button type="button" data-bar="done">Done</button>
             </span>
         </div>
+        <div class="fmt" role="toolbar" aria-label="Formatting" hidden>
+            <button type="button" data-fmt="bold" aria-label="Bold" title="Bold (Ctrl B)"><b>B</b></button>
+            <button type="button" data-fmt="italic" aria-label="Italic" title="Italic (Ctrl I)"><i>I</i></button>
+            <button type="button" data-fmt="link" aria-label="Link" title="Link (Ctrl K)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+            <form class="fmt__link" hidden>
+                <input type="text" aria-label="Where the link goes" placeholder="/about, https://…, an email" autocapitalize="off" spellcheck="false">
+                <button type="submit" class="fmt__add">Add</button>
+                <button type="button" class="fmt__off" data-fmt="unlink">Take off</button>
+            </form>
+        </div>
         <div class="toast" role="status" aria-live="polite" hidden></div>
         <div class="phone" hidden>
             <div class="phone__frame"><iframe title="The draft, as a phone shows it"></iframe></div>
@@ -178,21 +188,47 @@
     };
     const textOf = (el) => (el.innerText || '').replace(/ /g, ' ').replace(/\n$/, '');
 
+    // Words fields keep a little formatting, saved as typed in the drawer: **bold**, *italic*, [a link](/about).
+    const escMarks = (t) => t.replace(/[\\*\[\]]/g, (c) => '\\' + c);
+    const wrap = (inner, open, close) => {
+        const m = inner.match(/^(\s*)([\s\S]*?)(\s*)$/);
+        return m[2] === '' ? inner : m[1] + open + m[2] + close + m[3];
+    };
+    const marked = (node) => {
+        let out = '';
+        node.childNodes.forEach((n) => {
+            if (n.nodeType === 3) { out += escMarks(n.nodeValue.replace(/\u00a0/g, ' ')); return; }
+            if (n.nodeType !== 1) return;
+            const tag = n.tagName, inner = marked(n);
+            if (tag === 'BR') out += '\n';
+            else if (tag === 'B' || tag === 'STRONG' || (tag === 'SPAN' && /bold|[6-9]00/.test(n.style.fontWeight))) out += wrap(inner, '**', '**');
+            else if (tag === 'I' || tag === 'EM' || (tag === 'SPAN' && n.style.fontStyle === 'italic')) out += wrap(inner, '*', '*');
+            else if (tag === 'A' && n.getAttribute('href')) out += wrap(inner, '[', '](' + n.getAttribute('href') + ')');
+            else if (tag === 'DIV' || tag === 'P') out += (out !== '' && !out.endsWith('\n') ? '\n' : '') + inner;
+            else out += inner;
+        });
+        return out;
+    };
+    let rich = null; // the words field being typed into, when it can be formatted
+
     const type = (field, id, x, y) => {
         if (field.isContentEditable) return;
-        field.contentEditable = 'plaintext-only';
-        if (field.contentEditable !== 'plaintext-only') field.contentEditable = 'true';
+        const formatted = field.dataset.pbKind === 'words';
+        field.contentEditable = formatted ? 'true' : 'plaintext-only';
+        if (field.contentEditable !== 'plaintext-only' && !formatted) field.contentEditable = 'true';
         field.classList.add('is-editing');
         field.focus({ preventScroll: true });
         if (x !== undefined) caretAt(x, y);
         else { const r = document.createRange(); r.selectNodeContents(field); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
         const line = field.dataset.pbKind !== 'words';
+        const valueOf = () => (formatted ? marked(field).replace(/\n$/, '') : textOf(field));
+        if (formatted) rich = field;
         let timer = null;
-        let sent = textOf(field);
+        let sent = valueOf();
         const push = () => {
             clearTimeout(timer);
-            const value = textOf(field);
+            const value = valueOf();
             if (value === sent) return;
             sent = value;
             act('set', { id, field: field.dataset.pbField, value }, { quiet: true });
@@ -205,7 +241,14 @@
             placeTools();
         };
         const onKey = (e) => {
-            if ((e.key === 'Enter' && line) || e.key === 'Escape') { e.preventDefault(); field.blur(); }
+            if ((e.key === 'Enter' && line) || e.key === 'Escape') { e.preventDefault(); field.blur(); return; }
+            if (!formatted) return;
+            if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
+            const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
+            if (mod && ['b', 'i', 'k'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                formatWith({ b: 'bold', i: 'italic', k: 'link' }[e.key.toLowerCase()]);
+            }
         };
         const onPaste = (e) => {
             e.preventDefault();
@@ -214,7 +257,10 @@
             document.execCommand('insertText', false, text);
         };
         const done = () => {
+            // Into the link box above it: still typing here.
+            if (formatted && linking) return;
             push();
+            if (rich === field) { rich = null; fmt.hidden = true; }
             field.removeAttribute('contenteditable');
             field.classList.remove('is-editing');
             field.removeEventListener('input', onInput);
@@ -227,6 +273,94 @@
         field.addEventListener('paste', onPaste);
         field.addEventListener('blur', done);
     };
+
+    // The formatting bar: above the words chosen in a words field --------------------------
+
+    const fmt = $('.fmt'), linkForm = $('.fmt__link'), linkBox = linkForm.querySelector('input');
+    let linking = false, savedRange = null;
+    const linkAt = () => {
+        const s = getSelection();
+        const n = s.rangeCount ? s.getRangeAt(0).commonAncestorContainer : null;
+        const el = n && (n.nodeType === 1 ? n : n.parentElement);
+        const a = el && el.closest('a');
+        return a && rich && rich.contains(a) ? a : null;
+    };
+    const placeFmt = () => {
+        if (!rich || linking) return;
+        const s = getSelection();
+        if (!s.rangeCount || !rich.contains(s.anchorNode)) { fmt.hidden = true; return; }
+        const r = s.getRangeAt(0);
+        if (r.collapsed && !linkAt()) { fmt.hidden = true; return; }
+        const box = r.getBoundingClientRect().width ? r.getBoundingClientRect() : rich.getBoundingClientRect();
+        fmt.hidden = false;
+        fmt.querySelector('[data-fmt="bold"]').setAttribute('aria-pressed', document.queryCommandState('bold') ? 'true' : 'false');
+        fmt.querySelector('[data-fmt="italic"]').setAttribute('aria-pressed', document.queryCommandState('italic') ? 'true' : 'false');
+        fmt.querySelector('[data-fmt="link"]').setAttribute('aria-pressed', linkAt() ? 'true' : 'false');
+        const w = fmt.offsetWidth;
+        fmt.style.left = Math.min(Math.max(8, box.left + box.width / 2 - w / 2), innerWidth - w - 8) + 'px';
+        fmt.style.top = (box.top > 60 ? box.top - 46 : box.bottom + 8) + 'px';
+    };
+    document.addEventListener('selectionchange', () => { if (rich) placeFmt(); });
+    addEventListener('scroll', () => { if (rich && !fmt.hidden) placeFmt(); }, { passive: true });
+
+    const closeLink = (refocus = true) => {
+        linking = false;
+        linkForm.hidden = true;
+        fmt.classList.remove('is-linking');
+        if (refocus && rich) {
+            rich.focus({ preventScroll: true });
+            if (savedRange) { const s = getSelection(); s.removeAllRanges(); s.addRange(savedRange); }
+        }
+        savedRange = null;
+        placeFmt();
+    };
+    const formatWith = (what) => {
+        if (!rich) return;
+        if (what === 'bold' || what === 'italic') { document.execCommand(what); placeFmt(); return; }
+        if (what === 'unlink') {
+            closeLink();
+            const a = linkAt();
+            if (a) { const r = document.createRange(); r.selectNodeContents(a); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+            document.execCommand('unlink');
+            return;
+        }
+        if (what === 'link') {
+            const s = getSelection();
+            if (!s.rangeCount) return;
+            const a = linkAt();
+            if (a) { const r = document.createRange(); r.selectNodeContents(a); s.removeAllRanges(); s.addRange(r); }
+            if (s.getRangeAt(0).collapsed) { toast('Choose some words first, then make them a link.'); return; }
+            savedRange = s.getRangeAt(0).cloneRange();
+            linking = true;
+            fmt.classList.add('is-linking');
+            linkForm.hidden = false;
+            fmt.querySelector('.fmt__off').hidden = !a;
+            linkBox.value = a ? a.getAttribute('href') : '';
+            // Wider now: kept on the screen.
+            fmt.style.left = Math.max(8, Math.min(parseFloat(fmt.style.left) || 8, innerWidth - fmt.offsetWidth - 8)) + 'px';
+            linkBox.focus();
+        }
+    };
+    fmt.addEventListener('mousedown', (e) => { if (!e.target.closest('input')) e.preventDefault(); }); // keep typing where you were
+    fmt.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-fmt]');
+        if (b) formatWith(b.dataset.fmt);
+    });
+    linkForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        let url = linkBox.value.trim();
+        if (url !== '' && !/^(#|\/|\?|[a-z][a-z0-9+.-]*:)/i.test(url)) url = url.includes('@') && !url.includes('/') ? 'mailto:' + url : 'https://' + url;
+        closeLink();
+        if (url === '') { document.execCommand('unlink'); return; }
+        if (/^(javascript|data|vbscript):/i.test(url)) { toast('That isn’t an address a link can go to.', true); return; }
+        document.execCommand('createLink', false, url);
+        rich && rich.dispatchEvent(new Event('input'));
+    });
+    linkBox.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); closeLink(); } });
+    linkBox.addEventListener('blur', () => {
+        // Clicked away from the link box (not onto its buttons): done with it, and with typing there.
+        setTimeout(() => { if (linking && !(ui.activeElement && fmt.contains(ui.activeElement))) { const f = rich; closeLink(false); if (f) f.blur(); f && f.dispatchEvent(new Event('blur')); } }, 0);
+    });
 
     page.addEventListener('click', (e) => {
         if (!editing) return;

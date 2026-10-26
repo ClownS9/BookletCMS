@@ -14,7 +14,7 @@
         if ($qa->isNotEmpty() && empty($embedded)) {
             \App\Support\StructuredData::add(['@type' => 'FAQPage', 'mainEntity' => $qa->map(fn ($q) => [
                 '@type' => 'Question', 'name' => $q->get('question'),
-                'acceptedAnswer' => ['@type' => 'Answer', 'text' => $q->get('answer')],
+                'acceptedAnswer' => ['@type' => 'Answer', 'text' => \App\PageBuilder\Fields::plain((string) $q->get('answer'))],
             ])->values()->all()]);
         }
     @endphp

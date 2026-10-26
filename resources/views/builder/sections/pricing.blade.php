@@ -10,7 +10,7 @@
                 {{ $plan->words('words', 'pb-plan__list pb-plan__list--edit') }}
             @elseif ($plan->lines('words') !== [])
                 <ul class="pb-plan__list">
-                    @foreach ($plan->lines('words') as $line) <li>{{ $line }}</li> @endforeach
+                    @foreach ($plan->lines('words') as $line) <li>{{ $plan->inline($line) }}</li> @endforeach
                 </ul>
             @endif
             @if ($plan->has('button.label'))
