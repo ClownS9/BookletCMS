@@ -5668,3 +5668,38 @@ body.night .size-print small { color: var(--faint); }
 .guide-keys div { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
 .guide-keys dt { min-width: 220px; }
 .guide-keys dd { margin: 0; color: var(--muted); }
+
+/* Coming down by itself on a date (the writing page) */
+.takedown { padding: 10px 14px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-3); }
+.takedown summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-height: 30px; cursor: pointer; font-size: 14px; font-weight: 500; }
+.takedown__when { font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--muted); }
+.takedown[open] summary { margin-bottom: 10px; }
+.takedown .field + .field { margin-top: 12px; }
+.takedown__clear { margin-top: 6px; font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
+.takedown__done { margin: 0; }
+
+/* Comments › Forms: forms of your own */
+.forms-new { display: flex; flex-direction: column; gap: 6px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.forms-new__row { display: flex; gap: 8px; }
+.forms-new__row .input { flex: 1 1 auto; min-width: 0; }
+.forms-new__row .btn { flex: none; white-space: nowrap; }
+.forms-edit { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+.forms-edit__name { font-family: var(--serif); font-size: 24px !important; }
+.forms-qs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.forms-q { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--rule); border-radius: 12px; background: var(--paper-3); }
+.forms-q__top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.forms-q__n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: color-mix(in srgb, var(--rose) 45%, transparent); font-size: 12px; font-weight: 600; }
+.forms-q__type { width: auto; min-height: 36px; padding-top: 4px; padding-bottom: 4px; font-size: 14px; }
+.forms-q__need { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13.5px; color: var(--muted); }
+.forms-q__tools { display: inline-flex; gap: 2px; margin-left: auto; }
+.forms-q__sub { font-size: 13px; color: var(--muted); }
+.forms-q__help { font-size: 13.5px; }
+.forms-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.forms-add .pill { font-size: 13px; }
+.forms-where { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--rose) 14%, var(--paper-3)); }
+.forms-edit__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding-top: 6px; }
+@media (max-width: 720px) {
+    .forms-new__row { flex-direction: column; }
+    .forms-q__tools { margin-left: 0; }
+}
+.inbox-pick__form { display: inline-block; margin: 2px 0; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--rose) 30%, transparent); color: var(--ink); font-size: 11.5px; font-weight: 500; }

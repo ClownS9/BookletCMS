@@ -13,7 +13,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * Calendar: a month of dated entries, published and scheduled, with the
+ * Calendar: a month of dated entries, published and scheduled (and what comes down when), with the
  * drafts still waiting for a day.
  */
 #[Layout('components.layouts.admin')]
@@ -22,7 +22,7 @@ class Calendar extends Component
 {
     use Stamps;
 
-    public const TONES = ['draft' => 'var(--sun)', 'scheduled' => 'var(--sky)', 'published' => 'var(--mint)'];
+    public const TONES = ['draft' => 'var(--sun)', 'scheduled' => 'var(--sky)', 'published' => 'var(--mint)', 'down' => 'var(--coral)'];
 
     /** "2026-10" */
     #[Url(except: '')]
@@ -101,6 +101,14 @@ class Calendar extends Component
             ->sortBy(fn (Entry $e) => $e->date()->timestamp)
             ->groupBy(fn (Entry $e) => $e->date()->format('Y-m-d'));
 
+        // Posts and pages (any chapter they open) planned to come down, on their day.
+        $downs = Booklet::entries()->all()
+            ->filter(fn (Entry $e) => $e->published() && request()->user()->canOpen($e->collectionHandle()))
+            ->map(fn (Entry $e) => [$e, \App\Support\Takedowns::at($e)])
+            ->filter(fn ($pair) => $pair[1] && $pair[1]->betweenIncluded($start, $end->copy()->endOfDay()))
+            ->sortBy(fn ($pair) => $pair[1]->timestamp)
+            ->groupBy(fn ($pair) => $pair[1]->format('Y-m-d'));
+
         $days = [];
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             $key = $date->format('Y-m-d');
@@ -110,13 +118,21 @@ class Calendar extends Component
                 'inMonth' => $date->month === $first->month,
                 'today' => $date->isToday(),
                 'label' => $date->format('j F'),
-                'entries' => $byDay->get($key, collect())->map(fn (Entry $e) => [
+                'entries' => [...$byDay->get($key, collect())->map(fn (Entry $e) => [
                     'id' => $e->id(),
                     'time' => $e->date()->format('g:i a'),
                     'title' => $e->title() ?: 'Untitled',
                     'status' => $e->status(),
+                    'label' => ucfirst($e->status()),
                     'href' => route('admin.entries.edit', [$e->collectionHandle(), $e->id()]),
-                ])->values()->all(),
+                ])->values()->all(), ...$downs->get($key, collect())->map(fn ($pair) => [
+                    'id' => $pair[0]->id().'-down',
+                    'time' => $pair[1]->format('g:i a'),
+                    'title' => '↓ '.($pair[0]->title() ?: 'Untitled'),
+                    'status' => 'down',
+                    'label' => 'Comes down',
+                    'href' => route('admin.entries.edit', [$pair[0]->collectionHandle(), $pair[0]->id()]),
+                ])->values()->all()],
             ];
         }
 

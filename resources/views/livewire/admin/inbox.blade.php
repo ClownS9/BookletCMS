@@ -11,12 +11,13 @@
         <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · letters to the book</p>
         <h1 class="display display--page" style="margin-top: 8px">Inbox</h1>
         <p class="lede" style="margin: 12px 0 0; font-size: 15px">Messages readers send from the form on your
-            @if ($contact) <a href="{{ app(\App\Booklet\Site::class)->url($contact) }}" target="_blank" rel="noopener">Contact page ↗</a>@else Contact page @endif.</p>
+            @if ($contact) <a href="{{ app(\App\Booklet\Site::class)->url($contact) }}" target="_blank" rel="noopener">Contact page ↗</a>@else Contact page @endif,
+            and answers to <a href="{{ route('admin.forms') }}" wire:navigate>your own forms</a>.</p>
 
         <div class="setting-rows" style="margin-top: 16px">
             <div class="setting-row">
                 <span>
-                    <span id="inbox-open" style="display: block; font-size: 15px; font-weight: 500">Show the form</span>
+                    <span id="inbox-open" style="display: block; font-size: 15px; font-weight: 500">Show the contact form</span>
                     <span style="display: block; font-size: 13px; color: var(--faint)">
                         @if (! $contact) There’s no published page with the address /contact, so the form has nowhere to show.
                         @else On the Contact page, under its words. @endif
@@ -25,6 +26,19 @@
                 <button type="button" class="switch" role="switch" aria-labelledby="inbox-open" aria-checked="{{ $open ? 'true' : 'false' }}" wire:click="toggleOpen"></button>
             </div>
         </div>
+
+        @if (count($forms) > 1)
+            <div class="field inbox-from" style="margin: 18px 0 0">
+                <label for="inbox-from">From</label>
+                <select id="inbox-from" class="input" wire:model.live="from">
+                    <option value="">Every form</option>
+                    @foreach ($forms as $handle => $name) <option value="{{ $handle }}">{{ $name }}</option> @endforeach
+                </select>
+                @if ($from !== '' && $from !== Letters::FORM)
+                    <p class="field__hint" style="margin: 4px 0 0"><a href="{{ route('admin.forms.csv', $from) }}">Download its answers (CSV)</a> · <a href="{{ route('admin.forms', ['form' => $from]) }}" wire:navigate>Change the form →</a></p>
+                @endif
+            </div>
+        @endif
 
         <div class="filters" role="group" aria-label="Which messages" style="margin: 18px 0 10px">
             @foreach (['inbox' => 'Inbox', 'archived' => 'Archived', 'spam' => 'Spam'] as $value => $label)
@@ -44,7 +58,7 @@
         @if ($pile->isEmpty())
             <p class="empty-note">
                 @if ($search !== '') Nothing matches.
-                @elseif ($show === 'inbox') No messages. When someone writes from the Contact page, it lands here and you get an email.
+                @elseif ($show === 'inbox') No messages. When someone writes from the Contact page or fills in one of your forms, it lands here and you get an email.
                 @elseif ($show === 'spam') No spam. Messages that look like it wait here for {{ Letters::SPAM_DAYS }} days, then go.
                 @else Nothing archived. @endif
             </p>
@@ -60,7 +74,8 @@
                                     <span class="inbox-pick__from">@if ($isNew)<span class="sr-only">Unread: </span>@endif{{ $from }}</span>
                                     <span class="inbox-pick__when">{{ Letters::at($m)?->diffForHumans(short: true) }}</span>
                                 </span>
-                                <span class="serif inbox-pick__text">{{ \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', Letters::body($m)), 140) }}</span>
+                                @if ($from === '' && $m->form() !== Letters::FORM) <span class="inbox-pick__form">{{ Letters::formName($m) }}</span> @endif
+                                <span class="serif inbox-pick__text">{{ \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', Letters::preview($m)), 140) }}</span>
                             </span>
                         </button>
                     </li>
@@ -78,6 +93,7 @@
         @if ($chosen)
             @php [$from, $email] = Letters::sender($chosen); $state = Letters::status($chosen); @endphp
             <p class="ribbon-clear" style="font-size: 14px; color: var(--faint)">
+                @if ($chosen->form() !== Letters::FORM) <span class="inbox-pick__form">{{ Letters::formName($chosen) }}</span> · @endif
                 {{ Letters::at($chosen)?->format('l j F Y, g:i a') }}
                 @if ($chosen->get('_page')) · from <span style="font-family: var(--mono); font-size: 12.5px">{{ $chosen->get('_page') }}</span> @endif
             </p>
@@ -94,9 +110,9 @@
                     @endif
                 </div>
                 @foreach (Letters::extras($chosen) as $label => $value)
-                    <p style="margin: 0 0 6px; font-size: 14px; color: #4A453C"><strong>{{ $label }}:</strong> {{ $value }}</p>
+                    <p style="margin: 0 0 6px; font-size: 14px; color: #4A453C"><strong>{{ preg_match('/[?:.!]$/u', $label) ? $label : $label.':' }}</strong> {{ $value }}</p>
                 @endforeach
-                <p class="serif inbox-letter">{{ Letters::body($chosen) }}</p>
+                @if (trim(Letters::body($chosen)) !== '') <p class="serif inbox-letter">{{ Letters::body($chosen) }}</p> @endif
             </div>
 
             @if ($replies->isNotEmpty())

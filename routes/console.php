@@ -61,6 +61,9 @@ rescue(fn () => app(\App\Inserts\InsertManager::class)->schedule(app(\Illuminate
 \Illuminate\Support\Facades\Schedule::command('booklet:publish-static --when-due')->everyMinute()->name('static-site')->withoutOverlapping(20)
     ->when(fn () => \App\Support\StaticSite::settings()['auto']);
 
+// Posts and pages with a date to come down: they do, on time.
+\Illuminate\Support\Facades\Schedule::call(fn () => \App\Support\Takedowns::settle())->everyMinute()->name('takedowns')->withoutOverlapping();
+
 // The check-up: the scheduler leaves a mark every minute, so the book can tell it's running.
 \Illuminate\Support\Facades\Schedule::call(fn () => \Illuminate\Support\Facades\Cache::forever(\App\Support\Health::BEAT, now()->timestamp))->everyMinute()->name('scheduler-beat');
 

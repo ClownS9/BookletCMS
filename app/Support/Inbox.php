@@ -16,7 +16,8 @@ use Illuminate\Support\Str;
 
 /**
  * Letters to the book: what readers send from the contact form on the
- * Contact page. They're kept with the form's submissions, with a few notes
+ * Contact page, and the answers to forms of your own (App\Support\Forms).
+ * They're kept with each form's submissions, with a few notes
  * of Booklet's own, in fields starting with "_":
  *
  *   _at       when it arrived
@@ -74,13 +75,23 @@ class Inbox
     }
 
     /**
-     * The form's fields, simplified: [handle => [label, type, required, input]].
-     * Text and long text only (anything else is left off the public form).
+     * A form's fields, simplified: [handle => [label, type, required, input]].
+     * The contact form's (text and long text only: anything else is left off
+     * the public form), or one of your own forms' questions.
      *
      * @return array<string, array{label: string, type: string, required: bool, input: string}>
      */
-    public static function fields(): array
+    public static function fields(?string $form = null): array
     {
+        if ($form !== null && $form !== self::FORM) {
+            $made = Forms::find($form);
+
+            return $made ? collect(Forms::fields($made))->mapWithKeys(fn ($f) => [$f['key'] => [
+                'label' => $f['label'], 'type' => $f['type'] === 'long' ? 'textarea' : 'text', 'required' => $f['required'],
+                'input' => $f['type'] === 'email' ? 'email' : 'text',
+            ]])->all() : [];
+        }
+
         $blueprint = rescue(fn () => Booklet::blueprints()->findIn('forms', self::FORM), null, false);
         $fields = [];
         foreach ($blueprint?->fields() ?? [] as $f) {
@@ -141,12 +152,31 @@ class Inbox
 
     // Reading ----------------------------------------------------------------------
 
-    /** @return Collection<int, Submission> newest first */
-    public static function all(): Collection
+    /**
+     * Every letter, or one form's: the contact form's and your own forms' answers.
+     *
+     * @return Collection<int, Submission> newest first
+     */
+    public static function all(?string $form = null): Collection
     {
-        return rescue(fn () => Booklet::submissions()->whereForm(self::FORM), collect(), false)
+        $forms = $form !== null ? [$form] : [self::FORM, ...Forms::all()->map(fn ($f) => $f->handle())->all()];
+
+        return collect($forms)
+            ->flatMap(fn ($handle) => rescue(fn () => Booklet::submissions()->whereForm($handle)->all(), [], false))
             ->sortByDesc(fn (Submission $s) => (string) $s->get('_at'))
             ->values();
+    }
+
+    /** The forms letters come from: handle => name (the contact form first). */
+    public static function forms(): array
+    {
+        return [self::FORM => 'Contact form'] + Forms::all()->mapWithKeys(fn ($f) => [$f->handle() => $f->title()])->all();
+    }
+
+    /** Which form a letter came from, by name. */
+    public static function formName(Submission $s): string
+    {
+        return $s->form() === self::FORM ? 'Contact form' : (Forms::find($s->form())?->title() ?? 'A form');
     }
 
     /** How many haven't been opened (for the badge on the Inbox flag; kept for a minute). */
@@ -177,7 +207,7 @@ class Inbox
     {
         $s = rescue(fn () => Booklet::submissions()->find($id), null, false);
 
-        return $s && $s->form() === self::FORM ? $s : null;
+        return $s && ($s->form() === self::FORM || Forms::find($s->form())) ? $s : null;
     }
 
     public static function status(Submission $s): string
@@ -194,26 +224,55 @@ class Inbox
     public static function sender(Submission $s): array
     {
         $email = null;
-        foreach (self::fields() as $handle => $f) {
+        foreach (self::fields($s->form()) as $handle => $f) {
             if ($f['input'] === 'email' && filter_var($s->get($handle), FILTER_VALIDATE_EMAIL)) {
                 $email = (string) $s->get($handle);
                 break;
             }
         }
 
-        return [trim((string) ($s->get('name') ?: $s->get('full_name') ?: '')) ?: ($email ? Str::before($email, '@') : 'Someone'), $email];
+        $name = trim((string) ($s->get('name') ?: $s->get('full_name') ?: $s->get('your_name') ?: ''));
+        if ($name === '' && $s->form() !== self::FORM) {
+            // One of your own forms: the first question that asks for a name.
+            foreach (self::fields($s->form()) as $handle => $f) {
+                if (preg_match('/\bname\b|\bnama\b/i', $f['label']) && is_string($s->get($handle)) && trim($s->get($handle)) !== '') {
+                    $name = trim($s->get($handle));
+                    break;
+                }
+            }
+        }
+
+        return [Str::limit($name, 120, '') ?: ($email ? Str::before($email, '@') : 'Someone'), $email];
     }
 
     /** The message itself: the long text field, or everything that isn't the name or email. */
     public static function body(Submission $s): string
     {
-        foreach (self::fields() as $handle => $f) {
+        foreach (self::fields($s->form()) as $handle => $f) {
             if ($f['type'] === 'textarea' && trim((string) $s->get($handle)) !== '') {
                 return (string) $s->get($handle);
             }
         }
 
+        if ($s->form() !== self::FORM) {
+            return ''; // one of your own forms: its answers are all in extras()
+        }
+
         return collect($s->data())->reject(fn ($v, $k) => str_starts_with($k, '_') || in_array($k, ['name', 'email'], true) || ! is_scalar($v))->implode("\n");
+    }
+
+    /** "Label: value", without a second mark when the question ends in one ("Coming? Yes"). */
+    public static function labelled(string $label, string $value): string
+    {
+        return (preg_match('/[?:.!]$/u', $label) ? $label : $label.':').' '.$value;
+    }
+
+    /** A line to know it by in a list: its words, or (a form without any) its answers. */
+    public static function preview(Submission $s): string
+    {
+        $body = trim(self::body($s));
+
+        return $body !== '' ? $body : collect(self::extras($s))->map(fn ($v, $label) => self::labelled((string) $label, $v))->implode(' · ');
     }
 
     /**
@@ -224,8 +283,13 @@ class Inbox
     public static function extras(Submission $s): array
     {
         $extras = [];
-        foreach (self::fields() as $handle => $f) {
-            $value = trim((string) $s->get($handle));
+        [$name] = self::sender($s);
+        foreach (self::fields($s->form()) as $handle => $f) {
+            $raw = $s->get($handle);
+            $value = trim(is_array($raw) ? implode(', ', array_filter($raw, 'is_scalar')) : (is_scalar($raw) ? (string) $raw : ''));
+            if ($s->form() !== self::FORM && $value === $name) {
+                continue; // already shown as who sent it
+            }
             if ($value !== '' && $f['type'] !== 'textarea' && $f['input'] !== 'email' && $handle !== 'name') {
                 $extras[$f['label']] = $value;
             }

@@ -89,6 +89,11 @@ class EntryEditor extends Component
     /** Email this post to subscribers when it goes live. */
     public bool $emailIt = true;
 
+    /** When it comes down by itself ("Y-m-d\TH:i"), and where readers go then (see App\Support\Takedowns). */
+    public ?string $takedown = null;
+
+    public string $takedownTo = '';
+
     public function mount(string $collection, ?string $entry = null): void
     {
         $model = Booklet::collections()->find($collection);
@@ -110,6 +115,7 @@ class EntryEditor extends Component
             $this->date = $existing->date()?->format('Y-m-d\TH:i');
             $this->savedAt = $existing->lastModified();
             $this->emailIt = ! $existing->get('no_email');
+            $this->readTakedown($existing);
             $this->fill($this->valuesFrom($existing->data()));
 
             return;
@@ -794,6 +800,16 @@ class EntryEditor extends Component
             'slug' => ['nullable', 'alpha_dash', 'max:200'],
             'status' => ['required', 'in:draft,scheduled,published'],
             'date' => [$this->status === 'scheduled' ? 'required' : 'nullable', 'date'],
+            'takedown' => ['nullable', 'date', 'after:now', ...($this->status === 'scheduled' && $this->date ? ['after:date'] : []), function ($attribute, $value, $fail) {
+                if ($value && $this->entryId && (string) app(\App\Booklet\Site::class)->setting('homepage', 'posts') === $this->entryId) {
+                    $fail('This is the home page, so it can’t come down by itself. Choose another home page first (Settings).');
+                }
+            }],
+            'takedownTo' => ['nullable', 'string', 'max:500', function ($attribute, $value, $fail) {
+                if (trim((string) $value) !== '' && ! \App\Support\Takedowns::safeTo(trim((string) $value))) {
+                    $fail('Use an address like /offers or https://example.com.');
+                }
+            }],
         ];
 
         $hidden = $this->hiddenFields();
@@ -821,9 +837,33 @@ class EntryEditor extends Component
         return $rules;
     }
 
+    protected function messages(): array
+    {
+        return [
+            'takedown.after' => $this->status === 'scheduled' && $this->date && rescue(fn () => Carbon::parse((string) $this->takedown)->isFuture(), false, false)
+                ? 'It has to come down after it goes out.' : 'Choose a time that hasn’t been yet.',
+            'takedown.date' => 'Choose a day and a time.',
+        ];
+    }
+
+    /** What's set for coming down, from the saved entry. */
+    protected function readTakedown(Entry $entry): void
+    {
+        $this->takedown = \App\Support\Takedowns::at($entry)?->format('Y-m-d\TH:i');
+        $this->takedownTo = (string) $entry->get('takedown_to', '');
+    }
+
+    /** Clear the date it comes down (the button beside it). */
+    public function clearTakedown(): void
+    {
+        $this->takedown = null;
+        $this->takedownTo = '';
+        $this->resetErrorBag(['takedown', 'takedownTo']);
+    }
+
     protected function validationAttributes(): array
     {
-        $names = [];
+        $names = ['takedown' => 'the date it comes down', 'takedownTo' => 'where readers go'];
 
         foreach ($this->allFields() as $field) {
             $prefix = $field['type'] === 'terms' ? 'termInputs' : 'values';
@@ -983,6 +1023,15 @@ class EntryEditor extends Component
         abort_if(! $isNew && ! $this->canEdit($entry), 403);
 
         $data = array_merge($entry->data(), $this->dataFromValues(), ['no_email' => $this->model->dated() && ! $this->emailIt ? true : null]);
+        if ($this->canPublish()) {
+            // Coming down by itself: only while it's out (or going out); a draft keeps nothing of it.
+            $down = $this->status !== 'draft' && $this->takedown ? Carbon::parse($this->takedown, config('app.timezone')) : null;
+            $data['takedown_at'] = $down?->format('Y-m-d H:i:s');
+            $data['takedown_to'] = $down && trim($this->takedownTo) !== '' ? trim($this->takedownTo) : null;
+            if ($this->status !== 'draft') {
+                $data['taken_down_at'] = null; // out again
+            }
+        }
         if ($isNew) {
             $data['author'] = request()->user()?->id;
         }
@@ -1061,6 +1110,7 @@ class EntryEditor extends Component
         $this->slug = (string) $entry->slug();
         $this->date = $entry->date()?->format('Y-m-d\TH:i');
         $this->status = $entry->status();
+        $this->readTakedown($entry);
         $this->savedAt = now()->format('Y-m-d H:i:s');
         unset($this->editions);
     }
@@ -1227,6 +1277,7 @@ class EntryEditor extends Component
 
         $this->fill($this->valuesFrom($entry->data()));
         $this->status = $entry->status();
+        $this->readTakedown($entry);
         $this->savedAt = now()->format('Y-m-d H:i:s');
         $this->dispatch('entry-saved');
         $this->stamp('Loaded the newest version.');
@@ -1347,6 +1398,10 @@ class EntryEditor extends Component
             'searchCard' => $this->searchCard(),
             ...$this->building(),
             'coEditors' => $this->coEditors(),
+            'takenDown' => $this->entryId && $this->status === 'draft'
+                ? rescue(fn () => ($at = Booklet::entries()->find($this->entryId)?->get('taken_down_at')) ? Carbon::parse($at) : null, null, false) : null,
+            'canTakeDown' => $this->canPublish() && $this->status !== 'draft',
+            'isHome' => $this->entryId && (string) app(\App\Booklet\Site::class)->setting('homepage', 'posts') === $this->entryId,
             'review' => ($reviewed = $this->entryId ? Booklet::entries()->find($this->entryId) : null) ? \App\Support\Reviews::state($reviewed) : null,
             'reviewInfo' => $reviewed ? \App\Support\Reviews::details($reviewed) : null,
             'reviewPublished' => (bool) $reviewed?->published(),

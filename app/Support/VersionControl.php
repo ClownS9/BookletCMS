@@ -706,7 +706,7 @@ class VersionControl
             ->oldest('created_at')->limit(200)->get();
 
         $lines = $logs->map(function (ActivityLog $log) {
-            $who = $log->actor === 'stacy' ? 'Stacy (for '.($log->user->name ?? 'someone').')' : ($log->user->name ?? 'Someone');
+            $who = $log->actor === 'stacy' ? 'Stacy (for '.($log->user->name ?? 'someone').')' : ($log->actor === 'booklet' ? 'Booklet (as planned)' : ($log->user->name ?? 'Someone'));
 
             return trim($who.' '.$log->action.' '.($log->subject_label ? '“'.$log->subject_label.'”' : ''));
         })->unique()->values();

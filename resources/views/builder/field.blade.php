@@ -42,7 +42,7 @@
         @break
 
     @case ('select')
-        @php $options = is_array($spec['options']) ? $spec['options'] : $categories; @endphp
+        @php $options = is_array($spec['options']) ? $spec['options'] : ($spec['options'] === 'forms' ? \App\Support\Forms::choices() : $categories); @endphp
         <label class="d-field">
             <span>{{ $spec['label'] }}</span>
             <select data-set="{{ $path }}">

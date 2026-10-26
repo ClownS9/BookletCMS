@@ -113,6 +113,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     })->name('view-as.stop');
     Route::get('/comments', Admin\Comments::class)->name('comments');
     Route::get('/inbox', Admin\Inbox::class)->name('inbox');
+    Route::get('/forms', Admin\Forms::class)->name('forms');
+    Route::get('/forms/{form}/answers.csv', function (string $form) {
+        abort_unless(in_array(request()->user()?->level(), ['admin', 'editor'], true), 403);
+        $made = \App\Support\Forms::find($form);
+        abort_unless($made !== null, 404);
+        \App\Models\ActivityLog::record('downloaded the answers to', 'comments', 'form', $made->handle(), $made->title());
+
+        return response(\App\Support\Forms::csv($made), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.\Illuminate\Support\Str::slug($made->title()).'-answers-'.now()->format('Y-m-d').'.csv"',
+            'Cache-Control' => 'no-store, private',
+        ]);
+    })->where('form', '[a-z0-9-]+')->name('forms.csv');
     Route::get('/settings/health', Admin\Health::class)->name('settings.health');
     Route::get('/settings/version-control', Admin\VersionControl::class)->name('settings.version-control');
     Route::get('/settings/plain-files', Admin\StaticPublishing::class)->name('settings.static');

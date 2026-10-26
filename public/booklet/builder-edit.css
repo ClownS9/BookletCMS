@@ -170,6 +170,7 @@ code { font: 12px ui-monospace, "JetBrains Mono", monospace; background: var(--p
 .d-kind__icon--video { background-color: var(--k); background-image: conic-gradient(from 60deg at 45% 50%, #FBF8F1 0 60deg, transparent 0); background-size: 14px 14px; background-position: center; }
 .d-kind__icon--posts { background-image: linear-gradient(var(--coral), var(--coral)), linear-gradient(var(--coral), var(--coral)), linear-gradient(var(--coral), var(--coral)), linear-gradient(var(--g), var(--g)); background-size: 9px 12px, 9px 12px, 9px 12px, 32px 2px; background-position: 6px 6px, 17px 6px, 28px 6px, 6px 24px; }
 .d-kind__icon--contact { background-color: #DCE6F8; background-image: linear-gradient(var(--g), var(--g)), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff); background-size: 10px 3px, 16px 6px, 16px 10px; background-position: 6px 10px, 20px 7px, 20px 16px; }
+.d-kind__icon--form { background-color: #F6DDE3; background-image: linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(var(--g), var(--g)); background-size: 26px 5px, 26px 5px, 26px 5px, 12px 5px; background-position: 9px 6px, 9px 13px, 9px 20px, 9px 27px; }
 
 .d-pictures { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
 .d-pictures button { position: relative; display: block; width: 100%; aspect-ratio: 1; padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: var(--paper-2); }

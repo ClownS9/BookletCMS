@@ -69,7 +69,7 @@
             <section id="guide-sections">
                 <h2 class="heading heading--sub">Sections</h2>
                 <p>Hover over a section for its tools: move it up or down, make a copy, add one after it, open its settings, or take it out. Drag it by its handle to move it further, or drag it in the drawer’s <b>All sections</b> tab, which lists every section on the page.</p>
-                <p>To add one, press <b>+</b> between sections or <b>Add a section</b> in the drawer, and choose what kind. <b>Columns of your own</b> puts two to four columns side by side, each with any of a picture, a heading, words and a button.</p>
+                <p>To add one, press <b>+</b> between sections or <b>Add a section</b> in the drawer, and choose what kind. <b>Columns of your own</b> puts two to four columns side by side, each with any of a picture, a heading, words and a button. <b>A form</b> puts one of your own forms on the page (a sign-up, an RSVP, an order: make them under Comments › Forms); answers arrive in the Inbox.</p>
             </section>
 
             <section id="guide-look">

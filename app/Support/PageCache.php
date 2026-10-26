@@ -197,7 +197,9 @@ class PageCache
         $season = rescue(fn () => \App\Booklet\Support\Menus::nextSeasonChange(), null, false);
         // And a built page scheduled to go live (it does, on the next visit after its time).
         $built = rescue(fn () => app(\App\PageBuilder\PageBuilder::class)->nextScheduled(), null, false);
-        $next = collect([$next instanceof Carbon ? $next : null, $season, $built])->filter()->min();
+        // And a post or page coming down.
+        $down = rescue(fn () => \App\Support\Takedowns::next(), null, false);
+        $next = collect([$next instanceof Carbon ? $next : null, $season, $built, $down])->filter()->min();
 
         Cache::put(self::NEXT_KEY, $next instanceof \DateTimeInterface ? $next->getTimestamp() : now()->addYears(5)->timestamp, now()->addMinutes(self::MINUTES));
     }
@@ -207,6 +209,9 @@ class PageCache
     {
         if (! in_array($what, ['revisions', 'form_submissions'], true)) {
             self::flush();
+        }
+        if ($what === 'entries') {
+            \App\Support\Takedowns::forget(); // a date to come down may have been set, moved or reached
         }
     }
 }

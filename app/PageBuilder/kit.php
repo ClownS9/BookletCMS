@@ -491,6 +491,19 @@ return [
             'style' => ['width' => 'narrow'],
         ],
 
+        'form' => [
+            'name' => 'A form',
+            'about' => 'One of your own forms (a sign-up, an RSVP, an order), made in Comments › Forms. Answers arrive in the Inbox.',
+            'group' => 'Doing business',
+            'fields' => [
+                'form' => ['type' => 'select', 'label' => 'Which form', 'options' => 'forms'],
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'words' => ['type' => 'words', 'label' => 'Words beside it'],
+            ],
+            'start' => ['form' => '', 'title' => 'Sign up', 'words' => 'Fill this in and we’ll be in touch.'],
+            'style' => ['width' => 'narrow'],
+        ],
+
         'subscribe' => [
             'name' => 'New posts by email',
             'about' => 'The box for signing up to new posts (when emails are switched on).',

@@ -16,7 +16,8 @@ use Livewire\Component;
 use Throwable;
 
 /**
- * The Inbox: messages from the contact form on the Contact page. Read them,
+ * The Inbox: messages from the contact form on the Contact page, and answers
+ * to your own forms (Comments › Forms), all together or one form's. Read them,
  * write back (by email, through the book's email settings), archive or
  * mark as spam. Admins and editors.
  */
@@ -32,6 +33,10 @@ class Inbox extends Component
     #[Url(as: 'message', except: null)]
     public ?string $selected = null;
 
+    /** One form's letters only (its handle), or every form's. */
+    #[Url(as: 'from', except: '')]
+    public string $from = '';
+
     public string $search = '';
 
     public string $reply = '';
@@ -42,6 +47,9 @@ class Inbox extends Component
         if (! in_array($this->show, ['inbox', 'archived', 'spam'], true)) {
             $this->show = 'inbox';
         }
+        if (! array_key_exists($this->from, Letters::forms())) {
+            $this->from = '';
+        }
         if ($this->selected && ($m = Letters::find($this->selected))) {
             Letters::markRead($m); // opened from the email
             $this->show = match (Letters::status($m)) { 'archived' => 'archived', 'spam' => 'spam', default => 'inbox' };
@@ -51,6 +59,15 @@ class Inbox extends Component
     protected function allowed(): bool
     {
         return in_array(request()->user()?->level(), ['admin', 'editor'], true);
+    }
+
+    public function updatedFrom(): void
+    {
+        if (! array_key_exists($this->from, Letters::forms())) {
+            $this->from = '';
+        }
+        $this->selected = null;
+        $this->reply = '';
     }
 
     public function updatedShow(): void
@@ -98,7 +115,7 @@ class Inbox extends Component
         abort_unless($this->allowed(), 403);
         if ($m = $this->chosen()) {
             Letters::delete($m);
-            ActivityLog::record('deleted a message from the contact form', 'comments', 'message', (string) $m->id(), null);
+            ActivityLog::record($m->form() === Letters::FORM ? 'deleted a message from the contact form' : 'deleted an answer to “'.Letters::formName($m).'”', 'comments', 'message', (string) $m->id(), null);
             $this->selected = null;
             $this->stamp('Deleted.');
         }
@@ -155,8 +172,9 @@ class Inbox extends Component
 
     public function render()
     {
-        $all = Letters::all();
+        $all = Letters::all($this->from !== '' ? $this->from : null);
         $counts = Letters::counts($all);
+        $forms = Letters::forms();
 
         $pile = $all
             ->filter(fn (Submission $s) => match ($this->show) {
@@ -179,6 +197,7 @@ class Inbox extends Component
             'open' => Letters::open(),
             'contact' => $contact,
             'mailOff' => MailSettings::status()['state'] === 'off',
+            'forms' => $forms,
             'replies' => $chosen ? collect((array) $chosen->get('_replies', []))->map(fn ($r) => [
                 'by' => \App\Models\User::find($r['by'] ?? null)?->name ?? 'Someone',
                 'at' => rescue(fn () => \Illuminate\Support\Carbon::parse($r['at'] ?? null), null, false),

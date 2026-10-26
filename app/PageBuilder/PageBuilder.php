@@ -1045,7 +1045,8 @@ class PageBuilder
                     return null;
                 }
                 $field = $payload['field'];
-                $choices = str_ends_with($field, 'category') ? $categories() : [];
+                // Selects whose choices are worked out: the blog's categories, your forms.
+                $choices = str_ends_with($field, 'category') ? $categories() : ($field === 'form' ? \App\Support\Forms::choices() : []);
 
                 $why = $onSection($page, $payload['id'] ?? null,
                     fn (array $s) => $builder->set($s, $field, $payload['value'] ?? '', $isPicture, $choices),
@@ -1676,6 +1677,14 @@ class PageBuilder
             }
             if ($s['type'] === 'banner' && trim((string) ($s['fields']['picture'] ?? '')) === '') {
                 $say('no picture yet.');
+            }
+            if ($s['type'] === 'form') {
+                $made = \App\Support\Forms::find((string) ($s['fields']['form'] ?? ''));
+                if (! $made) {
+                    $say('no form chosen yet (make one in Comments › Forms).');
+                } elseif (! \App\Support\Forms::open($made)) {
+                    $say('“'.$made->title().'” isn’t taking answers, so readers see it’s closed.');
+                }
             }
             if ($s['type'] === 'contact' && ! rescue(fn () => \App\Support\Inbox::open(), true, false)) {
                 $say('the contact form is switched off, so readers won’t see it (Settings › Email).');

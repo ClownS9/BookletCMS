@@ -64,7 +64,8 @@ class AdminNav
             ['people', 'People', 'Who writes here', route('admin.people'), 'people', 'lilac', $r->routeIs('admin.people'), null, 'main'],
             $arranges ? ['subscribers', 'Subscribers', 'New posts by email', route('admin.subscribers'), 'comment', 'lilac', $r->routeIs('admin.subscribers'), null, 'tools'] : null,
             ['comments', 'Comments', 'Notes from readers', route('admin.comments'), 'comment', 'rose', $r->routeIs('admin.comments'), $waiting ?: null, 'main'],
-            $arranges ? ['inbox', 'Inbox', 'Messages from the contact form', route('admin.inbox'), 'mail', 'rose', $r->routeIs('admin.inbox'), \App\Support\Inbox::newCount() ?: null, 'tools'] : null,
+            $arranges ? ['inbox', 'Inbox', 'Messages and form answers', route('admin.inbox'), 'mail', 'rose', $r->routeIs('admin.inbox'), \App\Support\Inbox::newCount() ?: null, 'tools'] : null,
+            $arranges ? ['forms', 'Forms', 'Sign-ups, RSVPs, orders', route('admin.forms'), 'list', 'rose', $r->routeIs('admin.forms'), null, 'tools'] : null,
             ['calendar', 'Calendar', 'What goes out when', route('admin.calendar'), 'calendar', 'sky', $r->routeIs('admin.calendar'), null, 'tools'],
             ['taxonomies', 'Categories & tags', 'The index', route('admin.taxonomies'), 'tag', 'rose', $r->routeIs('admin.taxonomies'), null, 'tools'],
             ['print', 'Print as a book', 'Your writing, typeset for paper', route('admin.print'), 'printer', 'sun', $r->routeIs('admin.print'), null, 'tools'],
@@ -210,6 +211,7 @@ class AdminNav
         $add('subscribers', 'main', 'Chapter '.$n, 'People', 'Subscribers', route('admin.subscribers'), 'lilac');
         $add('comments', 'main', 'Chapter '.(++$n), 'Comments', 'Comments', route('admin.comments'), 'rose');
         $add('inbox', 'main', 'Chapter '.$n, 'Comments', 'Inbox', route('admin.inbox'), 'rose');
+        $add('forms', 'main', 'Chapter '.$n, 'Comments', 'Forms', route('admin.forms'), 'rose');
 
         // Back matter
         $add('activity', 'back', 'Appendix A', 'Activity', 'Activity', route('admin.activity'), 'coral');

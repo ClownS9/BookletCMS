@@ -11,6 +11,7 @@
             <span style="display: flex; align-items: center; gap: 10px"><span class="dot" style="--dot: var(--mint); --tilt: 0deg"></span>Published</span>
             <span style="display: flex; align-items: center; gap: 10px"><span class="dot" style="--dot: var(--sky); --tilt: 0deg"></span>Scheduled</span>
             <span style="display: flex; align-items: center; gap: 10px"><span class="dot" style="--dot: var(--sun); --tilt: 0deg"></span>Draft with a date</span>
+            <span style="display: flex; align-items: center; gap: 10px"><span class="dot" style="--dot: var(--coral); --tilt: 0deg"></span>Comes down</span>
         </div>
 
         <div style="padding-top: 20px; border-top: 1px solid var(--rule)">
@@ -19,7 +20,7 @@
                 <a href="{{ $item['href'] }}" class="row" style="padding: 10px; gap: 10px" wire:navigate>
                     <span class="dot" style="--dot: {{ $tones[$item['status']] }}; --tilt: 0deg"></span>
                     <span class="row__title" style="font-size: 17px">{{ $item['title'] }}</span>
-                    <span class="row__meta">{{ $item['time'] ?? '' }} · {{ ucfirst($item['status']) }}</span>
+                    <span class="row__meta">{{ $item['time'] ?? '' }} · {{ $item['label'] ?? ucfirst($item['status']) }}</span>
                 </a>
             @empty
                 <p class="serif muted" style="font-style: italic; font-size: 17px">A blank page. <a href="{{ route('admin.entries.create', ['posts', 'date' => $chosen['date']]) }}" wire:navigate>Plan a post for this day →</a></p>

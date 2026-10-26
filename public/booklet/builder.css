@@ -150,6 +150,9 @@
 .pb-width--normal .pb-contact, .pb-width--wide .pb-contact { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
 .pb-contact__details { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 6px; color: var(--pb-soft-ink); }
 .pb-contact__form { background: var(--pb-card); color: var(--ink, #1E1C18); border: 1px solid var(--pb-line); border-radius: 16px; padding: clamp(18px, 3vw, 28px); }
+/* Holding the real form (a card of its own, with the airmail edge): no second card around it */
+.pb-contact__form:has(> .letter), .pb-contact__form:has(> [wire\:id] > .letter) { padding: 0; border: 0; background: none; }
+.pb-contact__form .letter { margin-top: 0; }
 
 .pb-nothing { color: var(--pb-soft-ink); font-style: italic; }
 .pb-draft-note { margin: 0; padding: 10px var(--pb-gutter); background: var(--note, #FFF6CF); color: var(--ink, #1E1C18); font-size: 14px; text-align: center; }

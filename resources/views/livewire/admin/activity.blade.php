@@ -67,7 +67,7 @@
                             </span>
                             <span class="dot" style="--dot: {{ $kinds[$log->kind][1] ?? 'var(--sand)' }}; --tilt: 0deg"></span>
                             <span class="library-card__text">
-                                <strong>{{ $log->actor === 'stacy' ? 'Stacy' : ($log->user?->name ?? 'Someone') }}</strong>
+                                <strong>{{ $log->actor === 'stacy' ? 'Stacy' : ($log->actor === 'booklet' ? 'Booklet' : ($log->user?->name ?? 'Someone')) }}</strong>
                                 {{ $log->action }}
                                 @if ($log->subject_label)
                                     @if ($links[$log->id] ?? null)

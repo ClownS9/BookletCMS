@@ -1160,3 +1160,16 @@ html { overflow-x: clip; } /* edge-to-edge pictures don't leave a sideways scrol
 .guard:empty { display: none; }
 .guard-note { margin: 6px 0 0; font-size: 12px; color: var(--faint); }
 .guard-note a { color: inherit; }
+
+/* Forms of your own (the page builder's "A form" section) ---------------- */
+.made-form .field select { width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); font: inherit; color: var(--ink); }
+.made-form .field select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.made-form__set { margin: 0; padding: 0; border: 0; min-width: 0; }
+.made-form__set legend { margin-bottom: 6px; padding: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.made-form .made-form__pick { display: flex; align-items: flex-start; gap: 10px; min-height: 36px; padding: 6px 0; font-size: 16px; font-weight: 400; color: var(--ink); cursor: pointer; }
+.made-form .made-form__pick input { flex: none; width: 20px; height: 20px; min-height: 0; margin: 2px 0 0; padding: 0; accent-color: var(--accent); }
+.made-form__tick span { font-weight: 500; }
+.made-form__help { margin: 0; font-size: 13px; color: var(--muted); }
+.made-form__closed, .made-form__thanks { margin: 0; font-family: var(--serif); font-size: 20px; line-height: 1.45; color: var(--ink); }
+.letter__sent .made-form__thanks { color: var(--ink); }
+.made-form .muted { font-weight: 400; }

@@ -26,7 +26,7 @@ class Account extends Component
 
     public const PREFERENCES = [
         'notify_comments' => ['New comments on my entries', 'An email when someone leaves a note', true],
-        'notify_messages' => ['Messages from the contact form', 'An email when someone writes from the Contact page (admins and editors)', true],
+        'notify_messages' => ['Messages and form answers', 'An email when someone writes from the Contact page or fills in one of your forms (admins and editors)', true],
         'notify_reviews' => ['Reviews', 'An email when a draft is ready for review, sent back, or published', true],
         'stacy_suggestions' => ['Stacy’s suggestions', 'Little nudges on Contents, like drafts going quiet', true],
         'stacy_greet' => ['Stacy says hello', 'A greeting when you sign in or come back after a while', true],

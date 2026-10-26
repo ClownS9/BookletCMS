@@ -259,6 +259,33 @@
             </div>
         @endif
 
+        {{-- Coming down by itself (an offer that ends, an event that's over) --}}
+        @if ($canTakeDown && ! $isHome)
+            <details class="takedown" @if ($takedown || $errors->has('takedown') || $errors->has('takedownTo')) open @endif>
+                <summary>
+                    <span>Take it down on a date</span>
+                    @if ($takedown) <span class="takedown__when">{{ \Illuminate\Support\Carbon::parse($takedown)->format('D j M, g:ia') }}</span> @endif
+                </summary>
+                <div class="field">
+                    <label for="entry-takedown">Comes down on</label>
+                    <input id="entry-takedown" type="datetime-local" wire:model="takedown" min="{{ now()->format('Y-m-d\TH:i') }}">
+                    @error('takedown') <p class="field__error">{{ $message }}</p> @enderror
+                    <p class="field__hint">Then it’s a draft again, by itself: nothing is deleted. Save to set it.</p>
+                </div>
+                <div class="field">
+                    <label for="entry-takedown-to">Then send readers to <span class="muted">(optional)</span></label>
+                    <input id="entry-takedown-to" type="text" wire:model="takedownTo" placeholder="/offers or https://…" autocapitalize="off" spellcheck="false" maxlength="500">
+                    @error('takedownTo') <p class="field__error">{{ $message }}</p> @enderror
+                    <p class="field__hint">Without one, its address says the page isn’t there any more.</p>
+                </div>
+                @if ($takedown)
+                    <button type="button" class="link-button takedown__clear" wire:click="clearTakedown">Don’t take it down</button>
+                @endif
+            </details>
+        @elseif ($takenDown)
+            <p class="field__hint takedown__done">Came down by itself on {{ $takenDown->format('D j M Y, g:ia') }}, as planned. Publish it again to bring it back.</p>
+        @endif
+
         <div class="field">
             <label for="entry-slug">Slug</label>
             <div class="slug">

@@ -674,7 +674,7 @@ class Tools
         $this->links[] = ['label' => 'Activity', 'meta' => 'Open', 'href' => route('admin.activity'), 'tone' => 'var(--coral)'];
 
         return ['activity' => $rows->map(fn (ActivityLog $a) => [
-            'who' => $a->actor === 'stacy' ? 'Stacy (for '.($a->user?->name ?? 'someone').')' : ($a->user?->name ?? 'Someone'),
+            'who' => $a->actor === 'stacy' ? 'Stacy (for '.($a->user?->name ?? 'someone').')' : ($a->actor === 'booklet' ? 'Booklet (as planned)' : ($a->user?->name ?? 'Someone')),
             'did' => trim($a->action.' '.$a->subject_label),
             'when' => $a->created_at?->diffForHumans(),
         ])->all()];
