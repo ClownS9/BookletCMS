@@ -195,7 +195,9 @@ class PageCache
 
         // A seasonal menu starting or stopping changes every page too.
         $season = rescue(fn () => \App\Booklet\Support\Menus::nextSeasonChange(), null, false);
-        $next = collect([$next instanceof Carbon ? $next : null, $season])->filter()->min();
+        // And a built page scheduled to go live (it does, on the next visit after its time).
+        $built = rescue(fn () => app(\App\PageBuilder\PageBuilder::class)->nextScheduled(), null, false);
+        $next = collect([$next instanceof Carbon ? $next : null, $season, $built])->filter()->min();
 
         Cache::put(self::NEXT_KEY, $next instanceof \DateTimeInterface ? $next->getTimestamp() : now()->addYears(5)->timestamp, now()->addMinutes(self::MINUTES));
     }

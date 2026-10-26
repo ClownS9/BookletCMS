@@ -148,6 +148,8 @@ Only these folders: `views/site/`, `views/components/site/` and `views/errors/`.
 | `site/partials/card.blade.php` | A post in a list | `$entry`, `$site`, `$i` |
 | `errors/404.blade.php` | Page not found | |
 
+Pages, posts and the blog page can be built of sections on the page itself ("Edit this page", signed in). A theme with its own `site/page`, `site/post` or `site/blog` template draws those itself, so they aren't built there; the theme's layout still frames the ones that are.
+
 `$site` is `App\Booklet\Site`: `$site->url($entry)`, `$site->markdown($text)`,
 `$site->image($entry)`, `$site->crop($entry, 'hero')`, `$site->excerpt($entry)`,
 `$site->menu('header')` and more. Copy a template from `resources/views/` to start

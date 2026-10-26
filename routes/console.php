@@ -40,6 +40,9 @@
 \Illuminate\Support\Facades\Schedule::call(fn () => \App\Support\Newsletter::tidy())->daily()->name('newsletter-tidy');
 \Illuminate\Support\Facades\Schedule::call(fn () => \App\Support\Inbox::tidy())->daily()->name('inbox-spam-tidy');
 
+// Pages, posts and the blog page built on the page: scheduled ones (and changes) go live.
+\Illuminate\Support\Facades\Schedule::call(fn () => app(\App\PageBuilder\PageBuilder::class)->settle())->everyFiveMinutes()->name('builder-scheduled')->withoutOverlapping();
+
 // Jobs inserts ask for ('every' => ['daily' => …] in their insert.php).
 rescue(fn () => app(\App\Inserts\InsertManager::class)->schedule(app(\Illuminate\Console\Scheduling\Schedule::class)), null, true);
 \Illuminate\Support\Facades\Schedule::call(fn () => app(\App\Inserts\InsertManager::class)->fireScheduledGoneLive())->everyFiveMinutes()->name('inserts-scheduled-live');

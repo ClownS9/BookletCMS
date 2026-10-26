@@ -80,4 +80,9 @@
             </aside>
         @endif
     </article>
+
+    @if ($builder ?? null)
+        {{-- People who can build it: "Build this page", and the editor. Readers never get either. --}}
+        @include('builder.editor', $builder)
+    @endif
 </x-site.layout>

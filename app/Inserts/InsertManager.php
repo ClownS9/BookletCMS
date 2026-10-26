@@ -89,8 +89,14 @@ class InsertManager
     /** @return Collection<string, Insert> the ones in use right now */
     public function active(): Collection
     {
-        return $this->safeMode() ? collect() : $this->all()->filter(fn (Insert $i) => ! $i->manifest('broken') && $i->active());
+        return $this->safeMode() ? collect() : $this->all()->filter(fn (Insert $i) => ! $i->manifest('broken') && $i->active() && ! $i->builtIn());
     }
+
+    /**
+     * Inserts that became part of Booklet: never run any more, and the shelf
+     * says where they went.
+     */
+    public const BUILT_IN = ['page-builder' => 'Building on the page, for every page and post and the blog page (since Booklet 1.4). What you built with it comes across with php artisan booklet:builder-import'];
 
     // Public pages --------------------------------------------------------------------------
 
@@ -453,6 +459,10 @@ class InsertManager
         $swap = function (array $m) use ($slips, $silent, $context) {
             $name = strtolower($m[1]);
             $arg = trim(html_entity_decode((string) ($m[2] ?? ''), ENT_QUOTES | ENT_HTML5));
+            if ($name === 'builder') {
+                // A built page, in a post or page: Booklet's own slip.
+                return (string) rescue(fn () => ViewState::protect(fn () => app(\App\PageBuilder\PageBuilder::class)->slip($arg)), '', true);
+            }
             if (! isset($slips[$name])) {
                 return in_array($name, $silent, true) ? '' : $m[0];
             }
@@ -494,6 +504,9 @@ class InsertManager
         }
         if (! $insert->fits()) {
             throw new \RuntimeException($insert->name().' needs Booklet '.$insert->needs().' or newer.');
+        }
+        if ($insert->builtIn()) {
+            throw new \RuntimeException($insert->name().' is part of Booklet now: '.self::BUILT_IN[$insert->key].'. This copy can go.');
         }
 
         // Its own tables, if it brings any.

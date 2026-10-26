@@ -181,6 +181,26 @@
             @error('status') <p class="field__error">{{ $message }}</p> @enderror
         </fieldset>
 
+        {{-- Built of sections, on the page itself --}}
+        @if ($build)
+            <section class="review-card review-card--built" aria-label="Built on the page">
+                <p class="review-card__head">
+                    <span @class(['sticker', 'sticker--'.['live' => 'mint', 'changed' => 'sun', 'scheduled' => 'sky', 'draft' => 'sand'][$build['status']]])>Built on the page</span>
+                    <span class="review-card__when">{{ $build['words'] }}</span>
+                </p>
+                <p class="field__hint">Readers see the sections you built{{ $build['status'] === 'draft' ? ' once it’s published' : '' }}. {{ $build['fresh']
+                    ? 'Its words here are made from them each time you publish, and show only if you stop building it.'
+                    : 'Its words here show only if you stop building it.' }}</p>
+                <a class="btn btn--ink" href="{{ $build['url'] }}">Edit it on the page</a>
+            </section>
+        @elseif ($canBuild)
+            <section class="review-card" aria-label="Build it on the page">
+                <p class="review-card__head">Build it on the page</p>
+                <p class="field__hint">Make it of sections (a hero, cards, prices, questions…), right where readers see it. Its words and pictures are where you start; nothing changes for readers until you publish.</p>
+                <button type="button" class="btn" wire:click="buildOnPage" wire:confirm="Save, then open it on the site to build it?">Build it on the page</button>
+            </section>
+        @endif
+
         {{-- Review before publishing --}}
         @if (! $reviewPublished && (! $canPublish || $review))
             <section @class(['review-card', 'review-card--'.($review ?? 'none')]) aria-label="Review">

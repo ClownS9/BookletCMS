@@ -1288,6 +1288,32 @@ class EntryEditor extends Component
         $this->redirectRoute('admin.entries.edit', ['collection' => $copy->collectionHandle(), 'entry' => $copy->id()], navigate: true);
     }
 
+    /** Built of sections on the page: where it stands, and where to build it (or whether it can be). */
+    protected function building(): array
+    {
+        $pages = app(\App\PageBuilder\PageBuilder::class);
+        $entry = $this->entryId ? Booklet::entries()->find($this->entryId) : null;
+        if ($entry && ($build = \App\Models\PageBuild::forEntry($entry))) {
+            [$status, $words] = $pages->status($build);
+
+            return ['build' => ['status' => $status, 'words' => $words, 'url' => $pages->editUrl($entry), 'fresh' => $build->fresh], 'canBuild' => true];
+        }
+
+        return ['build' => null, 'canBuild' => $entry !== null && $pages->canBuild(request()->user(), $entry)];
+    }
+
+    /** "Build it on the page": save what's here, then off to the site to build it. */
+    public function buildOnPage(): void
+    {
+        $this->save();
+        $entry = $this->entryId ? Booklet::entries()->find($this->entryId) : null;
+        if (! $entry || ! app(\App\PageBuilder\PageBuilder::class)->canBuild(request()->user(), $entry)) {
+            return;
+        }
+        app(\App\PageBuilder\PageBuilder::class)->start($entry);
+        $this->redirect(app(\App\PageBuilder\PageBuilder::class)->editUrl($entry));
+    }
+
     public function render()
     {
         $title = $this->values['title'] ?? '';
@@ -1319,6 +1345,7 @@ class EntryEditor extends Component
             'canTranslate' => $stacyHelp && $this->entryId && \App\Stacy\StacyConfig::allowsAction('translate'),
             'routePrefix' => Str::before((string) $this->model->route(), '{'),
             'searchCard' => $this->searchCard(),
+            ...$this->building(),
             'coEditors' => $this->coEditors(),
             'review' => ($reviewed = $this->entryId ? Booklet::entries()->find($this->entryId) : null) ? \App\Support\Reviews::state($reviewed) : null,
             'reviewInfo' => $reviewed ? \App\Support\Reviews::details($reviewed) : null,

@@ -65,6 +65,12 @@ class Insert
         return $this->manifest['needs'] ?? null;
     }
 
+    /** Part of Booklet now (see InsertManager::BUILT_IN): this copy never runs. */
+    public function builtIn(): bool
+    {
+        return isset(InsertManager::BUILT_IN[$this->key]);
+    }
+
     public function fits(): bool
     {
         return ! $this->needs() || version_compare((string) config('booklet.version', '1.0'), (string) $this->needs(), '>=');

@@ -23,6 +23,7 @@ class SiteController extends Controller
 
     public function home(Request $request)
     {
+        $this->builder()->settle();
         // A home page an insert makes (a page from the page builder, say).
         if ($page = app(\App\Inserts\InsertManager::class)->home($request)) {
             return $page;
@@ -38,6 +39,10 @@ class SiteController extends Controller
     {
         // The blog page as an insert arranges it (the page builder, say).
         if ($page = app(\App\Inserts\InsertManager::class)->blog($request)) {
+            return $page;
+        }
+        // Arranged of sections, on the page itself.
+        if ($page = $this->builder()->blog($request)) {
             return $page;
         }
         $category = (string) $request->query('category', '');
@@ -90,6 +95,7 @@ class SiteController extends Controller
      */
     public function show(Request $request)
     {
+        $this->builder()->settle(); // built pages whose time has come go live first
         $uri = '/'.trim($request->path(), '/');
 
         if ($entry = $this->site()->findByUri($uri)) {
@@ -133,6 +139,7 @@ class SiteController extends Controller
      */
     public function preview(Request $request, string $entry)
     {
+        $this->builder()->settle();
         $model = \App\Booklet\Facades\Booklet::entries()->find($entry);
         abort_unless($model !== null, 404);
 
@@ -172,7 +179,7 @@ class SiteController extends Controller
             ->take(3)
             ->values();
 
-        return view('site.post', [
+        $data = [
             'site' => $this->site(),
             'entry' => $entry,
             'author' => $this->site()->author($entry),
@@ -181,18 +188,63 @@ class SiteController extends Controller
             'newer' => $index !== false && $index > 0 ? $posts[$index - 1] : null,
             'older' => $index !== false ? $posts->get($index + 1) : null,
             'related' => $related,
-        ]);
+            'builder' => $this->buildButton($entry),
+        ];
+        // Built of sections, on the page itself: its head, the sections, then what follows a post.
+        if ($drawn = $this->builder()->drawing($entry, request())) {
+            [$build, $draft, $editable] = $drawn;
+            $data['sections'] = $this->builder()->sectionsOf($build, $draft);
+            $data['types'] = $this->builder()->builder->types();
+            $data['builder'] = $editable ? ['target' => $entry->id(), 'start' => request()->boolean('edit') || $build->published === null,
+                'draft' => ! $entry->published(), 'back' => route('admin.entries', $entry->collectionHandle())] : null;
+        }
+
+        return view('site.post', $data);
     }
 
     protected function page(Entry $entry)
     {
         request()->attributes->set('booklet_entry', $entry->id()); // for the visit stats
         $this->languages($entry);
+        // Built of sections, on the page itself.
+        if ($drawn = $this->builder()->drawing($entry, request())) {
+            [$build, $draft, $editable] = $drawn;
+
+            return view('builder.page', [
+                'site' => $this->site(),
+                'entry' => $entry,
+                'build' => $build,
+                'sections' => $this->builder()->sectionsOf($build, $draft),
+                'types' => $this->builder()->builder->types(),
+                'draft' => $draft,
+                'editable' => $editable,
+                'isHome' => $this->builder()->isHome($entry),
+                'back' => route('admin.entries', $entry->collectionHandle()),
+            ]);
+        }
+
         return view('site.page', [
             'site' => $this->site(),
             'entry' => $entry,
             'template' => (string) $entry->get('template', 'default'),
+            'builder' => $this->buildButton($entry),
         ]);
+    }
+
+    protected function builder(): \App\PageBuilder\PageBuilder
+    {
+        return app(\App\PageBuilder\PageBuilder::class);
+    }
+
+    /** For people who can build this page or post (not built yet): "Build this page". */
+    protected function buildButton(Entry $entry): ?array
+    {
+        if (request()->attributes->get('booklet_static') || request()->attributes->has('booklet_proof')
+            || ! $this->builder()->canBuild(request()->user(), $entry)) {
+            return null;
+        }
+
+        return ['target' => $entry->id(), 'built' => false, 'title' => $entry->title(), 'draft' => ! $entry->published(), 'back' => route('admin.entries', $entry->collectionHandle())];
     }
 
     protected function paginate(Collection $items, Request $request): LengthAwarePaginator

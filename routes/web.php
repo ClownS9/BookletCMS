@@ -179,4 +179,12 @@ Route::get('/themes/{theme}/assets/{path}', \App\Http\Controllers\ThemeAssetCont
 Route::get('/inserts/{insert}/assets/{path}', \App\Http\Controllers\InsertAssetController::class)
     ->where(['insert' => '[a-z][a-z0-9-]*', 'path' => '.+'])->name('inserts.asset');
 
+// Building pages, posts and the blog page on the page itself (the editor talks to these).
+Route::middleware('auth')->prefix('builder')->name('builder.')->group(function () {
+    Route::post('/start/{target}', [\App\Http\Controllers\BuilderController::class, 'start'])->name('start');
+    Route::get('/edit/{target}', [\App\Http\Controllers\BuilderController::class, 'edit'])->name('edit');
+    Route::post('/edit/{target}', [\App\Http\Controllers\BuilderController::class, 'act'])->name('act');
+    Route::get('/preview/{target}', [\App\Http\Controllers\BuilderController::class, 'preview'])->name('preview');
+});
+
 Route::fallback([SiteController::class, 'show']);

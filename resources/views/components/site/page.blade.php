@@ -72,6 +72,8 @@
     @if (! $theme || $theme->usesBookletCss())
         <link rel="stylesheet" href="{{ asset('booklet/site.css') }}?v={{ filemtime(public_path('booklet/site.css')) }}">
     @endif
+    {{-- Pages built of sections (and [[builder: …]] in posts) --}}
+    <link rel="stylesheet" href="{{ asset('booklet/builder.css') }}?v={{ filemtime(public_path('booklet/builder.css')) }}">
     <script src="{{ asset('booklet/site.js') }}?v={{ filemtime(public_path('booklet/site.js')) }}" defer></script>
     {{-- A theme's own styles (and, for a theme with code, its scripts) come after Booklet's --}}
     @if ($theme)

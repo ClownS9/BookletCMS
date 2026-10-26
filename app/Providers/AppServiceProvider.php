@@ -14,6 +14,10 @@ class AppServiceProvider extends ServiceProvider
         // Settings › Email takes over from .env the first time anything sends mail.
         $this->app->afterResolving('mail.manager', fn () => \App\Support\MailSettings::apply());
 
+        // Building pages, posts and the blog page of sections, on the page itself.
+        $this->app->singleton(\App\PageBuilder\Builder::class, fn () => new \App\PageBuilder\Builder(require app_path('PageBuilder/kit.php')));
+        $this->app->singleton(\App\PageBuilder\PageBuilder::class);
+
         // Inserts: extras tucked into the book (inserts/*/insert.php).
         $this->app->singleton(\App\Inserts\InsertManager::class);
     }

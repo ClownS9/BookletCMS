@@ -17,7 +17,7 @@
         @else
             <ul class="picks">
                 @foreach ($inserts as $i)
-                    @php $state = $i->manifest('broken') ? 'Couldn’t be read' : ($i->tornOut() ? 'Torn out' : (! $i->fits() ? 'Needs Booklet '.$i->needs() : ($i->enabled() ? 'On' : 'Off'))); @endphp
+                    @php $state = $i->builtIn() ? 'Part of Booklet now' : ($i->manifest('broken') ? 'Couldn’t be read' : ($i->tornOut() ? 'Torn out' : (! $i->fits() ? 'Needs Booklet '.$i->needs() : ($i->enabled() ? 'On' : 'Off')))); @endphp
                     <li wire:key="ins-{{ $i->key }}">
                         <button type="button" class="pick" wire:click="pick('{{ $i->key }}')" aria-pressed="{{ $insert?->key === $i->key && ! $adding && ! $look ? 'true' : 'false' }}" style="align-items: center">
                             <span class="insert-chip" style="--tone: var(--{{ $i->sticker() }})" aria-hidden="true"></span>
@@ -174,6 +174,8 @@
                         <button type="button" @class(['btn', 'btn--ink' => ! $previous]) wire:click="retry">Try again</button>
                     @endunless
                 </div>
+            @elseif ($insert->builtIn())
+                <p class="notice">This is part of Booklet now: {{ \App\Inserts\InsertManager::BUILT_IN[$insert->key] }}. This copy never runs: once what you built has come across, remove it.</p>
             @elseif (! $insert->fits())
                 <p class="notice notice--error">This insert needs Booklet {{ $insert->needs() }} or newer; this is {{ config('booklet.version') }}.</p>
             @else

@@ -1,0 +1,265 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Booklet\Data\Entry;
+use App\Booklet\Facades\Booklet;
+use App\Models\PageBuild;
+use App\Models\User;
+use Database\Seeders\BookletStarterSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
+use Illuminate\Testing\TestResponse;
+use Tests\TestCase;
+
+/**
+ * Building pages and posts of sections, on the page itself: the page or
+ * post stays what it is (its address, its chapter, its menus); only how
+ * it's drawn changes. Readers see Booklet's own drawing until the first
+ * publish, and only ever what's published after that.
+ */
+class PageBuilderTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Booklet::flush();
+        $this->seed(BookletStarterSeeder::class);
+        $this->admin = User::factory()->create(['role' => 'admin']);
+    }
+
+    protected function tearDown(): void
+    {
+        File::deleteDirectory(\App\Themes\ThemeManager::path());
+        parent::tearDown();
+    }
+
+    protected function about(): Entry
+    {
+        return Booklet::entries()->findBySlug('pages', 'about') ?? $this->fail('no About page');
+    }
+
+    protected function act(string $target, string $action, mixed $payload = null, array $state = [], ?User $as = null): TestResponse
+    {
+        return $this->actingAs($as ?? $this->admin)->postJson(route('builder.act', $target), ['action' => $action, 'payload' => $payload, 'state' => $state]);
+    }
+
+    protected function build(Entry $entry): PageBuild
+    {
+        return PageBuild::forEntry($entry) ?? $this->fail('not built');
+    }
+
+    protected function reader(string $url): TestResponse
+    {
+        $this->app['auth']->forgetGuards();
+        Booklet::flush();
+        $this->app->forgetInstance(\App\Booklet\Site::class);
+
+        return $this->get($url);
+    }
+
+    protected function startAbout(): PageBuild
+    {
+        $this->actingAs($this->admin)->postJson(route('builder.start', $this->about()->id()))->assertOk()
+            ->assertJsonPath('go', url('/about').'?edit=1');
+
+        return $this->build($this->about());
+    }
+
+    public function test_any_page_can_be_built_where_it_is(): void
+    {
+        $about = $this->about();
+
+        // Not built: Booklet draws it; people who can build it get "Build this page".
+        $this->reader('/about')->assertOk()->assertSee('A few lines about who writes here.')->assertDontSee('pb-editor', false);
+        $this->actingAs($this->admin)->get('/about')->assertOk()->assertSee('id="pb-editor"', false)
+            ->assertSee('data-begin="'.route('builder.start', $about->id()).'"', false)->assertSee('Build this page');
+        $writer = User::factory()->create(['role' => 'writer']);
+        $this->actingAs($writer)->get('/about')->assertDontSee('pb-editor', false);
+        $this->actingAs($writer)->postJson(route('builder.start', $about->id()))->assertNotFound();
+
+        // Starting: its own words, as sections. Readers still see the page as it was.
+        $page = $this->startAbout();
+        $this->assertSame(['hero'], array_column($page->draft, 'type'));
+        $this->assertSame(['About', 'A few lines about who writes here.'], [$page->draft[0]['fields']['title'], $page->draft[0]['fields']['lede']]);
+        $this->assertNull($page->published);
+        $this->reader('/about')->assertSee('A few lines about who writes here.')->assertDontSee('pb-page', false);
+        $this->actingAs($this->admin)->get('/about')->assertSee('data-pb-page="'.$about->id().'"', false)->assertSee('data-start="1"', false)
+            ->assertSee('noindex', false);
+        $this->actingAs($this->admin)->getJson(route('builder.edit', $about->id()))->assertOk()
+            ->assertJsonPath('bar.status', 'changed')->assertJsonPath('bar.words', 'Changes not published')->assertJsonPath('bar.address', '/about');
+
+        // Building, then publishing: same address, same page.
+        $this->act($about->id(), 'set', ['id' => $page->draft[0]['id'], 'field' => 'title', 'value' => 'Who we are']);
+        $this->act($about->id(), 'add', 'faq', ['section' => $page->draft[0]['id']]);
+        $this->act($about->id(), 'publish')->assertJsonPath('stamp', 'Published. Readers see the new version now.')->assertJsonPath('bar.status', 'live');
+        $html = $this->reader('/about')->assertOk()->assertSee('<h1 class="pb-title pb-title--big">Who we are</h1>', false)->assertSee('pb--faq', false)
+            ->assertDontSee('pb-editor', false)->assertDontSee('data-pb-field', false)->getContent();
+        $this->assertSame(1, substr_count($html, '<h1'));
+        $this->assertSame('A few lines about who writes here.', $this->about()->get('content'), 'its own words are left as they were');
+        $this->assertSame('/about', $this->about()->uri());
+        $this->actingAs($this->admin)->get('/about')->assertSee('Edit this page')->assertSee('data-start="0"', false);
+
+        // In the book: it says so.
+        \Livewire\Livewire::actingAs($this->admin)->test(\App\Livewire\Admin\EntryEditor::class, ['collection' => 'pages', 'entry' => $about->id()])
+            ->assertSee('Built on the page')->assertSee('On the site')->assertSee(url('/about').'?edit=1');
+    }
+
+    public function test_editing_undo_and_the_phone_view(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $hero = $page->draft[0]['id'];
+
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Who'], [], null);
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Who we are']);
+        $this->act($about->id(), 'copy', $hero);
+        $this->assertCount(2, $this->build($about)->draft);
+        $this->act($about->id(), 'undo');
+        $this->assertCount(1, $this->build($about)->draft);
+        $this->act($about->id(), 'undo');
+        $this->assertSame('About', $this->build($about)->draft[0]['fields']['title'], 'a run of typing is one Undo step');
+        $this->act($about->id(), 'remove', $hero)->assertJsonPath('stamp', 'Taken out. (Undo puts it back.)');
+        $this->act($about->id(), 'undo');
+
+        // The phone view: the draft, without the editor.
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'title', 'value' => 'Draft title']);
+        $this->actingAs($this->admin)->get(route('builder.preview', $about->id()))->assertRedirect(route('preview', $about->id()).'?preview=1');
+        $this->actingAs($this->admin)->get(route('preview', $about->id()).'?preview=1')->assertSee('Draft title')->assertDontSee('id="pb-editor"', false);
+        $this->act($about->id(), 'set', ['id' => $hero, 'field' => 'nope', 'value' => 'x'])->assertOk();
+        $this->act($about->id(), 'whatever')->assertNotFound();
+    }
+
+    public function test_its_name_address_home_page_and_going_back_to_normal(): void
+    {
+        $about = $this->about();
+        $this->startAbout();
+        $this->act($about->id(), 'publish');
+
+        $this->act($about->id(), 'details', ['name' => '', 'address' => 'x'])->assertStatus(422)->assertJsonPath('errors.name', 'The name field is required.');
+        $this->act($about->id(), 'details', ['name' => 'Our story', 'address' => 'Our Story', 'description' => 'How it began.'])
+            ->assertJsonPath('stamp', 'Saved. /about now sends readers to /our-story.')->assertJsonPath('moved', url('/our-story'));
+        $entry = Booklet::entries()->find($about->id());
+        $this->assertSame(['Our story', '/our-story', 'How it began.'], [$entry->title(), $entry->uri(), $entry->get('meta_description')]);
+        $this->reader('/about')->assertRedirect('/our-story');
+        $this->reader('/our-story')->assertOk()->assertSee('pb-page', false);
+        $this->act($about->id(), 'details', ['name' => 'Our story', 'address' => 'contact'])->assertJsonPath('stamp', 'Saved. That address was taken, so it’s /contact-2.');
+
+        // The home page (admins only).
+        $editor = User::factory()->create(['role' => 'editor']);
+        $this->act($about->id(), 'home', true, [], $editor)->assertJsonPath('stamp', 'Only an admin can choose the home page.');
+        $this->act($about->id(), 'home', true)->assertJsonPath('stamp', 'It’s the home page now.')->assertJsonPath('bar.address', '/');
+        $this->reader('/')->assertOk()->assertSee('pb-page', false)->assertSee('<h1 class="pb-title pb-title--big">About</h1>', false);
+        $this->act($about->id(), 'home', false)->assertJsonPath('stamp', 'Your latest posts are the home page again.');
+
+        // Drawn as before: its own words again.
+        $this->act($about->id(), 'stop')->assertJsonPath('gone', url('/contact-2'));
+        $this->assertNull(PageBuild::forEntry($about));
+        $this->reader('/contact-2')->assertOk()->assertSee('A few lines about who writes here.')->assertDontSee('pb-page', false);
+    }
+
+    public function test_a_new_page_is_built_from_a_layout_and_gets_its_words_when_published(): void
+    {
+        $entry = Booklet::entries()->make(['collection' => 'pages', 'published' => false], ['title' => 'Spring offer', 'content' => ''])->save();
+        $this->actingAs($this->admin)->get(route('preview', $entry->id()))->assertOk()->assertSee('Build this page');
+        $this->actingAs($this->admin)->postJson(route('builder.start', $entry->id()))->assertJsonPath('go', route('preview', $entry->id()).'?edit=1');
+        $page = $this->build($entry);
+        $this->assertSame(['hero', 'columns', 'text-picture', 'quotes', 'cta'], array_column($page->draft, 'type'));
+        $this->assertSame('Spring offer', $page->draft[0]['fields']['title']);
+        $this->assertTrue($page->fresh);
+        $this->reader('/spring-offer')->assertNotFound();
+
+        $this->act($entry->id(), 'publish')->assertJsonPath('stamp', 'It’s on the site at /spring-offer.')->assertJsonPath('moved', url('/spring-offer'));
+        $this->assertTrue(Booklet::entries()->find($entry->id())->published());
+        $this->assertStringContainsString('## Spring offer', (string) Booklet::entries()->find($entry->id())->get('content'), 'its words, for drawing without sections');
+        $this->reader('/spring-offer')->assertOk()->assertSee('pb--cta', false);
+        $this->assertDatabaseHas('activity_log', ['action' => 'published', 'subject_key' => $entry->id()]);
+
+        // A draft again: off the site; on, at its preview.
+        $this->act($entry->id(), 'status', ['status' => 'draft'])->assertJsonPath('stamp', 'Taken off the site. Only people who can edit it see it now.')
+            ->assertJsonPath('moved', route('preview', $entry->id()));
+        $this->reader('/spring-offer')->assertNotFound();
+        $this->assertFalse(Booklet::entries()->find($entry->id())->published());
+    }
+
+    public function test_posts_keep_their_head_and_conversation(): void
+    {
+        $post = Booklet::entries()->make(['collection' => 'posts', 'slug' => 'opening-day', 'date' => now()->subDay()->format('Y-m-d H:i:s')],
+            ['title' => 'Opening day', 'content' => "We open on Saturday.\n\n## What to bring\n\nYourselves.", 'author' => $this->admin->id])->save();
+        $url = (string) $post->uri();
+        $this->actingAs($this->admin)->get($url)->assertSee('Build this page');
+        $this->actingAs($this->admin)->postJson(route('builder.start', $post->id()))->assertOk();
+        $page = $this->build($post);
+        $this->assertSame(['text-picture', 'text-picture'], array_column($page->draft, 'type'), 'no hero: the post’s head has its title');
+        $this->assertSame('We open on Saturday.', $page->draft[0]['fields']['body']);
+        $this->act($post->id(), 'publish');
+        $this->assertStringNotContainsString('<h1', (string) $this->act($post->id(), 'tab', 'outline')->json('page'), 'the post’s head has the h1');
+
+        $html = $this->reader($url)->assertOk()->assertSee('<h1 class="post-head__title">Opening day</h1>', false)->assertSee('class="pb-post"', false)
+            ->assertSee('What to bring')->assertSee('class="byline"', false)->getContent();
+        $this->assertSame(1, substr_count($html, '<h1'));
+        $this->assertStringNotContainsString('prose--dropcap', $html);
+        $this->assertFalse($this->act($post->id(), 'tab', 'page')->json('bar.blog'));
+        $this->assertStringNotContainsString('Use it as the home page', (string) $this->act($post->id(), 'tab', 'page')->json('drawer'));
+    }
+
+    public function test_the_slip_and_who_can_build(): void
+    {
+        $about = $this->about();
+        $this->startAbout();
+        $this->act($about->id(), 'add', 'faq');
+        $this->assertSame('', app(\App\PageBuilder\PageBuilder::class)->slip('about'), 'nothing until it’s published');
+        $this->act($about->id(), 'publish');
+        $this->assertStringContainsString('pb-embed', app(\App\PageBuilder\PageBuilder::class)->slip('about'));
+
+        $this->app['auth']->forgetGuards();
+        $this->getJson(route('builder.edit', $about->id()))->assertUnauthorized();
+        $this->act($about->id(), 'publish', null, [], User::factory()->create(['role' => 'writer']))->assertNotFound();
+        $this->act('nothing-here', 'publish')->assertNotFound();
+        $this->actingAs($this->admin)->getJson(route('builder.edit', Booklet::entries()->findBySlug('pages', 'contact')->id()))->assertNotFound();
+    }
+
+    public function test_a_theme_that_draws_pages_itself_isnt_built_here(): void
+    {
+        config(['booklet.themes_path' => storage_path('framework/testing/themes')]);
+        File::ensureDirectoryExists(\App\Themes\ThemeManager::path().'/ownpages/views/site');
+        File::put(\App\Themes\ThemeManager::path().'/ownpages/theme.json', json_encode(['key' => 'ownpages', 'name' => 'Own pages', 'version' => '1.0']));
+        File::put(\App\Themes\ThemeManager::path().'/ownpages/views/site/page.blade.php', '<p>A page of its own</p>');
+        \App\Themes\ThemeManager::forget();
+        \App\Support\Look::save(\App\Support\Look::clean(['theme' => 'ownpages']));
+
+        $this->actingAs($this->admin)->get('/about')->assertDontSee('pb-editor', false);
+        $this->actingAs($this->admin)->postJson(route('builder.start', $this->about()->id()))->assertNotFound();
+    }
+
+    public function test_the_old_insert_stands_aside_and_what_it_built_comes_across(): void
+    {
+        $about = $this->about();
+        // As the insert kept them: a page built from About (in its place), one from scratch, and the blog.
+        $section = fn (string $title) => ['id' => 'abcd'.substr(md5($title), 0, 6), 'type' => 'hero', 'fields' => ['title' => $title], 'look' => []];
+        \App\Models\InsertRecord::create(['insert' => 'page-builder', 'kind' => 'pages', 'slug' => 'about', 'data' => [
+            'title' => 'About', 'draft' => [$section('Built about')], 'published' => [$section('Built about')], 'home' => false,
+            'replaces' => ['entry' => $about->id(), 'title' => 'About', 'address' => 'about', 'done' => now()->toIso8601String()],
+        ]]);
+        $about->setAttribute('published', false)->save();
+        \App\Models\InsertRecord::create(['insert' => 'page-builder', 'kind' => 'pages', 'slug' => 'offer', 'data' => [
+            'title' => 'Offer', 'draft' => [$section('Our offer')], 'published' => [$section('Our offer')], 'home' => true,
+        ]]);
+        \App\Models\InsertRecord::create(['insert' => 'page-builder', 'kind' => 'pages', 'slug' => null, 'data' => [
+            'title' => 'The blog', 'blog' => true, 'draft' => [$section('Blog draft')], 'published' => null,
+        ]]);
+
+        $this->artisan('booklet:builder-import')->expectsOutputToContain('“About”: on the site at /about.')
+            ->expectsOutputToContain('“Offer”: on the site at /offer (your home page).')->expectsOutputToContain('The blog page: its arrangement is a draft.')->assertSuccessful();
+        $this->reader('/about')->assertOk()->assertSee('Built about');
+        $this->reader('/')->assertOk()->assertSee('Our offer');
+        $this->assertNotNull(PageBuild::blog());
+        $this->artisan('booklet:builder-import')->expectsOutputToContain('Everything was here already.');
+
+        $this->assertArrayHasKey('page-builder', \App\Inserts\InsertManager::BUILT_IN);
+    }
+}
