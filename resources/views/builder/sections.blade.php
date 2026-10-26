@@ -18,6 +18,7 @@
             'pb', 'pb--'.$s['type'],
             'pb-bg--'.($look['background'] === 'picture' && ! $bg ? 'none' : $look['background']),
             'pb-space--'.$look['space'], 'pb-align--'.$look['align'], 'pb-width--'.$look['width'],
+            'pb-show--'.$look['show'] => $look['show'] !== 'all',
         ])
         @if ($bg) style="--pb-picture: url(&quot;{{ addcslashes($bg['url'], '"\\') }}&quot;); --pb-focus: {{ $bg['focus'] }}" @endif
         @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ ($types[$s['type']]['name'] ?? $s['type']).(isset($s['shared']) ? ' · shared' : '') }}" @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>

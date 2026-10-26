@@ -98,6 +98,7 @@
         @include('builder.status')
         @include('builder.history')
         @include('builder.proofs')
+        @include('builder.layouts')
 
         {{-- The page's (or post's) own details: they're its own, in the book too --}}
         @php
@@ -170,6 +171,23 @@
             <h2 class="d-h">{{ $kind['name'] }}</h2>
         </div>
         <p class="d-note">{{ $kind['fields'] === [] ? 'It draws itself: there’s nothing to fill in. How it looks is below.' : 'Click words on the page to type into them. Everything else is here.' }}</p>
+
+        @if ($stacy && $kind['fields'] !== [] && empty($kind['blog']))
+            {{-- Stacy writes its words, as asked --}}
+            <details class="d-stacy" @if (! empty($errors['stacy'])) open @endif>
+                <summary>Ask Stacy to write it</summary>
+                <form class="d-form" data-form="stacy">
+                    <input type="hidden" name="id" value="{{ $sid }}">
+                    <label class="d-field">
+                        <span>What should it say?</span>
+                        <textarea name="ask" rows="3" maxlength="1000" placeholder="Questions people ask about delivery, in a friendly voice…">{{ ! empty($errors['stacy']) ? request()->input('payload.ask') : '' }}</textarea>
+                        @if (! empty($errors['stacy'])) <em class="d-error">{{ $errors['stacy'] }}</em> @endif
+                        <small>She writes its words only (pictures and links stay as they are), and doesn’t make up facts: anything she doesn’t know is left in [brackets]. Undo takes it back.</small>
+                    </label>
+                    <button type="submit" class="d-btn">Write it</button>
+                </form>
+            </details>
+        @endif
 
         @if ($sharedNow)
             {{-- Used on other pages too --}}

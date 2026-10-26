@@ -475,6 +475,88 @@ class PageBuilderTest extends TestCase
         $this->assertStringNotContainsString('Share the draft', (string) $this->act('blog', 'tab', 'page', ['tab' => 'page'])->json('drawer'));
     }
 
+    public function test_shows_on_dragging_layouts_and_columns(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $hero = $page->draft[0]['id'];
+
+        // Shows on computers only, or phones only: hidden for the other (labelled while building).
+        $this->act($about->id(), 'look', ['id' => $hero, 'key' => 'show', 'value' => 'phone']);
+        $this->assertStringContainsString('pb-show--phone', (string) $this->act($about->id(), 'tab', 'outline')->json('page'));
+        $this->act($about->id(), 'look', ['id' => $hero, 'key' => 'show', 'value' => 'tablet'])->assertJsonPath('stamp', 'That isn’t one of the choices.');
+
+        // Start again from a layout Booklet comes with (its hero says the page's name); Undo takes it back.
+        $drawer = (string) $this->act($about->id(), 'tab', 'page', ['tab' => 'page'])->json('drawer');
+        $this->assertStringContainsString('A shop or café', $drawer);
+        $this->act($about->id(), 'layout', 'starter:shop', ['tab' => 'page'])->assertJsonPath('stamp', 'Started again from that layout. (Undo takes it back.)');
+        $this->assertSame(['hero', 'menu', 'hours', 'quotes', 'cta'], array_column($this->build($about)->draft, 'type'));
+        $this->assertSame('About', $this->build($about)->draft[0]['fields']['title']);
+        $this->act($about->id(), 'undo');
+        $this->assertSame(['hero'], array_column($this->build($about)->draft, 'type'));
+        $this->act($about->id(), 'layout', 'starter:nope')->assertJsonPath('stamp', 'That layout isn’t there any more.');
+
+        // Moving to a place (what dragging on the page sends).
+        $this->act($about->id(), 'add', 'free');
+        $this->act($about->id(), 'move', ['id' => collect($this->build($about)->draft)->firstWhere('type', 'free')['id'], 'to' => 0]);
+        $this->assertSame(['free', 'hero'], array_column($this->build($about)->draft, 'type'));
+
+        // Saved as a layout, and another page started from it (new sections, the same words).
+        $this->assertSame(['layout' => 'Give it a name, to choose it by.'], $this->act($about->id(), 'save-layout', ['name' => ''])->assertStatus(422)->json('errors'));
+        $this->act($about->id(), 'save-layout', ['name' => 'Two columns and a hero'])->assertJsonPath('stamp', 'Saved as the layout “Two columns and a hero”. Start any page from it, under Start from a layout.');
+        $layout = \App\Models\PageLayout::firstOrFail();
+        $entry = Booklet::entries()->make(['collection' => 'pages', 'published' => false], ['title' => 'Spring offer', 'content' => ''])->save();
+        $this->actingAs($this->admin)->postJson(route('builder.start', $entry->id()));
+        $this->assertStringContainsString('Two columns and a hero', (string) $this->act($entry->id(), 'tab', 'page', ['tab' => 'page'])->json('drawer'));
+        $this->act($entry->id(), 'layout', 'saved:'.$layout->id);
+        $there = $this->build($entry)->draft;
+        $this->assertSame(['free', 'hero'], array_column($there, 'type'));
+        $this->assertNotSame($this->build($about)->draft[0]['id'], $there[0]['id']);
+        $this->act($entry->id(), 'forget-layout', $layout->id)->assertJsonPath('stamp', 'The layout “Two columns and a hero” is gone. (Pages started from it stay as they are.)');
+
+        // Columns of your own, as readers see them: two, wider on the left; an empty column part isn't drawn.
+        $this->act($entry->id(), 'set', ['id' => $there[0]['id'], 'field' => 'widths', 'value' => 'left']);
+        $this->act($entry->id(), 'set', ['id' => $there[0]['id'], 'field' => 'items.1.title', 'value' => '']);
+        $this->act($entry->id(), 'publish');
+        $this->reader('/spring-offer')->assertSee('pb-free--2 pb-free--left', false)->assertSee('On the left')->assertDontSee('On the right')
+            ->assertSee('Each column has the same choices.');
+
+        // The blog page doesn't start again from layouts.
+        $this->actingAs($this->admin)->getJson(route('builder.edit', 'blog'));
+        $this->assertStringNotContainsString('Start from a layout', (string) $this->act('blog', 'tab', 'page', ['tab' => 'page'])->json('drawer'));
+    }
+
+    public function test_stacy_writes_a_section_as_asked(): void
+    {
+        \App\Models\AiProvider::create(['service' => 'openrouter', 'enabled' => true, 'is_default' => true, 'api_key' => 'k', 'default_model' => 'deepseek/deepseek-chat']);
+        $about = $this->about();
+        $this->startAbout();
+        $this->act($about->id(), 'add', 'faq');
+        $faq = collect($this->build($about)->draft)->firstWhere('type', 'faq')['id'];
+        $this->assertStringContainsString('Ask Stacy to write it', (string) $this->act($about->id(), 'select', $faq, ['section' => $faq])->json('drawer'));
+
+        $reply = json_encode(['title' => 'Delivery questions', 'intro' => 'What people ask most.', 'items' => [
+            ['question' => 'Do you deliver?', 'answer' => 'Yes, **every day** within [your area].'],
+            ['question' => 'How much is it?', 'answer' => 'It costs [price].'],
+            ['question' => 'Can I pick up?', 'answer' => 'Of course. See [the map](/contact).'],
+        ]]);
+        \Illuminate\Support\Facades\Http::fake(['openrouter.ai/*' => \Illuminate\Support\Facades\Http::response(['choices' => [['message' => ['role' => 'assistant', 'content' => "Here it is:\n".$reply]]]])]);
+
+        $this->act($about->id(), 'stacy', ['id' => $faq, 'ask' => 'Questions about delivery'], ['section' => $faq])
+            ->assertJsonPath('stamp', 'Stacy wrote it. Read it over and change anything that isn’t right (anything in [brackets] is yours to fill in). Undo takes it back.');
+        $fields = collect($this->build($about)->draft)->firstWhere('type', 'faq')['fields'];
+        $this->assertSame('Delivery questions', $fields['title']);
+        $this->assertSame(['Do you deliver?', 'How much is it?', 'Can I pick up?'], array_column($fields['items'], 'question'));
+        $this->assertSame('Of course. See [the map](/contact).', $fields['items'][2]['answer']);
+        \Illuminate\Support\Facades\Http::assertSent(fn ($r) => str_contains((string) json_encode($r->data()), 'Questions about delivery'));
+        $this->act($about->id(), 'undo');
+        $this->assertSame('Questions', collect($this->build($about)->draft)->firstWhere('type', 'faq')['fields']['title']);
+
+        // Asked for nothing: said under the box.
+        $this->assertSame(['stacy' => 'Say what it should be about, and I’ll write it.'],
+            $this->act($about->id(), 'stacy', ['id' => $faq, 'ask' => ' '], ['section' => $faq])->assertStatus(422)->json('errors'));
+    }
+
     public function test_the_slip_and_who_can_build(): void
     {
         $about = $this->about();
