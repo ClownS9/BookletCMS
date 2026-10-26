@@ -100,7 +100,7 @@ class Inbox extends Component
             Letters::setStatus($m, $status);
             $this->stamp(match ($status) {
                 'archived' => 'Archived.',
-                'spam' => 'Moved to Spam. It’s forgotten after '.Letters::SPAM_DAYS.' days.',
+                'spam' => __('Moved to Spam. It’s forgotten after :days days.', ['days' => Letters::SPAM_DAYS]),
                 'new' => 'Marked unread.',
                 default => 'Back in the inbox.',
             });
@@ -136,14 +136,14 @@ class Inbox extends Component
         ], ['reply' => 'reply']);
 
         if (! Letters::sender($m)[1]) {
-            $this->addError('reply', 'They didn’t leave an email address, so there’s nowhere to send it.');
+            $this->addError('reply', __('They didn’t leave an email address, so there’s nowhere to send it.'));
 
             return;
         }
 
         $key = 'inbox-reply|'.request()->user()?->id;
         if (RateLimiter::tooManyAttempts($key, 20)) {
-            $this->addError('reply', 'That’s a lot of replies in a short time. Wait a few minutes.');
+            $this->addError('reply', __('That’s a lot of replies in a short time. Wait a few minutes.'));
 
             return;
         }
@@ -153,14 +153,14 @@ class Inbox extends Component
             Letters::reply($m, request()->user(), $this->reply);
         } catch (Throwable $e) {
             report($e);
-            $this->addError('reply', 'It didn’t send: '.Str::limit($e->getMessage(), 160).(request()->user()->isAdmin() ? ' Check Settings › Email.' : ''));
+            $this->addError('reply', __('It didn’t send: :why', ['why' => Str::limit($e->getMessage(), 160)]).(request()->user()->isAdmin() ? ' '.__('Check Settings › Email.') : ''));
 
             return;
         }
 
         ActivityLog::record('wrote back to', 'comments', 'message', (string) $m->id(), Letters::sender($m)[0]);
         $this->reply = '';
-        $this->stamp('Sent to '.Letters::sender($m)[1].'.');
+        $this->stamp(__('Sent to :email.', ['email' => Letters::sender($m)[1]]));
     }
 
     public function toggleOpen(): void

@@ -58,6 +58,9 @@ class Account extends Component
 
     public array $preferences = [];
 
+    /** The book's language for this person (App\Support\BookLanguage), or '' to follow the browser. */
+    public string $language = '';
+
     /** Stacy's service and model for this person ("" = the book's default). */
     public string $stacyService = '';
 
@@ -102,6 +105,7 @@ class Account extends Component
             $this->preferences[$key] = (bool) ($user->preferences[$key] ?? $default);
         }
 
+        $this->language = (string) ($user->preferences['locale'] ?? '');
         $this->stacyService = (string) ($user->preferences['stacy_service'] ?? '');
         $this->stacyModel = (string) ($user->preferences['stacy_model'] ?? '');
 
@@ -114,6 +118,27 @@ class Account extends Component
         $this->stacyEngine = (string) ($p['stacy_engine'] ?? 'natural');
         $this->stacyNaturalVoice = (string) ($p['stacy_natural_voice'] ?? 'coral');
         $this->stacyStyle = (string) ($p['stacy_style'] ?? '');
+    }
+
+    /** The book in another language: saved, remembered in this browser (for the sign-in page), and the page drawn again in it. */
+    public function updatedLanguage(string $code): void
+    {
+        if ($code !== '' && ! isset(\App\Support\BookLanguage::LANGUAGES[$code])) {
+            return;
+        }
+        $user = request()->user();
+        $preferences = array_merge((array) $user->preferences, ['locale' => $code]);
+        if ($code === '') {
+            unset($preferences['locale']); // follow the browser
+            \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(\App\Support\BookLanguage::COOKIE));
+        } else {
+            \Illuminate\Support\Facades\Cookie::queue(\App\Support\BookLanguage::COOKIE, $code, 60 * 24 * 365);
+        }
+        $user->update(['preferences' => $preferences]);
+        $code = $code !== '' ? $code : \App\Support\BookLanguage::fromBrowser(request());
+        \App\Support\BookLanguage::use($code);
+        $this->stamp(__('The book speaks :language now.', ['language' => \App\Support\BookLanguage::LANGUAGES[$code][1]]), afterRedirect: true);
+        $this->redirectRoute('admin.account', navigate: false);
     }
 
     public function saveVoice(): void
@@ -263,7 +288,7 @@ class Account extends Component
 
         $this->reset('currentPassword', 'newPassword', 'newPassword_confirmation');
         $this->passwordSaved = true;
-        $this->stamp($others ? 'Password changed. Signed out of '.$others.' other '.str('device')->plural($others).'.' : 'Password changed.');
+        $this->stamp($others ? trans_choice('Password changed. Signed out of :count other device.|Password changed. Signed out of :count other devices.', $others) : 'Password changed.');
     }
 
     public function updatedStacyService(): void

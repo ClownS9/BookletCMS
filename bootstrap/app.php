@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // A brand new book opens on First setup, not the public site.
             \App\Http\Middleware\RedirectToSetup::class,
             \App\Http\Middleware\ApplySiteSettings::class,
+            // The book in the language its reader chose (readers' pages are left as they are).
+            \App\Http\Middleware\SpeakBookLanguage::class,
             \App\Http\Middleware\CountVisit::class,
             \App\Http\Middleware\SecurityHeaders::class,
             // Last, so visits are still counted and headers still added for kept pages.

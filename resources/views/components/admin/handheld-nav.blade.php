@@ -16,28 +16,28 @@
 
     <header class="topbar">
         <button type="button" class="topbar__btn" x-on:click="open = true" :aria-expanded="open.toString()" aria-controls="toc-drawer">
-            <x-admin.icon name="menu" size="20" /><span class="sr-only">Open the table of contents</span>
+            <x-admin.icon name="menu" size="20" /><span class="sr-only">{{ __('Open the table of contents') }}</span>
         </button>
 
-        <a href="{{ route('admin.contents') }}" class="topbar__brand" wire:navigate aria-label="Booklet, Contents">
+        <a href="{{ route('admin.contents') }}" class="topbar__brand" wire:navigate aria-label="{{ __('Booklet, Contents') }}">
             <x-admin.logo size="22" />
-            <span class="topbar__name">booklet</span>
+            <span class="topbar__name">{{ __('booklet') }}</span>
         </a>
 
         <span class="topbar__title" aria-hidden="true">{{ $current }}</span>
 
         <span class="topbar__tools">
-            <a href="#search" class="topbar__btn" x-on:click.prevent="$dispatch('open-search')" aria-label="Search everything">
+            <a href="#search" class="topbar__btn" x-on:click.prevent="$dispatch('open-search')" aria-label="{{ __('Search everything') }}">
                 <x-admin.icon name="search" size="19" />
             </a>
-            <a href="{{ route('admin.stacy') }}" class="topbar__stacy" aria-label="Ask Stacy" wire:navigate @if (request()->routeIs('admin.stacy')) aria-current="page" @endif>
-                <x-admin.icon name="stacy" size="16" /><span>Ask Stacy</span>
+            <a href="{{ route('admin.stacy') }}" class="topbar__stacy" aria-label="{{ __('Ask Stacy') }}" wire:navigate @if (request()->routeIs('admin.stacy')) aria-current="page" @endif>
+                <x-admin.icon name="stacy" size="16" /><span>{{ __('Ask Stacy') }}</span>
             </a>
         </span>
     </header>
 
     {{-- The table of contents --}}
-    <div class="toc-drawer" id="toc-drawer" x-show="open" x-cloak role="dialog" aria-modal="true" aria-label="Table of contents">
+    <div class="toc-drawer" id="toc-drawer" x-show="open" x-cloak role="dialog" aria-modal="true" aria-label="{{ __('Table of contents') }}">
         <div class="toc-drawer__backdrop" x-show="open" x-transition.opacity x-on:click="open = false"></div>
 
         <div class="toc-drawer__panel" x-show="open"
@@ -50,16 +50,16 @@
                 <a href="{{ route('admin.account') }}" class="toc-drawer__plate" wire:navigate>
                     <x-admin.avatar :user="$user" size="44" presence />
                     <span style="min-width: 0">
-                        <span class="eyebrow" style="display: block; font-size: 10px">This book belongs to</span>
+                        <span class="eyebrow" style="display: block; font-size: 10px">{{ __('This book belongs to') }}</span>
                         <span class="serif" style="display: block; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ $user->name }}</span>
                     </span>
                 </a>
-                <button type="button" class="topbar__btn" x-on:click="open = false"><x-admin.icon name="close" size="20" /><span class="sr-only">Close</span></button>
+                <button type="button" class="topbar__btn" x-on:click="open = false"><x-admin.icon name="close" size="20" /><span class="sr-only">{{ __('Close') }}</span></button>
             </div>
 
             <a href="{{ route('admin.stacy') }}" class="toc-drawer__stacy" wire:navigate>
                 <span class="toc-drawer__stacy-mark"><x-admin.icon name="stacy" size="18" /></span>
-                <span><strong>Ask Stacy</strong><small>Find things, or have her do small jobs</small></span>
+                <span><strong>{{ __('Ask Stacy') }}</strong><small>{{ __('Find things, or have her do small jobs') }}</small></span>
                 <span aria-hidden="true">→</span>
             </a>
 
@@ -85,14 +85,14 @@
 
             <form method="POST" action="{{ route('logout') }}" class="toc-drawer__foot">
                 @csrf
-                <span class="muted" style="font-size: 13px">Signed in as {{ $user->email }}</span>
-                <button type="submit" class="btn btn--quiet" style="min-height: 40px"><x-admin.icon name="logout" size="16" /> Sign out</button>
+                <span class="muted" style="font-size: 13px">{{ __('Signed in as :name', ['name' => $user->email]) }}</span>
+                <button type="submit" class="btn btn--quiet" style="min-height: 40px"><x-admin.icon name="logout" size="16" /> {{ __('Sign out') }}</button>
             </form>
         </div>
     </div>
 
     {{-- Phones: the tab bar --}}
-    <nav class="tabbar" aria-label="Chapters">
+    <nav class="tabbar" aria-label="{{ __('Chapters') }}">
         @foreach ($tabs as $tab)
             <a href="{{ $tab['href'] }}" wire:navigate class="tabbar__tab" style="--tone: var(--{{ $tab['tone'] }})" @if ($tab['active']) aria-current="page" @endif>
                 <span class="tabbar__icon"><x-admin.icon :name="$tab['icon']" size="20" /></span>
@@ -106,7 +106,7 @@
                     <span class="tabbar__dot" aria-label="{{ $waiting }} comments waiting"></span>
                 @endif
             </span>
-            <span>More</span>
+            <span>{{ __('More') }}</span>
         </button>
     </nav>
 </div>

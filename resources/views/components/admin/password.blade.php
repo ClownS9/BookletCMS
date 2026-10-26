@@ -42,9 +42,9 @@
     @endif
     @if ($match)
         <p class="pw-match" x-show="value" x-cloak :class="{ 'is-ok': matches }" aria-live="polite"
-           x-text="matches ? '✓ Matches' : 'Doesn’t match yet'"></p>
+           x-text="matches ? @js(__('✓ Matches')) : @js(__('Doesn’t match yet'))"></p>
     @endif
-    <p class="pw-caps" x-show="caps" x-cloak role="status">Caps Lock is on.</p>
+    <p class="pw-caps" x-show="caps" x-cloak role="status">{{ __('Caps Lock is on.') }}</p>
     @if ($hint) <p class="field__hint">{{ $hint }}</p> @endif
     @error($error ?? $model) <p class="field__error">{{ $message }}</p> @enderror
 </div>

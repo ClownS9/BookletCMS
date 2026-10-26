@@ -146,7 +146,7 @@ class LinksAndRowsTest extends TestCase
         Livewire::actingAs($this->admin)->test(EntryEditor::class, ['collection' => 'posts', 'entry' => $kopi->id()])
             ->assertSee('Linked from')
             ->assertSee('About')
-            ->assertSee('1 page link here');
+            ->assertSee('1 page links here');
     }
 
     public function test_links_are_checked_before_they_are_kept(): void

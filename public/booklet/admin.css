@@ -644,6 +644,11 @@ body.night .status-pick { color: var(--ink); }
 
 .cover__plate h2 { font-family: var(--serif); font-weight: 400; font-size: 28px; }
 .cover__sticker { position: absolute; top: -12px; right: 26px; --tilt: 4deg; }
+/* "or sign in with a passkey", under the sign-in button */
+.cover__passkey { display: flex; flex-direction: column; gap: clamp(8px, 1.5vh, 12px); }
+.cover__passkey .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.cover__or { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--faint); }
+.cover__or::before, .cover__or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
 
 /* Toast ----------------------------------------------------------------- */
 

@@ -11,17 +11,17 @@
     ];
     $flags = array_values(array_filter($flags));
 @endphp
-<nav class="flags" aria-label="Sections">
-    <a class="flag flag--paper" href="#search" x-on:click.prevent="$dispatch('open-search')" aria-label="Search everything">
+<nav class="flags" aria-label="{{ __('Sections') }}">
+    <a class="flag flag--paper" href="#search" x-on:click.prevent="$dispatch('open-search')" aria-label="{{ __('Search everything') }}">
         <x-admin.icon name="search" size="16" /><span class="kbd-hint">⌘K</span>
     </a>
     <a class="flag flag--ink flag--push" href="{{ route('admin.stacy') }}" wire:navigate @if(request()->routeIs('admin.stacy')) aria-current="page" @endif>
-        <x-admin.icon name="stacy" size="16" />Ask Stacy
+        <x-admin.icon name="stacy" size="16" />{{ __('Ask Stacy') }}
     </a>
     @foreach ($flags as $flag)
-        <a class="flag flag--{{ $flag['tone'] }}" href="{{ $flag['route'] }}" wire:navigate @if($flag['active']) aria-current="page" @endif>{{ $flag['label'] }}</a>
+        <a class="flag flag--{{ $flag['tone'] }}" href="{{ $flag['route'] }}" wire:navigate @if($flag['active']) aria-current="page" @endif>{{ __($flag['label']) }}</a>
     @endforeach
-    <a class="flag flag--sand" href="{{ route('admin.settings') }}" wire:navigate aria-label="Settings" @if(request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
+    <a class="flag flag--sand" href="{{ route('admin.settings') }}" wire:navigate aria-label="{{ __('Settings') }}" @if(request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
         <x-admin.icon name="settings" />
     </a>
 </nav>

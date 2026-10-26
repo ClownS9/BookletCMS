@@ -57,31 +57,31 @@ class AdminNav
         }
 
         $items = [
-            ['contents', 'Contents', 'The dashboard', route('admin.contents'), 'book', 'coral', $r->routeIs('admin.contents'), null, 'main'],
-            ($user?->canOpen('posts') ?? true) ? ['posts', 'Posts', 'Write and publish', route('admin.entries', 'posts'), 'pen', 'sun', $r->route('collection') === 'posts', null, 'main'] : null,
-            ($user?->canOpen('pages') ?? true) ? ['pages', 'Pages', 'Your site’s pages', route('admin.entries', 'pages'), 'file', 'mint', $r->route('collection') === 'pages', null, 'main'] : null,
-            ['media', 'Media', 'Pictures and files', route('admin.media'), 'image', 'sky', $r->routeIs('admin.media'), null, 'main'],
-            ['people', 'People', 'Who writes here', route('admin.people'), 'people', 'lilac', $r->routeIs('admin.people'), null, 'main'],
-            $arranges ? ['subscribers', 'Subscribers', 'New posts by email', route('admin.subscribers'), 'comment', 'lilac', $r->routeIs('admin.subscribers'), null, 'tools'] : null,
-            ['comments', 'Comments', 'Notes from readers', route('admin.comments'), 'comment', 'rose', $r->routeIs('admin.comments'), $waiting ?: null, 'main'],
-            $arranges ? ['inbox', 'Inbox', 'Messages and form answers', route('admin.inbox'), 'mail', 'rose', $r->routeIs('admin.inbox'), \App\Support\Inbox::newCount() ?: null, 'tools'] : null,
-            $arranges ? ['forms', 'Forms', 'Sign-ups, RSVPs, orders', route('admin.forms'), 'list', 'rose', $r->routeIs('admin.forms'), null, 'tools'] : null,
-            ['calendar', 'Calendar', 'What goes out when', route('admin.calendar'), 'calendar', 'sky', $r->routeIs('admin.calendar'), null, 'tools'],
-            ['taxonomies', 'Categories & tags', 'The index', route('admin.taxonomies'), 'tag', 'rose', $r->routeIs('admin.taxonomies'), null, 'tools'],
-            ['print', 'Print as a book', 'Your writing, typeset for paper', route('admin.print'), 'printer', 'sun', $r->routeIs('admin.print'), null, 'tools'],
-            $arranges ? ['menus', 'Site menus', 'Header and footer', route('admin.menus'), 'list', 'mint', $r->routeIs('admin.menus'), null, 'tools'] : null,
-            $arranges ? ['redirects', 'Redirects', 'Old addresses that forward', route('admin.redirects'), 'redirect', 'mint', $r->routeIs('admin.redirects'), null, 'tools'] : null,
-            ['activity', 'Activity', 'Who changed what', route('admin.activity'), 'pulse', 'coral', $r->routeIs('admin.activity'), null, 'tools'],
-            ['bin', 'The bin', 'Put back what was deleted', route('admin.bin'), 'bin', 'sand', $r->routeIs('admin.bin'), null, 'tools'],
-            ['collections', 'Collections', 'Chapters & blueprints', route('admin.collections'), 'layers', 'sand', $r->routeIs('admin.collections'), null, 'tools'],
-            ['settings', 'Settings', 'Site, look & Stacy', route('admin.settings'), 'settings', 'sand', $r->routeIs('admin.settings', 'admin.settings.*'), null, 'you'],
-            $user?->isAdmin() ? ['backups', 'Backups', 'The whole book in one file', route('admin.backups'), 'book', 'sand', $r->routeIs('admin.backups'), null, 'you'] : null,
-            $user?->isAdmin() ? ['version-control', 'Version control', 'Every change kept in git', route('admin.settings.version-control'), 'history', 'sand', $r->routeIs('admin.settings.version-control'), null, 'you'] : null,
-            $user?->isAdmin() ? ['look', 'The cover', 'Themes, fonts & colours', route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,
-            $user?->isAdmin() ? ['static', 'Publish as plain files', 'For GitHub Pages or any host', route('admin.settings.static'), 'printer', 'sand', $r->routeIs('admin.settings.static'), null, 'you'] : null,
-            $user?->isAdmin() ? ['api', 'Content API', 'Your posts as JSON for apps', route('admin.settings.api'), 'code', 'sand', $r->routeIs('admin.settings.api'), null, 'you'] : null,
-            $user?->isAdmin() ? ['import', 'Move in from WordPress', 'Bring an old site across', route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,
-            ['account', 'Your account', 'Profile & password', route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account'), null, 'you'],
+            ['contents', __('Contents'), __('The dashboard'), route('admin.contents'), 'book', 'coral', $r->routeIs('admin.contents'), null, 'main'],
+            ($user?->canOpen('posts') ?? true) ? ['posts', __('Posts'), __('Write and publish'), route('admin.entries', 'posts'), 'pen', 'sun', $r->route('collection') === 'posts', null, 'main'] : null,
+            ($user?->canOpen('pages') ?? true) ? ['pages', __('Pages'), __('Your site’s pages'), route('admin.entries', 'pages'), 'file', 'mint', $r->route('collection') === 'pages', null, 'main'] : null,
+            ['media', __('Media'), __('Pictures and files'), route('admin.media'), 'image', 'sky', $r->routeIs('admin.media'), null, 'main'],
+            ['people', __('People'), __('Who writes here'), route('admin.people'), 'people', 'lilac', $r->routeIs('admin.people'), null, 'main'],
+            $arranges ? ['subscribers', __('Subscribers'), __('New posts by email'), route('admin.subscribers'), 'comment', 'lilac', $r->routeIs('admin.subscribers'), null, 'tools'] : null,
+            ['comments', __('Comments'), __('Notes from readers'), route('admin.comments'), 'comment', 'rose', $r->routeIs('admin.comments'), $waiting ?: null, 'main'],
+            $arranges ? ['inbox', __('Inbox'), __('Messages and form answers'), route('admin.inbox'), 'mail', 'rose', $r->routeIs('admin.inbox'), \App\Support\Inbox::newCount() ?: null, 'tools'] : null,
+            $arranges ? ['forms', __('Forms'), __('Sign-ups, RSVPs, orders'), route('admin.forms'), 'list', 'rose', $r->routeIs('admin.forms'), null, 'tools'] : null,
+            ['calendar', __('Calendar'), __('What goes out when'), route('admin.calendar'), 'calendar', 'sky', $r->routeIs('admin.calendar'), null, 'tools'],
+            ['taxonomies', __('Categories & tags'), __('The index'), route('admin.taxonomies'), 'tag', 'rose', $r->routeIs('admin.taxonomies'), null, 'tools'],
+            ['print', __('Print as a book'), __('Your writing, typeset for paper'), route('admin.print'), 'printer', 'sun', $r->routeIs('admin.print'), null, 'tools'],
+            $arranges ? ['menus', __('Site menus'), __('Header and footer'), route('admin.menus'), 'list', 'mint', $r->routeIs('admin.menus'), null, 'tools'] : null,
+            $arranges ? ['redirects', __('Redirects'), __('Old addresses that forward'), route('admin.redirects'), 'redirect', 'mint', $r->routeIs('admin.redirects'), null, 'tools'] : null,
+            ['activity', __('Activity'), __('Who changed what'), route('admin.activity'), 'pulse', 'coral', $r->routeIs('admin.activity'), null, 'tools'],
+            ['bin', __('The bin'), __('Put back what was deleted'), route('admin.bin'), 'bin', 'sand', $r->routeIs('admin.bin'), null, 'tools'],
+            ['collections', __('Collections'), __('Chapters & blueprints'), route('admin.collections'), 'layers', 'sand', $r->routeIs('admin.collections'), null, 'tools'],
+            ['settings', __('Settings'), __('Site, look & Stacy'), route('admin.settings'), 'settings', 'sand', $r->routeIs('admin.settings', 'admin.settings.*'), null, 'you'],
+            $user?->isAdmin() ? ['backups', __('Backups'), __('The whole book in one file'), route('admin.backups'), 'book', 'sand', $r->routeIs('admin.backups'), null, 'you'] : null,
+            $user?->isAdmin() ? ['version-control', __('Version control'), __('Every change kept in git'), route('admin.settings.version-control'), 'history', 'sand', $r->routeIs('admin.settings.version-control'), null, 'you'] : null,
+            $user?->isAdmin() ? ['look', __('The cover'), __('Themes, fonts & colours'), route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,
+            $user?->isAdmin() ? ['static', __('Publish as plain files'), __('For GitHub Pages or any host'), route('admin.settings.static'), 'printer', 'sand', $r->routeIs('admin.settings.static'), null, 'you'] : null,
+            $user?->isAdmin() ? ['api', __('Content API'), __('Your posts as JSON for apps'), route('admin.settings.api'), 'code', 'sand', $r->routeIs('admin.settings.api'), null, 'you'] : null,
+            $user?->isAdmin() ? ['import', __('Move in from WordPress'), __('Bring an old site across'), route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,
+            ['account', __('Your account'), __('Profile & password'), route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account'), null, 'you'],
         ];
 
         return array_values(array_map(fn ($i) => [
@@ -157,8 +157,8 @@ class AdminNav
         };
 
         // Front matter
-        $add('contents', 'front', null, 'Contents', 'Contents', route('admin.contents'), 'coral');
-        $add('stacy', 'front', null, 'Ask Stacy', 'Ask Stacy', route('admin.stacy'), 'ink');
+        $add('contents', 'front', null, __('Contents'), __('Contents'), route('admin.contents'), 'coral');
+        $add('stacy', 'front', null, __('Ask Stacy'), __('Ask Stacy'), route('admin.stacy'), 'ink');
 
         // Chapters: each collection, then Media, People, Comments
         $n = 0;
@@ -173,65 +173,65 @@ class AdminNav
 
         $hasCalendar = $hasMenus = false;
         foreach ($collections as $collection) {
-            $chapter = 'Chapter '.(++$n);
+            $chapter = __('Chapter :n', ['n' => ++$n]);
             $handle = $collection->handle();
             $tone = $handle === 'posts' ? 'sun' : ($handle === 'pages' ? 'mint' : 'sand');
             $add("list:{$handle}", 'main', $chapter, $collection->title(), $collection->title(), route('admin.entries', $handle), $tone);
-            $add("editor:{$handle}", 'main', $chapter, $collection->title(), 'Writing', null, $tone);
-            $add("history:{$handle}", 'main', $chapter, $collection->title(), 'Editions', null, $tone);
+            $add("editor:{$handle}", 'main', $chapter, $collection->title(), __('Writing'), null, $tone);
+            $add("history:{$handle}", 'main', $chapter, $collection->title(), __('Editions'), null, $tone);
             // The calendar and the index belong to the blog; the menus to the site's pages.
             // If there's no "posts" or "pages", the first dated or structured collection takes them.
             if (! $hasCalendar && ($handle === 'posts' || ($collection->dated() && ! $collections->contains(fn ($c) => $c->handle() === 'posts')))) {
-                $add('calendar', 'main', $chapter, $collection->title(), 'Calendar', route('admin.calendar'), $tone);
-                $add('taxonomies', 'main', $chapter, $collection->title(), 'Categories & tags', route('admin.taxonomies'), $tone);
-                $add('print', 'main', $chapter, $collection->title(), 'Print as a book', route('admin.print'), $tone);
+                $add('calendar', 'main', $chapter, $collection->title(), __('Calendar'), route('admin.calendar'), $tone);
+                $add('taxonomies', 'main', $chapter, $collection->title(), __('Categories & tags'), route('admin.taxonomies'), $tone);
+                $add('print', 'main', $chapter, $collection->title(), __('Print as a book'), route('admin.print'), $tone);
                 $hasCalendar = true;
             }
             if (! $hasMenus && ($handle === 'pages' || ($collection->structured() && ! $collections->contains(fn ($c) => $c->handle() === 'pages')))) {
-                $add('menus', 'main', $chapter, $collection->title(), 'Site menus', route('admin.menus'), $tone);
-                $add('redirects', 'main', $chapter, $collection->title(), 'Redirects', route('admin.redirects'), $tone);
+                $add('menus', 'main', $chapter, $collection->title(), __('Site menus'), route('admin.menus'), $tone);
+                $add('redirects', 'main', $chapter, $collection->title(), __('Redirects'), route('admin.redirects'), $tone);
                 $hasMenus = true;
             }
         }
 
         // Still without a home (no collections at all, say): give them a chapter each, so every screen has a page.
         if (! $hasCalendar) {
-            $chapter = 'Chapter '.(++$n);
-            $add('calendar', 'main', $chapter, 'Calendar', 'Calendar', route('admin.calendar'), 'sun');
-            $add('taxonomies', 'main', $chapter, 'Calendar', 'Categories & tags', route('admin.taxonomies'), 'sun');
-            $add('print', 'main', $chapter, 'Calendar', 'Print as a book', route('admin.print'), 'sun');
+            $chapter = __('Chapter :n', ['n' => ++$n]);
+            $add('calendar', 'main', $chapter, __('Calendar'), __('Calendar'), route('admin.calendar'), 'sun');
+            $add('taxonomies', 'main', $chapter, __('Calendar'), __('Categories & tags'), route('admin.taxonomies'), 'sun');
+            $add('print', 'main', $chapter, __('Calendar'), __('Print as a book'), route('admin.print'), 'sun');
         }
         if (! $hasMenus) {
-            $add('menus', 'main', 'Chapter '.(++$n), 'Site menus', 'Site menus', route('admin.menus'), 'mint');
-            $add('redirects', 'main', 'Chapter '.$n, 'Site menus', 'Redirects', route('admin.redirects'), 'mint');
+            $add('menus', 'main', __('Chapter :n', ['n' => ++$n]), __('Site menus'), __('Site menus'), route('admin.menus'), 'mint');
+            $add('redirects', 'main', __('Chapter :n', ['n' => $n]), __('Site menus'), __('Redirects'), route('admin.redirects'), 'mint');
         }
 
-        $add('media', 'main', 'Chapter '.(++$n), 'Media', 'Media', route('admin.media'), 'sky');
-        $add('people', 'main', 'Chapter '.(++$n), 'People', 'People', route('admin.people'), 'lilac');
-        $add('subscribers', 'main', 'Chapter '.$n, 'People', 'Subscribers', route('admin.subscribers'), 'lilac');
-        $add('comments', 'main', 'Chapter '.(++$n), 'Comments', 'Comments', route('admin.comments'), 'rose');
-        $add('inbox', 'main', 'Chapter '.$n, 'Comments', 'Inbox', route('admin.inbox'), 'rose');
-        $add('forms', 'main', 'Chapter '.$n, 'Comments', 'Forms', route('admin.forms'), 'rose');
+        $add('media', 'main', __('Chapter :n', ['n' => ++$n]), __('Media'), __('Media'), route('admin.media'), 'sky');
+        $add('people', 'main', __('Chapter :n', ['n' => ++$n]), __('People'), __('People'), route('admin.people'), 'lilac');
+        $add('subscribers', 'main', __('Chapter :n', ['n' => $n]), __('People'), __('Subscribers'), route('admin.subscribers'), 'lilac');
+        $add('comments', 'main', __('Chapter :n', ['n' => ++$n]), __('Comments'), __('Comments'), route('admin.comments'), 'rose');
+        $add('inbox', 'main', __('Chapter :n', ['n' => $n]), __('Comments'), __('Inbox'), route('admin.inbox'), 'rose');
+        $add('forms', 'main', __('Chapter :n', ['n' => $n]), __('Comments'), __('Forms'), route('admin.forms'), 'rose');
 
         // Back matter
-        $add('activity', 'back', 'Appendix A', 'Activity', 'Activity', route('admin.activity'), 'coral');
-        $add('visits', 'back', 'Appendix A', 'Activity', 'Visits', route('admin.visits'), 'sky');
-        $add('bin', 'back', 'Appendix A', 'Activity', 'The bin', route('admin.bin'), 'sand');
-        $add('collections', 'back', 'Appendix B', 'Collections', 'Collections & blueprints', route('admin.collections'), 'sand');
-        $add('settings', 'back', 'Appendix C', 'Settings', 'Settings', route('admin.settings'), 'sand');
-        $add('email', 'back', 'Appendix C', 'Settings', 'Email', route('admin.settings.email'), 'sand');
-        $add('backups', 'back', 'Appendix C', 'Settings', 'Backups', route('admin.backups'), 'sand');
-        $add('health', 'back', 'Appendix C', 'Settings', 'Check-up', route('admin.settings.health'), 'sand');
-        $add('version-control', 'back', 'Appendix C', 'Settings', 'Version control', route('admin.settings.version-control'), 'sand');
-        $add('static', 'back', 'Appendix C', 'Settings', 'Publish as plain files', route('admin.settings.static'), 'sand');
-        $add('look', 'back', 'Appendix C', 'Settings', 'The cover', route('admin.settings.look'), 'sand');
-        $add('api', 'back', 'Appendix C', 'Settings', 'Content API', route('admin.settings.api'), 'sand');
-        $add('import', 'back', 'Appendix C', 'Settings', 'Move in from WordPress', route('admin.import'), 'sand');
-        $add('inserts', 'back', 'Appendix C', 'Settings', 'Inserts', route('admin.settings.inserts'), 'sand');
-        $add('stacy-settings', 'back', 'Appendix D', 'Stacy’s brain', 'Stacy’s brain', route('admin.settings.stacy'), 'ink');
-        $add('stacy-behaviour', 'back', 'Appendix D', 'Stacy’s brain', 'How Stacy behaves', route('admin.settings.stacy.behaviour'), 'ink');
-        $add('help.building', 'back', 'Appendix E', 'Help', 'Building pages', route('admin.help.building'), 'mint');
-        $add('account', 'back', 'Ex libris', 'Your account', 'Your account', route('admin.account'), 'lilac');
+        $add('activity', 'back', __('Appendix A'), __('Activity'), __('Activity'), route('admin.activity'), 'coral');
+        $add('visits', 'back', __('Appendix A'), __('Activity'), __('Visits'), route('admin.visits'), 'sky');
+        $add('bin', 'back', __('Appendix A'), __('Activity'), __('The bin'), route('admin.bin'), 'sand');
+        $add('collections', 'back', __('Appendix B'), __('Collections'), __('Collections & blueprints'), route('admin.collections'), 'sand');
+        $add('settings', 'back', __('Appendix C'), __('Settings'), __('Settings'), route('admin.settings'), 'sand');
+        $add('email', 'back', __('Appendix C'), __('Settings'), __('Email'), route('admin.settings.email'), 'sand');
+        $add('backups', 'back', __('Appendix C'), __('Settings'), __('Backups'), route('admin.backups'), 'sand');
+        $add('health', 'back', __('Appendix C'), __('Settings'), __('Check-up'), route('admin.settings.health'), 'sand');
+        $add('version-control', 'back', __('Appendix C'), __('Settings'), __('Version control'), route('admin.settings.version-control'), 'sand');
+        $add('static', 'back', __('Appendix C'), __('Settings'), __('Publish as plain files'), route('admin.settings.static'), 'sand');
+        $add('look', 'back', __('Appendix C'), __('Settings'), __('The cover'), route('admin.settings.look'), 'sand');
+        $add('api', 'back', __('Appendix C'), __('Settings'), __('Content API'), route('admin.settings.api'), 'sand');
+        $add('import', 'back', __('Appendix C'), __('Settings'), __('Move in from WordPress'), route('admin.import'), 'sand');
+        $add('inserts', 'back', __('Appendix C'), __('Settings'), __('Inserts'), route('admin.settings.inserts'), 'sand');
+        $add('stacy-settings', 'back', __('Appendix D'), __('Stacy’s brain'), __('Stacy’s brain'), route('admin.settings.stacy'), 'ink');
+        $add('stacy-behaviour', 'back', __('Appendix D'), __('Stacy’s brain'), __('How Stacy behaves'), route('admin.settings.stacy.behaviour'), 'ink');
+        $add('help.building', 'back', __('Appendix E'), __('Help'), __('Building pages'), route('admin.help.building'), 'mint');
+        $add('account', 'back', __('Ex libris'), __('Your account'), __('Your account'), route('admin.account'), 'lilac');
 
         // Inserts' pages: tucked in after the chapter they name, or into one of their own.
         $spreads = static::tuckInserts($spreads);
@@ -271,7 +271,8 @@ class AdminNav
             // After the last spread of the chapter it names ("Media", "Posts", "People"…).
             $after = null;
             foreach ($spreads as $i => $s) {
-                if ($page['chapter'] !== '' && mb_strtolower($s['chapterTitle']) === mb_strtolower($page['chapter'])) {
+                // Named in English by the insert: matched in the book's language too.
+                if ($page['chapter'] !== '' && in_array(mb_strtolower($s['chapterTitle']), [mb_strtolower($page['chapter']), mb_strtolower(__($page['chapter']))], true)) {
                     $after = $i;
                 }
             }

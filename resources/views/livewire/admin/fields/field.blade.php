@@ -14,11 +14,11 @@
 <div wire:key="{{ $id }}">@include('livewire.admin.fields.grid', ['field' => $field])</div>
 @elseif ($field['type'] === 'entries')
 <div class="field" wire:key="{{ $id }}">
-    <span class="field__label" id="{{ $id }}-label">{{ $field['display'] }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</span>
-    @if ($field['instructions']) <p class="field__hint">{{ $field['instructions'] }}</p> @endif
+    <span class="field__label" id="{{ $id }}-label">{{ __($field['display']) }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</span>
+    @if ($field['instructions']) <p class="field__hint">{{ __($field['instructions']) }}</p> @endif
     @include('livewire.admin.fields.entries', [
         'target' => $field['handle'], 'ids' => array_values(array_filter((array) ($values[$field['handle']] ?? []), 'is_string')),
-        'label' => 'Link '.(count($field['collections']) === 1 ? 'a '.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular((string) \App\Booklet\Facades\Booklet::collections()->find($field['collections'][0])?->title())) : 'a post or page'),
+        'label' => count($field['collections']) === 1 ? __('Link a :one', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular((string) \App\Booklet\Facades\Booklet::collections()->find($field['collections'][0])?->title()))]) : __('Link a post or page'),
         'max' => (int) ($field['max_items'] ?? 0), 'labelId' => $id.'-label',
     ])
     @error('values.'.$field['handle']) <p class="field__error">{{ $message }}</p> @enderror
@@ -28,16 +28,16 @@
     @if ($field['type'] === 'toggle')
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px">
             <span>
-                <span class="field__label" id="{{ $id }}-label">{{ $field['display'] }}</span>
-                @if ($field['instructions']) <span class="field__hint" style="display: block">{{ $field['instructions'] }}</span> @endif
+                <span class="field__label" id="{{ $id }}-label">{{ __($field['display']) }}</span>
+                @if ($field['instructions']) <span class="field__hint" style="display: block">{{ __($field['instructions']) }}</span> @endif
             </span>
             <button type="button" class="switch" role="switch" aria-labelledby="{{ $id }}-label"
                     aria-checked="{{ ($values[$field['handle']] ?? false) ? 'true' : 'false' }}"
                     wire:click="toggle('{{ $field['handle'] }}')"></button>
         </div>
     @else
-        <label for="{{ $id }}">{{ $field['display'] }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</label>
-        @if ($field['instructions']) <p class="field__hint">{{ $field['instructions'] }}</p> @endif
+        <label for="{{ $id }}">{{ __($field['display']) }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</label>
+        @if ($field['instructions']) <p class="field__hint">{{ __($field['instructions']) }}</p> @endif
 
         @switch($field['type'])
             @case('textarea')
@@ -55,8 +55,8 @@
                 @break
 
             @case('terms')
-                <input id="{{ $id }}" type="text" wire:model{{ $live }}="{{ $model }}" placeholder="food, city, evening">
-                <p class="field__hint">Separate with commas. New ones are added to {{ str($field['taxonomy'] ?? 'the list')->headline() }}.</p>
+                <input id="{{ $id }}" type="text" wire:model{{ $live }}="{{ $model }}" placeholder="{{ __('food, city, evening') }}">
+                <p class="field__hint">{{ __('Separate with commas. New ones are added to :list.', ['list' => __(str($field['taxonomy'] ?? 'the list')->headline()->toString())]) }}</p>
                 @break
 
             @case('assets')
@@ -69,13 +69,13 @@
                         @elseif ($path)
                             <span class="picture-field__file">{{ basename($path) }}</span>
                         @else
-                            <span class="picture-field__empty"><x-admin.icon name="image" size="22" /> Choose from Media</span>
+                            <span class="picture-field__empty"><x-admin.icon name="image" size="22" /> {{ __('Choose from Media') }}</span>
                         @endif
                     </button>
                     @if ($path)
                         <div class="picture-field__actions">
                             <span class="picture-field__path">{{ $path }}</span>
-                            <button type="button" class="link-button" style="min-height: 32px; font-size: 13px; color: var(--danger)" wire:click="clearPicture('{{ $field['handle'] }}')">Remove</button>
+                            <button type="button" class="link-button" style="min-height: 32px; font-size: 13px; color: var(--danger)" wire:click="clearPicture('{{ $field['handle'] }}')">{{ __('Remove') }}</button>
                         </div>
                     @endif
                 </div>
@@ -91,7 +91,7 @@
                 @break
 
             @case('link')
-                <input id="{{ $id }}" type="url" wire:model{{ $live }}="{{ $model }}" placeholder="https://">
+                <input id="{{ $id }}" type="url" wire:model{{ $live }}="{{ $model }}" placeholder="{{ __('https://') }}">
                 @break
 
             @default

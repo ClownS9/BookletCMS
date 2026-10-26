@@ -81,7 +81,7 @@ class Calendar extends Component
 
         ActivityLog::record('planned', 'edits', 'entry', $entry->id(), $entry->title());
         $this->day = $date;
-        $this->stamp('Planned for '.Carbon::parse($date)->format('j F').'. It’s still a draft.');
+        $this->stamp(__('Planned for :day. It’s still a draft.', ['day' => Carbon::parse($date)->translatedFormat('j F')]));
     }
 
     public function render()
@@ -117,7 +117,7 @@ class Calendar extends Component
                 'n' => $date->day,
                 'inMonth' => $date->month === $first->month,
                 'today' => $date->isToday(),
-                'label' => $date->format('j F'),
+                'label' => $date->translatedFormat('j F'),
                 'entries' => [...$byDay->get($key, collect())->map(fn (Entry $e) => [
                     'id' => $e->id(),
                     'time' => $e->date()->format('g:i a'),
@@ -139,7 +139,7 @@ class Calendar extends Component
         $chosen = collect($days)->firstWhere('date', $this->day);
         if (! $chosen) {
             $date = Carbon::parse($this->day);
-            $chosen = ['date' => $this->day, 'label' => $date->format('j F'), 'today' => $date->isToday(), 'entries' => []];
+            $chosen = ['date' => $this->day, 'label' => $date->translatedFormat('j F'), 'today' => $date->isToday(), 'entries' => []];
         }
 
         return view('livewire.admin.calendar', [

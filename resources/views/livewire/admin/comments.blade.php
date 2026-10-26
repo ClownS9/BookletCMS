@@ -6,27 +6,27 @@
 <div style="display: contents">
     {{-- Left page: the pile --}}
     <section class="page page--left" style="flex-basis: 420px">
-        <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · notes in the margin</p>
-        <h1 class="display display--page" style="margin-top: 8px">Comments</h1>
+        <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · {{ __('notes in the margin') }}</p>
+        <h1 class="display display--page" style="margin-top: 8px">{{ __('Comments') }}</h1>
         <x-admin.insert-links chapter="Comments" />
         @if (in_array(request()->user()->level(), ['admin', 'editor'], true))
             @php $newMessages = \App\Support\Inbox::newCount(); @endphp
             <div class="chapter-links">
-                <a href="{{ route('admin.inbox') }}" class="back" wire:navigate><x-admin.icon name="mail" size="16" /> Inbox @if ($newMessages)<span class="chapter-links__count">{{ $newMessages }} new</span>@endif →</a>
+                <a href="{{ route('admin.inbox') }}" class="back" wire:navigate><x-admin.icon name="mail" size="16" /> {{ __('Inbox') }} @if ($newMessages)<span class="chapter-links__count">{{ __(':count new', ['count' => $newMessages]) }}</span>@endif →</a>
             </div>
         @endif
 
-        <div class="filters" role="group" aria-label="Filter comments" style="margin: 22px 0 14px">
+        <div class="filters" role="group" aria-label="{{ __('Filter comments') }}" style="margin: 22px 0 14px">
             @foreach ($statuses as $value => $label)
                 <button type="button" class="pill" wire:click="$set('status', '{{ $value }}')" aria-pressed="{{ $status === $value ? 'true' : 'false' }}">
-                    {{ $label }} · {{ $counts[$value] ?? 0 }}
+                    {{ __($label) }} · {{ $counts[$value] ?? 0 }}
                 </button>
             @endforeach
         </div>
 
         @if ($this->pile->isEmpty())
             <p class="empty-note">
-                {{ $status === 'waiting' ? 'All caught up. Nothing waiting.' : 'Nothing in this pile.' }}
+                {{ $status === 'waiting' ? __('All caught up. Nothing waiting.') : __('Nothing in this pile.') }}
             </p>
         @else
             <ul class="picks">
@@ -59,13 +59,13 @@
                 @if ($entry)
                     <a href="{{ route('admin.entries.edit', [$entry->collectionHandle(), $entry->id()]) }}" class="serif" style="font-style: italic; font-size: 17px" wire:navigate>{{ $entry->title() }}</a>
                 @else
-                    <span class="serif" style="font-style: italic; font-size: 17px">a removed entry</span>
+                    <span class="serif" style="font-style: italic; font-size: 17px">{{ __('a removed entry') }}</span>
                 @endif
                 · {{ $chosen->created_at->diffForHumans() }}
             </p>
 
             @if ($chosen->parent_id && $chosen->parent)
-                <p class="reply-context">In reply to <strong>{{ $chosen->parent->author_name }}</strong>: “{{ \Illuminate\Support\Str::limit($chosen->parent->body, 160) }}”</p>
+                <p class="reply-context">{{ __('In reply to') }} <strong>{{ $chosen->parent->author_name }}</strong>: “{{ \Illuminate\Support\Str::limit($chosen->parent->body, 160) }}”</p>
             @endif
 
             <div class="sticky-note">
@@ -73,7 +73,7 @@
                     <span class="avatar" style="--size: 44px; --tone: {{ $tones[$chosen->id % count($tones)] }}">{{ mb_strtoupper(mb_substr($chosen->author_name, 0, 1)) }}</span>
                     <span style="min-width: 0">
                         <span style="display: block; font-weight: 600">{{ $chosen->author_name }}</span>
-                        @if ($chosen->author_email) <span style="display: block; font-size: 13px; color: #6B655A">{{ $chosen->author_email }}@if ($chosen->notify) · wants an email when someone replies @endif</span> @endif
+                        @if ($chosen->author_email) <span style="display: block; font-size: 13px; color: #6B655A">{{ $chosen->author_email }}@if ($chosen->notify) · {{ __('wants an email when someone replies') }} @endif</span> @endif
                     </span>
                     <span class="sticker sticker--{{ ['waiting' => 'rose', 'approved' => 'mint', 'spam' => 'sand'][$chosen->status] }}" style="margin-left: auto; --tilt: 3deg">{{ ucfirst($chosen->status) }}</span>
                 </div>
@@ -85,7 +85,7 @@
                     @foreach ($chosen->replies as $reply)
                         <li>
                             <p style="font-size: 14px"><strong>{{ $reply->author_name }}</strong> <span class="muted">· {{ $reply->created_at->diffForHumans() }}</span>
-                                @if ($reply->status !== 'approved') <button type="button" class="link-button" style="min-height: 0; padding: 0; text-decoration: underline" wire:click="open({{ $reply->id }})">{{ $reply->status === 'spam' ? 'In spam' : 'Waiting' }}</button> @endif</p>
+                                @if ($reply->status !== 'approved') <button type="button" class="link-button" style="min-height: 0; padding: 0; text-decoration: underline" wire:click="open({{ $reply->id }})">{{ $reply->status === 'spam' ? __('In spam') : __('Waiting') }}</button> @endif</p>
                             <p class="serif" style="margin-top: 4px; font-size: 18px; line-height: 1.55; white-space: pre-line">{{ $reply->body }}</p>
                         </li>
                     @endforeach
@@ -94,24 +94,24 @@
 
             <div style="margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap">
                 @if ($chosen->status !== 'approved')
-                    <button type="button" class="btn btn--ink" wire:click="setChosenStatus('approved')">Approve</button>
+                    <button type="button" class="btn btn--ink" wire:click="setChosenStatus('approved')">{{ __('Approve') }}</button>
                 @endif
                 @if ($chosen->status !== 'spam')
-                    <button type="button" class="btn" wire:click="setChosenStatus('spam')">Mark as spam</button>
+                    <button type="button" class="btn" wire:click="setChosenStatus('spam')">{{ __('Mark as spam') }}</button>
                 @endif
                 @if ($chosen->status !== 'waiting')
-                    <button type="button" class="btn btn--quiet" wire:click="setChosenStatus('waiting')">Back to waiting</button>
+                    <button type="button" class="btn btn--quiet" wire:click="setChosenStatus('waiting')">{{ __('Back to waiting') }}</button>
                 @endif
-                <button type="button" class="btn btn--danger" wire:click="deleteChosen" wire:confirm="Move this comment and its replies to the bin?">Delete</button>
+                <button type="button" class="btn btn--danger" wire:click="deleteChosen" wire:confirm="{{ __('Move this comment and its replies to the bin?') }}">{{ __('Delete') }}</button>
             </div>
 
             @if ($chosen->status !== 'spam')
                 <form wire:submit="sendReply" style="margin-top: auto; padding-top: 28px">
-                    <label for="reply" class="field__label" style="display: block; margin-bottom: 8px">Write back</label>
-                    <textarea id="reply" rows="3" class="lined" wire:model="reply" placeholder="Your reply is posted under the comment"></textarea>
+                    <label for="reply" class="field__label" style="display: block; margin-bottom: 8px">{{ __('Write back') }}</label>
+                    <textarea id="reply" rows="3" class="lined" wire:model="reply" placeholder="{{ __('Your reply is posted under the comment') }}"></textarea>
                     @error('reply') <p class="field__error">{{ $message }}</p> @enderror
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap">
-                        <button type="submit" class="btn">{{ $chosen->status === 'waiting' ? 'Approve & reply' : 'Send reply' }}</button>
+                        <button type="submit" class="btn">{{ $chosen->status === 'waiting' ? __('Approve & reply') : __('Send reply') }}</button>
                         <x-admin.folio side="right" style="margin: 0; padding: 0" />
                     </div>
                 </form>
@@ -119,7 +119,7 @@
                 <x-admin.folio side="right" />
             @endif
         @else
-            <p class="empty-note" style="max-width: 460px">Pick a note on the left to read it here.</p>
+            <p class="empty-note" style="max-width: 460px">{{ __('Pick a note on the left to read it here.') }}</p>
             <x-admin.folio side="right" />
         @endif
     </section>

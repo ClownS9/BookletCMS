@@ -205,7 +205,7 @@ class Media extends Component
         if ($last) {
             $this->pick($last->path());
             ActivityLog::record("uploaded {$count} ".Str::plural('file', $count).' to', 'uploads', 'asset', $this->container, $this->containerModel->title());
-            $this->stamp($count === 1 ? 'Taped in.' : "{$count} files taped in.");
+            $this->stamp($count === 1 ? 'Taped in.' : __(':count files taped in.', ['count' => $count]));
         }
     }
 

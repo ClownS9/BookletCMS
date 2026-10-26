@@ -41,7 +41,7 @@ class ResetPassword extends Component
         $this->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string', 'confirmed', new \App\Rules\StrongPassword([$this->email])],
-        ], ['password.confirmed' => 'The two passwords don’t match.']);
+        ], ['password.confirmed' => __('The two passwords don’t match.')]);
 
         $status = Password::reset(
             ['email' => $this->email, 'password' => $this->password, 'password_confirmation' => $this->password_confirmation, 'token' => $this->token],
@@ -55,10 +55,10 @@ class ResetPassword extends Component
         );
 
         if ($status !== Password::PASSWORD_RESET) {
-            throw ValidationException::withMessages(['email' => 'That link has expired or doesn’t match this email. Ask for a new one.']);
+            throw ValidationException::withMessages(['email' => __('That link has expired or doesn’t match this email. Ask for a new one.')]);
         }
 
-        session()->flash('stamp', 'Password changed. Sign in with the new one.');
+        session()->flash('stamp', __('Password changed. Sign in with the new one.'));
 
         return $this->redirectRoute('login', navigate: false);
     }

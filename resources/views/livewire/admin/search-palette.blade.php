@@ -3,7 +3,7 @@
      x-on:keydown.window="shortcut($event)"
      x-on:livewire:navigating.window="close(true)">
     <div class="search-modal" x-show="open" x-cloak
-         role="dialog" aria-modal="true" aria-label="Search everything"
+         role="dialog" aria-modal="true" aria-label="{{ __('Search everything') }}"
          x-on:keydown.escape.prevent.stop="close()"
          x-on:keydown.down.prevent="move(1)"
          x-on:keydown.up.prevent="move(-1)"
@@ -19,19 +19,19 @@
                     <span wire:loading.remove wire:target="q, setScope"><x-admin.icon name="search" size="20" /></span>
                     <span wire:loading wire:target="q, setScope" class="search-modal__spin"></span>
                 </span>
-                <label for="search-everything" class="sr-only">Search everything</label>
+                <label for="search-everything" class="sr-only">{{ __('Search everything') }}</label>
                 <input id="search-everything" x-ref="input" type="text" wire:model.live.debounce.180ms="q"
-                       placeholder="Search posts, pages, files, people… or type a command"
+                       placeholder="{{ __('Search posts, pages, files, people… or type a command') }}"
                        autocomplete="off" spellcheck="false"
                        x-on:keydown.enter.prevent="go($event.metaKey || $event.ctrlKey)" x-on:input="active = 0">
-                <button type="button" class="search-modal__clear" x-show="$wire.q" x-cloak x-on:click="$wire.set('q', ''); $refs.input.focus()" aria-label="Clear">
+                <button type="button" class="search-modal__clear" x-show="$wire.q" x-cloak x-on:click="$wire.set('q', ''); $refs.input.focus()" aria-label="{{ __('Clear') }}">
                     <x-admin.icon name="close" size="14" />
                 </button>
-                <button type="button" class="kbd search-modal__esc" x-on:click="close()" aria-label="Close search">esc</button>
+                <button type="button" class="kbd search-modal__esc" x-on:click="close()" aria-label="{{ __('Close search') }}">esc</button>
             </div>
 
             {{-- Filters --}}
-            <div class="search-modal__filters" role="tablist" aria-label="What to search">
+            <div class="search-modal__filters" role="tablist" aria-label="{{ __('What to search') }}">
                 @foreach ($scopes as $key => $s)
                     @php $n = $counts[$key] ?? null; @endphp
                     <button type="button" role="tab" wire:key="scope-{{ $key }}"
@@ -39,13 +39,13 @@
                             aria-selected="{{ $scope === $key ? 'true' : 'false' }}"
                             wire:click="setScope('{{ $key }}')" x-on:click="active = 0; $refs.input.focus()">
                         @if ($key !== 'all') <span class="dot" style="--dot: {{ $s['tone'] }}; --tilt: 0deg; margin: 0"></span> @endif
-                        {{ $s['label'] }}
+                        {{ __($s['label']) }}
                         @if ($typed && $n !== null) <span class="search-chip__n">{{ $n }}</span> @endif
                     </button>
                 @endforeach
 
                 <span class="search-modal__status">
-                    @foreach (['draft' => 'Drafts', 'scheduled' => 'Scheduled', 'published' => 'Live'] as $value => $label)
+                    @foreach (['draft' => __('Drafts'), 'scheduled' => __('Scheduled'), 'published' => __('Live')] as $value => $label)
                         <button type="button" @class(['search-chip search-chip--quiet', 'is-on' => $status === $value])
                                 x-on:click="toggleStatus('{{ $value }}')">{{ $label }}</button>
                     @endforeach
@@ -61,8 +61,8 @@
                     <template x-if="recent.length">
                         <section>
                             <p class="search-group">
-                                Recently opened
-                                <button type="button" class="link-button search-group__aside" x-on:click="forget()">Clear</button>
+                                {{ __('Recently opened') }}
+                                <button type="button" class="link-button search-group__aside" x-on:click="forget()">{{ __('Clear') }}</button>
                             </p>
                             <template x-for="(item, n) in recent" :key="item.href">
                                 <a :href="item.href" class="hit" data-hit wire:navigate x-on:click="remember(item)">
@@ -75,33 +75,33 @@
                     </template>
 
                     @if ($dogEars->isNotEmpty())
-                        <p class="search-group">Dog-eared</p>
+                        <p class="search-group">{{ __('Dog-eared') }}</p>
                         @foreach ($dogEars as $fold)
                             @include('livewire.admin.partials.search-hit', ['item' => ['label' => $fold->title, 'meta' => $fold->chapter ?? '', 'href' => $fold->url, 'tone' => 'var(--sun)', 'icon' => 'book'], 'needle' => ''])
                         @endforeach
                     @endif
 
                     @if ($recent)
-                        <p class="search-group">Recently edited</p>
+                        <p class="search-group">{{ __('Recently edited') }}</p>
                         @foreach ($recent as $item)
                             @include('livewire.admin.partials.search-hit', ['item' => $item, 'needle' => ''])
                         @endforeach
                     @endif
 
-                    <p class="search-group">Quick actions</p>
+                    <p class="search-group">{{ __('Quick actions') }}</p>
                     <div class="search-actions">
                         @foreach ($actions as $action)
                             <a href="{{ $action['href'] }}" class="search-action" data-hit
                                @if (! empty($action['external'])) target="_blank" rel="noopener" @else wire:navigate @endif
                                x-on:click="remember(@js(['label' => $action['label'], 'meta' => $action['meta'], 'href' => $action['href'], 'tone' => $action['tone']]))">
                                 <span class="search-action__icon" style="--tone: {{ $action['tone'] }}"><x-admin.icon :name="$action['icon']" size="16" /></span>
-                                <span><strong>{{ $action['label'] }}</strong><small>{{ $action['meta'] }}</small></span>
+                                <span><strong>{{ __($action['label']) }}</strong><small>{{ __($action['meta']) }}</small></span>
                             </a>
                         @endforeach
                     </div>
 
                     <p class="search-tips">
-                        Tip: type <code>status:draft</code> to find unfinished work, or <code>in:media</code> to look only at files.
+                        {!! __('Tip: type :status to find unfinished work, or :media to look only at files.', ['status' => '<code>status:draft</code>', 'media' => '<code>in:media</code>']) !!}
                     </p>
                 @else
                     {{-- Ask Stacy --}}
@@ -109,17 +109,17 @@
                         <a href="{{ route('admin.stacy', ['q' => $needle]) }}" class="hit hit--stacy" data-hit wire:navigate
                            x-on:click="remember({ label: @js('Ask Stacy: “'.$needle.'”'), meta: 'Stacy', href: $el.href, tone: 'var(--ink)' })">
                             <span class="hit__stacy" aria-hidden="true"><x-admin.icon name="stacy" size="16" /></span>
-                            <span class="hit__text"><span class="hit__label">Ask Stacy: <em class="serif">“{{ $needle }}”</em></span><span class="hit__sub">She can find, explain or change things for you</span></span>
+                            <span class="hit__text"><span class="hit__label">{{ __('Ask Stacy:') }} <em class="serif">“{{ $needle }}”</em></span><span class="hit__sub">{{ __('She can find, explain or change things for you') }}</span></span>
                             <span class="hit__go" aria-hidden="true">↵</span>
                         </a>
                     @endif
 
                     @foreach ($groups as $group)
                         <p class="search-group">
-                            {{ $group['name'] }}
+                            {{ __($group['name']) }}
                             @if ($scope === 'all' && ($counts[$group['key']] ?? 0) > count($group['items']))
                                 <button type="button" class="link-button search-group__aside" wire:click="setScope('{{ $group['key'] }}')">
-                                    See all {{ $counts[$group['key']] }} →
+                                    {{ __('See all :count →', ['count' => $counts[$group['key']]]) }}
                                 </button>
                             @endif
                         </p>
@@ -129,7 +129,7 @@
                     @endforeach
 
                     @if ($actions && $scope === 'all' && $needle !== '')
-                        <p class="search-group">Do</p>
+                        <p class="search-group">{{ __('Do') }}</p>
                         @foreach ($actions as $action)
                             @include('livewire.admin.partials.search-hit', ['item' => $action + ['meta' => $action['meta']], 'needle' => $needle])
                         @endforeach
@@ -137,13 +137,13 @@
 
                     @if ($total === 0 && ! $actions)
                         <div class="search-empty">
-                            <p class="serif">Nothing called “{{ $needle ?: ($status ?? '') }}” in your book{{ $scope !== 'all' ? ' under '.$scopes[$scope]['label'] : '' }}.</p>
+                            <p class="serif">{{ $scope !== 'all' ? __('Nothing called “:words” in your book under :where.', ['words' => $needle ?: ($status ?? ''), 'where' => __($scopes[$scope]['label'])]) : __('Nothing called “:words” in your book.', ['words' => $needle ?: ($status ?? '')]) }}</p>
                             <p>
                                 @if ($scope !== 'all')
-                                    <button type="button" class="btn btn--sm" wire:click="setScope('all')">Search everything</button>
+                                    <button type="button" class="btn btn--sm" wire:click="setScope('all')">{{ __('Search everything') }}</button>
                                 @endif
                                 @if ($needle !== '')
-                                    <a href="{{ route('admin.stacy', ['q' => $needle]) }}" class="btn btn--sm" wire:navigate>Ask Stacy instead</a>
+                                    <a href="{{ route('admin.stacy', ['q' => $needle]) }}" class="btn btn--sm" wire:navigate>{{ __('Ask Stacy instead') }}</a>
                                 @endif
                             </p>
                         </div>
@@ -153,11 +153,11 @@
 
             {{-- Keys --}}
             <div class="search-modal__keys" aria-hidden="true">
-                <span><span class="kbd">↑</span><span class="kbd">↓</span> move</span>
-                <span><span class="kbd">↵</span> open</span>
-                <span><span class="kbd">⌘</span><span class="kbd">↵</span> new tab</span>
-                <span><span class="kbd">tab</span> next filter</span>
-                <span style="margin-left: auto"><span class="kbd">/</span> or <span class="kbd">⌘</span><span class="kbd">K</span> anywhere</span>
+                <span><span class="kbd">↑</span><span class="kbd">↓</span> {{ __('move') }}</span>
+                <span><span class="kbd">↵</span> {{ __('open') }}</span>
+                <span><span class="kbd">⌘</span><span class="kbd">↵</span> {{ __('new tab') }}</span>
+                <span><span class="kbd">tab</span> {{ __('next filter') }}</span>
+                <span style="margin-left: auto">{!! __(':slash or :keys anywhere', ['slash' => '<span class="kbd">/</span>', 'keys' => '<span class="kbd">⌘</span><span class="kbd">K</span>']) !!}</span>
             </div>
         </div>
     </div>

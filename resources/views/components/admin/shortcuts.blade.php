@@ -40,9 +40,9 @@
         <div class="keys-sheet__overlay" x-on:click="open = false"></div>
         <div class="keys-card" x-trap.noscroll="open">
             <div class="keys-card__ribbon" aria-hidden="true"></div>
-            <button type="button" class="keys-card__close" x-on:click="open = false" title="Close (Esc)"><x-admin.icon name="close" size="16" /><span class="sr-only">Close</span></button>
-            <p class="eyebrow">A bookmark for your fingers</p>
-            <h2 id="keys-title" class="display" style="font-size: 30px; margin-top: 4px">Keyboard shortcuts</h2>
+            <button type="button" class="keys-card__close" x-on:click="open = false" title="{{ __('Close (Esc)') }}"><x-admin.icon name="close" size="16" /><span class="sr-only">{{ __('Close') }}</span></button>
+            <p class="eyebrow">{{ __('A bookmark for your fingers') }}</p>
+            <h2 id="keys-title" class="display" style="font-size: 30px; margin-top: 4px">{{ __('Keyboard shortcuts') }}</h2>
 
             <div class="keys-card__groups">
                 @foreach ($groups as $title => $rows)

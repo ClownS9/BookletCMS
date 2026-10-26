@@ -20,7 +20,7 @@
                         <span class="spine__meta">{{ $linked->collection()?->title() }}@if ($linked->date()) · {{ $linked->date()->format('j M Y') }}@endif</span>
                     </span>
                     @if ($linked->status() !== 'published')
-                        <span class="sticker sticker--sm sticker--{{ $linked->status() }}" style="--tilt: -2deg" title="Readers only see it once it’s published">{{ ucfirst($linked->status()) }}</span>
+                        <span class="sticker sticker--sm sticker--{{ $linked->status() }}" style="--tilt: -2deg" title="{{ __('Readers only see it once it’s published') }}">{{ ucfirst($linked->status()) }}</span>
                     @endif
                     <span class="spine__tools">
                         <button type="button" class="icon-btn icon-btn--sm" wire:click="moveLink(@js($target), {{ $i }}, {{ $i - 1 }})" @disabled($loop->first) aria-label="Move {{ $linked->title() }} up">↑</button>
@@ -32,11 +32,11 @@
         </ol>
     @endif
     @if ($missing > 0)
-        <p class="field__hint">{{ $missing }} linked {{ str('entry')->plural($missing) }} {{ $missing === 1 ? 'has' : 'have' }} been torn out; {{ $missing === 1 ? 'it’s' : 'they’re' }} dropped when you save.</p>
+        <p class="field__hint">{{ trans_choice(':count linked entry has been torn out; it’s dropped when you save.|:count linked entries have been torn out; they’re dropped when you save.', $missing) }}</p>
     @endif
     @unless ($full)
         <button type="button" class="btn btn--dashed btn--sm spines__add" wire:click="openShelf(@js($target))">+ {{ $label }}</button>
     @else
-        <p class="field__hint">That’s all {{ $max }} it holds. Unlink one to choose another.</p>
+        <p class="field__hint">{{ __('That’s all :max it holds. Unlink one to choose another.', ['max' => $max]) }}</p>
     @endunless
 </div>

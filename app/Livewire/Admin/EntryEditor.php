@@ -421,7 +421,7 @@ class EntryEditor extends Component
         ActivityLog::record('added cut-outs to', 'settings', 'collection', $this->collection, $this->model->title());
         unset($this->blueprint, $this->fields);
         $this->values[$handle] = [];
-        $this->stamp('Cut-outs added to every '.Str::lower(Str::singular($this->model->title())).'. Tuck one in below.');
+        $this->stamp(__('Cut-outs added to every :one. Tuck one in below.', ['one' => Str::lower(Str::singular($this->model->title()))]));
     }
 
     /** Tuck in a new cut-out, at the end or before the one at $at. */
@@ -430,7 +430,7 @@ class EntryEditor extends Component
         $field = $this->blocksField($handle);
         abort_unless(array_key_exists($type, Blocks::kindsFor($field)), 422);
         if (count($this->values[$handle]) >= Blocks::MAX_BLOCKS) {
-            $this->stamp('That’s as many cut-outs as one field holds ('.Blocks::MAX_BLOCKS.').');
+            $this->stamp(__('That’s as many cut-outs as one field holds (:max).', ['max' => Blocks::MAX_BLOCKS]));
 
             return;
         }
@@ -1101,7 +1101,7 @@ class EntryEditor extends Component
         }
 
         if ($isNew) {
-            $this->stamp($this->status === 'draft' ? 'Draft saved.' : ucfirst($this->status).'.', afterRedirect: true);
+            $this->stamp($this->status === 'draft' ? 'Draft saved.' : ['published' => __('Published.'), 'scheduled' => __('Scheduled.')][$this->status] ?? ucfirst($this->status).'.', afterRedirect: true);
             $this->redirectRoute('admin.entries.edit', ['collection' => $this->collection, 'entry' => $entry->id()], navigate: true);
 
             return;
@@ -1335,7 +1335,7 @@ class EntryEditor extends Component
             return;
         }
 
-        $this->stamp(\App\Stacy\Writer::LANGUAGES[$lang][0].' draft ready. Read it through before publishing.', afterRedirect: true);
+        $this->stamp(__(':language draft ready. Read it through before publishing.', ['language' => \App\Stacy\Writer::LANGUAGES[$lang][0]]), afterRedirect: true);
         $this->redirectRoute('admin.entries.edit', ['collection' => $copy->collectionHandle(), 'entry' => $copy->id()], navigate: true);
     }
 

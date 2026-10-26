@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notification;
 
 /**
  * "Was this you?": sent when something about signing in changes (a new
- * password, a new email address, two-step sign-in switched off), so a
+ * password, a new email address, two-step sign-in switched off, a new passkey), so a
  * change someone else made doesn't go unnoticed.
  */
 class SecurityNotice extends Notification
@@ -18,6 +18,7 @@ class SecurityNotice extends Notification
         'password_reset' => ['Your password was reset', 'Your password was just reset using a link sent to this address, and every device was signed out.'],
         'email' => ['Your sign-in email was changed', 'The email address you sign in with was just changed to %s. This message goes to the old address, in case that wasn’t you.'],
         'two_factor_off' => ['Two-step sign-in was switched off', 'Two-step sign-in was just switched off for your account. Your password alone now opens it.'],
+        'passkey' => ['A passkey was added', 'A passkey called “%s” was just added to your account. It opens the book on its own, without your password. If you don’t recognise it, remove it in Your account › Signing in.'],
     ];
 
     public function __construct(public string $kind, public string $name = '', public string $detail = '') {}

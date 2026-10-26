@@ -3,6 +3,8 @@
 namespace App\Livewire\Auth;
 
 use App\Models\User;
+use App\Support\PasskeyProblem;
+use App\Support\Passkeys;
 use App\Support\TwoFactor;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
@@ -75,7 +77,7 @@ class Login extends Component
         $throttle = 'reset|'.request()->ip();
         if (RateLimiter::tooManyAttempts($throttle, 3)) {
             throw ValidationException::withMessages([
-                'resetEmail' => 'Too many tries. Wait '.RateLimiter::availableIn($throttle).' seconds and try again.',
+                'resetEmail' => __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)]),
             ]);
         }
         RateLimiter::hit($throttle, 300);
@@ -97,7 +99,7 @@ class Login extends Component
 
         if (RateLimiter::tooManyAttempts($throttle, 5)) {
             throw ValidationException::withMessages([
-                'email' => 'Too many tries. Wait '.RateLimiter::availableIn($throttle).' seconds and try again.',
+                'email' => __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)]),
             ]);
         }
 
@@ -118,7 +120,7 @@ class Login extends Component
         if (! $user instanceof User || ! $provider->validateCredentials($user, ['password' => $this->password])) {
             RateLimiter::hit($throttle);
 
-            throw ValidationException::withMessages(['email' => 'That email and password don’t match.']);
+            throw ValidationException::withMessages(['email' => __('That email and password don’t match.')]);
         }
 
         RateLimiter::clear($throttle);
@@ -145,14 +147,14 @@ class Login extends Component
         if (! $challenge || $challenge['until'] < now()->timestamp || ! ($user = User::find($challenge['id']))) {
             session()->forget('login.challenge');
             $this->mode = 'signin';
-            $this->addError('email', 'That took a while, so please sign in again.');
+            $this->addError('email', __('That took a while, so please sign in again.'));
 
             return null;
         }
 
         $throttle = 'two-factor|'.$user->id.'|'.request()->ip();
         if (RateLimiter::tooManyAttempts($throttle, 5)) {
-            throw ValidationException::withMessages(['code' => 'Too many tries. Wait '.RateLimiter::availableIn($throttle).' seconds and try again.']);
+            throw ValidationException::withMessages(['code' => __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)])]);
         }
 
         $how = TwoFactor::check($user, $this->code);
@@ -160,8 +162,8 @@ class Login extends Component
             RateLimiter::hit($throttle, 60);
 
             throw ValidationException::withMessages(['code' => $this->usingRecovery
-                ? 'That recovery code doesn’t match (each one works once).'
-                : 'That code doesn’t match. Check the time on your phone, and use the newest code.']);
+                ? __('That recovery code doesn’t match (each one works once).')
+                : __('That code doesn’t match. Check the time on your phone, and use the newest code.')]);
         }
 
         RateLimiter::clear($throttle);
@@ -169,7 +171,7 @@ class Login extends Component
 
         if ($how === 'recovery') {
             $left = count(TwoFactor::recoveryCodesOf($user->fresh()));
-            session()->flash('stamp', 'Signed in with a recovery code. '.$left.' '.Str::plural('code', $left).' left: you can make new ones in Your account.');
+            session()->flash('stamp', trans_choice('Signed in with a recovery code. :count code left: you can make new ones in Your account.|Signed in with a recovery code. :count codes left: you can make new ones in Your account.', $left));
         }
 
         return $this->signIn($user, (bool) $challenge['remember']);
@@ -188,6 +190,55 @@ class Login extends Component
         $this->mode = 'signin';
         $this->code = '';
         $this->resetValidation();
+    }
+
+    /** Signing in with a passkey, step one: a fresh challenge for the device to sign. */
+    public function passkeyOptions(): array
+    {
+        $this->resetErrorBag();
+        $throttle = 'passkey|'.request()->ip();
+        if (RateLimiter::tooManyAttempts($throttle, 10)) {
+            $this->addError('passkey', __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)]));
+
+            return [];
+        }
+
+        return Passkeys::loginOptions(request());
+    }
+
+    /**
+     * Step two: what the device signed. A passkey asks for a face, finger or
+     * PIN on the device itself, so it stands in for the password and the code.
+     */
+    public function passkeySignIn(array $credential)
+    {
+        $throttle = 'passkey|'.request()->ip();
+        if (RateLimiter::tooManyAttempts($throttle, 10)) {
+            $this->addError('passkey', __('Too many tries. Wait :seconds seconds and try again.', ['seconds' => RateLimiter::availableIn($throttle)]));
+
+            return null;
+        }
+
+        try {
+            $user = Passkeys::verify($credential, request());
+        } catch (PasskeyProblem $e) {
+            RateLimiter::hit($throttle, 60);
+            $this->addError('passkey', __($e->getMessage()));
+
+            return null;
+        }
+
+        RateLimiter::clear($throttle);
+        session()->forget('login.challenge');
+
+        return $this->signIn($user, $this->remember);
+    }
+
+    /** The browser's side didn't work (cancelled, unsupported…): say why. */
+    public function passkeyFailed(string $why): void
+    {
+        $this->resetErrorBag();
+        $this->addError('passkey', Passkeys::failure($why));
     }
 
     protected function signIn($user, bool $remember)

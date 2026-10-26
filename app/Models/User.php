@@ -111,6 +111,12 @@ class User extends Authenticatable
         return $this->role === 'admin' && $this->roleNow() !== 'admin' ? $this->roleNow() : null;
     }
 
+    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<Passkey, $this> */
+    public function passkeys(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Passkey::class);
+    }
+
     /** Their custom role (library card), if they have one. */
     public function card(): ?\App\Models\Role
     {

@@ -5,7 +5,9 @@
  *                copy of unsaved words in this browser, and who else is here.
  */
 (() => {
-    function writingDesk({ key, savedAt, others = [] }) {
+    function writingDesk({ key, savedAt, others = [], words = {} }) {
+        // The note by the toolbar, in the book's language (given by the page; English otherwise).
+        const say = Object.assign({ offline: 'Offline · kept on this page', waiting: 'Editing…', saving: 'Saving…', justNow: 'Saved just now', moment: 'Saved a moment ago', manual: 'Unsaved changes · press Save' }, words);
         return {
             online: navigator.onLine,
             others,               // [{ name, typing }]
@@ -85,12 +87,12 @@
 
             get autoLabel() {
                 this.tick; // re-read as time passes
-                if (!this.online) return 'Offline · kept on this page';
+                if (!this.online) return say.offline;
                 return {
-                    waiting: 'Editing…',
-                    saving: 'Saving…',
-                    saved: 'Saved ' + (this.autoAt && Date.now() - this.autoAt < 45000 ? 'just now' : 'a moment ago'),
-                    manual: 'Unsaved changes · press Save',
+                    waiting: say.waiting,
+                    saving: say.saving,
+                    saved: this.autoAt && Date.now() - this.autoAt < 45000 ? say.justNow : say.moment,
+                    manual: say.manual,
                 }[this.auto] || '';
             },
 
@@ -1598,3 +1600,70 @@ window.bookletPassword = ({ meter = false, personal = [], personalFrom = [], mat
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', watch) : watch();
     document.addEventListener('livewire:navigated', watch); // a new page body after wire:navigate
 })();
+
+/*
+ * Passkeys: Face ID, Touch ID, Windows Hello, a phone or a security key.
+ * The server hands over options (bytes as base64url); the device makes or
+ * signs a key; what comes back goes to the server, bytes as base64url again.
+ *   x-data="bookletPasskey('make')"   Your account › Signing in
+ *   x-data="bookletPasskey('signin')" the sign-in page
+ * Both expect the Livewire component to have passkeyOptions(), passkeyFailed(why),
+ * and addPasskey(credential) or passkeySignIn(credential).
+ */
+window.bookletPasskeys = (() => {
+    const bytes = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+    const text = (buffer) => {
+        let out = '';
+        new Uint8Array(buffer).forEach((b) => { out += String.fromCharCode(b); });
+        return btoa(out).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    };
+    const ids = (list) => (list || []).map((c) => ({ ...c, id: bytes(c.id) }));
+    const available = () => !!(window.isSecureContext && window.PublicKeyCredential && navigator.credentials);
+    const reason = () => (!window.isSecureContext ? 'insecure' : (!window.PublicKeyCredential ? 'unsupported' : null));
+
+    async function make(o) {
+        const made = await navigator.credentials.create({ publicKey: {
+            ...o, challenge: bytes(o.challenge), user: { ...o.user, id: bytes(o.user.id) }, excludeCredentials: ids(o.excludeCredentials),
+        } });
+        const r = made.response;
+        return { id: made.id, rawId: text(made.rawId), type: made.type, response: {
+            clientDataJSON: text(r.clientDataJSON), attestationObject: text(r.attestationObject),
+            transports: typeof r.getTransports === 'function' ? r.getTransports() : [],
+        } };
+    }
+
+    async function sign(o) {
+        const got = await navigator.credentials.get({ publicKey: { ...o, challenge: bytes(o.challenge), allowCredentials: ids(o.allowCredentials) } });
+        const r = got.response;
+        return { id: got.id, rawId: text(got.rawId), type: got.type, response: {
+            clientDataJSON: text(r.clientDataJSON), authenticatorData: text(r.authenticatorData),
+            signature: text(r.signature), userHandle: r.userHandle ? text(r.userHandle) : '',
+        } };
+    }
+
+    return { available, reason, make, sign };
+})();
+
+window.bookletPasskey = (what) => ({
+    busy: false,
+    available: window.bookletPasskeys.available(),
+    async go() {
+        if (this.busy) return;
+        const why = window.bookletPasskeys.reason();
+        if (why) { this.$wire.passkeyFailed(why); return; }
+        this.busy = true;
+        try {
+            const options = await this.$wire.passkeyOptions();
+            if (!options || !options.challenge) return; // the server said why
+            if (what === 'make') {
+                await this.$wire.addPasskey(await window.bookletPasskeys.make(options));
+            } else {
+                await this.$wire.passkeySignIn(await window.bookletPasskeys.sign(options));
+            }
+        } catch (error) {
+            this.$wire.passkeyFailed(error && error.name ? String(error.name) : 'Error');
+        } finally {
+            this.busy = false;
+        }
+    },
+});

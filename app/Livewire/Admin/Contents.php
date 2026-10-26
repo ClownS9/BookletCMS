@@ -94,7 +94,7 @@ class Contents extends Component
         }
 
         return $days->map(fn ($day) => [
-            'day' => Carbon::parse($day)->format('D'),
+            'day' => Carbon::parse($day)->translatedFormat('D'),
             'views' => (int) ($counts[$day] ?? 0),
         ])->all();
     }

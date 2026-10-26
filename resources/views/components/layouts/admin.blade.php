@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#23211D">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ isset($title) ? $title.' · ' : '' }}Booklet</title>
+    <title>{{ isset($title) ? __($title).' · ' : '' }}Booklet</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -20,7 +20,7 @@
       data-page-sound="{{ (request()->user()?->preferences['page_sound'] ?? true) ? 'on' : 'off' }}"
       x-data
 >
-    <a href="#main" class="skip">Skip to the page</a>
+    <a href="#main" class="skip">{{ __('Skip to the page') }}</a>
     <x-admin.handheld-nav />
 
     {{-- The desk lamp for night reading (kept across page changes, so its cord keeps swinging) --}}
@@ -32,8 +32,8 @@
         {{-- Trying the book out as another role --}}
         <form method="POST" action="{{ route('admin.view-as.stop') }}" class="viewing-as" role="status">
             @csrf
-            <span>Seeing the book as <strong>{{ \App\Models\Role::choices()[$as]['name'] ?? $as }}</strong>. Only you see this.</span>
-            <button type="submit" class="btn btn--sm btn--ink">Back to admin</button>
+            <span>{!! __('Seeing the book as :role. Only you see this.', ['role' => '<strong>'.e(\App\Models\Role::choices()[$as]['name'] ?? $as).'</strong>']) !!}</span>
+            <button type="submit" class="btn btn--sm btn--ink">{{ __('Back to admin') }}</button>
         </form>
     @endif
 
@@ -49,11 +49,11 @@
         </div>
 
         <footer class="desk__footer">
-            <span>Signed in as {{ request()->user()->name }}</span>
-            <button type="button" class="link-button desk__keys" x-on:click="$dispatch('open-shortcuts')"><kbd class="kbd">?</kbd> Shortcuts</button>
+            <span>{{ __('Signed in as :name', ['name' => request()->user()->name]) }}</span>
+            <button type="button" class="link-button desk__keys" x-on:click="$dispatch('open-shortcuts')"><kbd class="kbd">?</kbd> {{ __('Shortcuts') }}</button>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="link-button"><x-admin.icon name="logout" size="15" /> Sign out</button>
+                <button type="submit" class="link-button"><x-admin.icon name="logout" size="15" /> {{ __('Sign out') }}</button>
             </form>
         </footer>
     </div>
@@ -79,7 +79,7 @@
              x-on:mouseenter="hold()" x-on:mouseleave="release()"
              x-transition:leave="toast-out" x-transition:leave-end="toast-out--to">
             <span x-text="text"></span>
-            <button type="button" class="toast__undo" x-show="undo" x-on:click.stop="putBack()" :disabled="busy">Undo</button>
+            <button type="button" class="toast__undo" x-show="undo" x-on:click.stop="putBack()" :disabled="busy">{{ __('Undo') }}</button>
         </div>
     </div>
 </body>

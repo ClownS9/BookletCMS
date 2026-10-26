@@ -113,7 +113,7 @@ class Forms extends Component
     {
         abort_unless($this->allowed() && array_key_exists($type, Made::KINDS), 403);
         if (count($this->fields) >= Made::MAX_FIELDS) {
-            $this->addError('fields', 'That’s as many questions as a form can have.');
+            $this->addError('fields', __('That’s as many questions as a form can have.'));
 
             return;
         }
@@ -187,7 +187,7 @@ class Forms extends Component
         if ($first = Made::all()->first()) {
             $this->load($first->handle());
         }
-        $this->stamp('“'.$name.'” is gone, with its answers.');
+        $this->stamp(__('“:name” is gone, with its answers.', ['name' => $name]));
     }
 
     /** Pages with this form on them (built with the page builder): [title, address]. */

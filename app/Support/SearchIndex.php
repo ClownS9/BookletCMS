@@ -221,35 +221,35 @@ class SearchIndex
             ->filter(fn ($line) => ! empty($line['href']))
             ->map(fn ($line) => [
                 'label' => $line['title'],
-                'meta' => trim(($line['chapter'] ? $line['chapter'].' · ' : '').'page '.$line['page']),
+                'meta' => trim(($line['chapter'] ? $line['chapter'].' · ' : '').__('page :n', ['n' => $line['page']])),
                 'href' => $line['href'],
                 'tone' => 'var(--'.$line['tone'].')',
                 'icon' => 'book',
             ])
             ->merge([
-                ['label' => 'Calendar', 'meta' => 'What goes out when', 'href' => route('admin.calendar'), 'tone' => 'var(--sky)', 'icon' => 'calendar'],
-                ['label' => 'Categories & tags', 'meta' => 'The index of your blog', 'href' => route('admin.taxonomies'), 'tone' => 'var(--rose)', 'icon' => 'tag'],
-                ['label' => 'Site menus', 'meta' => 'Header and footer links', 'href' => route('admin.menus'), 'tone' => 'var(--mint)', 'icon' => 'list'],
-                ['label' => 'Visits', 'meta' => 'Most read, where readers come from', 'href' => route('admin.visits'), 'tone' => 'var(--sky)', 'icon' => 'pulse'],
-                ['label' => 'The bin', 'meta' => 'Put back what was deleted', 'href' => route('admin.bin'), 'tone' => 'var(--sand)', 'icon' => 'bin'],
-                ['label' => 'Inbox', 'meta' => 'Messages and form answers', 'href' => route('admin.inbox'), 'tone' => 'var(--rose)', 'icon' => 'mail'],
-                ['label' => 'Forms', 'meta' => 'Sign-ups, RSVPs, orders: forms of your own', 'href' => route('admin.forms'), 'tone' => 'var(--rose)', 'icon' => 'list'],
-                ['label' => 'Subscribers', 'meta' => 'Readers who get new posts by email', 'href' => route('admin.subscribers'), 'tone' => 'var(--lilac)', 'icon' => 'comment'],
-                ['label' => 'Redirects', 'meta' => 'Old addresses that forward to new ones', 'href' => route('admin.redirects'), 'tone' => 'var(--mint)', 'icon' => 'redirect'],
-                ['label' => 'Print as a book', 'meta' => 'Your posts typeset for paper, or a PDF', 'href' => route('admin.print'), 'tone' => 'var(--sun)', 'icon' => 'printer'],
+                ['label' => __('Calendar'), 'meta' => __('What goes out when'), 'href' => route('admin.calendar'), 'tone' => 'var(--sky)', 'icon' => 'calendar'],
+                ['label' => __('Categories & tags'), 'meta' => __('The index of your blog'), 'href' => route('admin.taxonomies'), 'tone' => 'var(--rose)', 'icon' => 'tag'],
+                ['label' => __('Site menus'), 'meta' => __('Header and footer links'), 'href' => route('admin.menus'), 'tone' => 'var(--mint)', 'icon' => 'list'],
+                ['label' => __('Visits'), 'meta' => __('Most read, where readers come from'), 'href' => route('admin.visits'), 'tone' => 'var(--sky)', 'icon' => 'pulse'],
+                ['label' => __('The bin'), 'meta' => __('Put back what was deleted'), 'href' => route('admin.bin'), 'tone' => 'var(--sand)', 'icon' => 'bin'],
+                ['label' => __('Inbox'), 'meta' => __('Messages and form answers'), 'href' => route('admin.inbox'), 'tone' => 'var(--rose)', 'icon' => 'mail'],
+                ['label' => __('Forms'), 'meta' => __('Sign-ups, RSVPs, orders: forms of your own'), 'href' => route('admin.forms'), 'tone' => 'var(--rose)', 'icon' => 'list'],
+                ['label' => __('Subscribers'), 'meta' => __('Readers who get new posts by email'), 'href' => route('admin.subscribers'), 'tone' => 'var(--lilac)', 'icon' => 'comment'],
+                ['label' => __('Redirects'), 'meta' => __('Old addresses that forward to new ones'), 'href' => route('admin.redirects'), 'tone' => 'var(--mint)', 'icon' => 'redirect'],
+                ['label' => __('Print as a book'), 'meta' => __('Your posts typeset for paper, or a PDF'), 'href' => route('admin.print'), 'tone' => 'var(--sun)', 'icon' => 'printer'],
             ])
             ->when(request()->user()?->isAdmin(), fn ($c) => $c->push(
-                ['label' => 'Email', 'meta' => 'The mail server the book sends through (SMTP)', 'href' => route('admin.settings.email'), 'tone' => 'var(--sand)', 'icon' => 'mail'],
-                ['label' => 'Check-up', 'meta' => 'Is the server giving the book everything it needs?', 'href' => route('admin.settings.health'), 'tone' => 'var(--mint)', 'icon' => 'pulse'],
-                ['label' => 'How Stacy behaves', 'meta' => 'Answer length, tone, limits', 'href' => route('admin.settings.stacy.behaviour'), 'tone' => 'var(--ink)', 'icon' => 'stacy'],
-                ['label' => 'Backups', 'meta' => 'Download the whole book, or restore it', 'href' => route('admin.backups'), 'tone' => 'var(--sand)', 'icon' => 'book'],
-                ['label' => 'Move in from WordPress', 'meta' => 'Import posts, pages, pictures and comments', 'href' => route('admin.import'), 'tone' => 'var(--sand)', 'icon' => 'upload'],
-                ['label' => 'Inserts', 'meta' => 'Extras for the book: switch them on and off', 'href' => route('admin.settings.inserts'), 'tone' => 'var(--sun)', 'icon' => 'layers'],
+                ['label' => __('Email'), 'meta' => __('The mail server the book sends through (SMTP)'), 'href' => route('admin.settings.email'), 'tone' => 'var(--sand)', 'icon' => 'mail'],
+                ['label' => __('Check-up'), 'meta' => __('Is the server giving the book everything it needs?'), 'href' => route('admin.settings.health'), 'tone' => 'var(--mint)', 'icon' => 'pulse'],
+                ['label' => __('How Stacy behaves'), 'meta' => __('Answer length, tone, limits'), 'href' => route('admin.settings.stacy.behaviour'), 'tone' => 'var(--ink)', 'icon' => 'stacy'],
+                ['label' => __('Backups'), 'meta' => __('Download the whole book, or restore it'), 'href' => route('admin.backups'), 'tone' => 'var(--sand)', 'icon' => 'book'],
+                ['label' => __('Move in from WordPress'), 'meta' => __('Import posts, pages, pictures and comments'), 'href' => route('admin.import'), 'tone' => 'var(--sand)', 'icon' => 'upload'],
+                ['label' => __('Inserts'), 'meta' => __('Extras for the book: switch them on and off'), 'href' => route('admin.settings.inserts'), 'tone' => 'var(--sun)', 'icon' => 'layers'],
             ))
             // Pages of the inserts that are switched on (for whoever may open them).
             ->merge(rescue(fn () => app(\App\Inserts\InsertManager::class)->active()
                 ->filter(fn ($i) => $i->canOpen(request()->user()))
-                ->map(fn ($i) => ['label' => $i->page()['title'], 'meta' => \Illuminate\Support\Str::limit($i->about() ?: 'An insert', 60), 'href' => $i->pageUrl(), 'tone' => 'var(--'.$i->sticker().')', 'icon' => 'layers'])
+                ->map(fn ($i) => ['label' => $i->page()['title'], 'meta' => \Illuminate\Support\Str::limit($i->about() ?: __('An insert'), 60), 'href' => $i->pageUrl(), 'tone' => 'var(--'.$i->sticker().')', 'icon' => 'layers'])
                 ->values()->all(), [], false))
 ;
 

@@ -11,6 +11,7 @@ trait Stamps
     /** @param  int|null  $undo  a bin item: the stamp offers "Undo" to put it back */
     protected function stamp(string $text, bool $afterRedirect = false, ?int $undo = null): void
     {
+        $text = __($text); // in the book's language (unchanged when there's no translation)
         if ($afterRedirect) {
             session()->flash('stamp', $text);
             if ($undo) {
