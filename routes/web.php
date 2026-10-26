@@ -185,6 +185,7 @@ Route::middleware('auth')->prefix('builder')->name('builder.')->group(function (
     Route::get('/edit/{target}', [\App\Http\Controllers\BuilderController::class, 'edit'])->name('edit');
     Route::post('/edit/{target}', [\App\Http\Controllers\BuilderController::class, 'act'])->name('act');
     Route::get('/preview/{target}', [\App\Http\Controllers\BuilderController::class, 'preview'])->name('preview');
+    Route::post('/here/{target}', [\App\Http\Controllers\BuilderController::class, 'ping'])->name('here');
 });
 
 Route::fallback([SiteController::class, 'show']);

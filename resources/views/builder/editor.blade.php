@@ -10,6 +10,7 @@
      data-edit="{{ route('builder.edit', $target) }}"
      data-act="{{ route('builder.act', $target) }}"
      data-preview="{{ route('builder.preview', $target) }}"
+     data-here="{{ route('builder.here', $target) }}"
      data-begin="{{ $built ? '' : route('builder.start', $target) }}"
      data-query="{{ $query ?? '' }}"
      data-token="{{ csrf_token() }}"

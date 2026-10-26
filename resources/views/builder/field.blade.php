@@ -62,10 +62,13 @@
         <div class="d-field">
             <span>{{ $spec['label'] }}</span>
             <span class="d-picture">
-                @if ($pic) <img src="{{ $pic['url'] }}" alt="" loading="lazy"> @endif
+                @if ($pic && ! $canMedia) <img src="{{ $pic['url'] }}" alt="" loading="lazy"> @endif
                 <button type="button" class="d-btn" data-do="pick" data-payload="{{ $j(['id' => $sid, 'field' => $path]) }}">{{ $pic ? 'Change' : 'Choose from Media' }}</button>
                 @if ($pic) <button type="button" class="d-link" data-do="set" data-payload="{{ $j(['id' => $sid, 'field' => $path, 'value' => '']) }}">Take it out</button> @endif
             </span>
+            @if ($pic && $canMedia)
+                @include('builder.picture-about', ['picPath' => $value, 'pic' => $pic])
+            @endif
         </div>
         @break
 
@@ -74,6 +77,20 @@
         <div class="d-field">
             <span>{{ $spec['label'] }} · {{ count($list) }}</span>
             <button type="button" class="d-btn" data-do="pick" data-payload="{{ $j(['id' => $sid, 'field' => $path]) }}">{{ $list === [] ? 'Choose from Media' : 'Add or take out' }}</button>
+            @if ($list !== [] && $canMedia)
+                {{-- Each one's description, for people who can't see them --}}
+                <ul class="d-alts">
+                    @foreach ($list as $one)
+                        @php $p = \App\PageBuilder\Fields::pictureFor($one); @endphp
+                        @if ($p)
+                            <li>
+                                <img src="{{ $p['url'] }}" alt="" loading="lazy" style="object-position: {{ $p['focus'] }}">
+                                <input type="text" data-alt="{{ $one }}" value="{{ $p['alt'] }}" maxlength="500" aria-label="Description of {{ basename($one) }}" placeholder="What’s in it (for people who can’t see it)">
+                            </li>
+                        @endif
+                    @endforeach
+                </ul>
+            @endif
         </div>
         @break
 

@@ -64,7 +64,7 @@
             <div class="drawer__inner"></div>
         </aside>
         <div class="bar" role="toolbar" aria-label="Page builder" hidden>
-            <span class="bar__who"><b class="bar__name"></b><span class="bar__state"></span></span>
+            <span class="bar__who"><b class="bar__name"></b><span class="bar__state"></span><span class="bar__others" hidden></span></span>
             <span class="bar__do">
                 <button type="button" data-bar="undo" title="Undo (Ctrl+Z)">Undo</button>
                 <button type="button" data-bar="phone">Phone view</button>
@@ -95,6 +95,7 @@
     const bar = $('.bar'), toastEl = $('.toast'), phone = $('.phone');
 
     let state = { section: null, tab: 'section', adding: false, picking: null };
+    let rev = null; // which change the page is at, as this editor last saw it
     let editing = false;
     let queue = Promise.resolve();
     let busy = 0;
@@ -119,7 +120,7 @@
     // One at a time, in the order they were asked for.
     const act = (action, payload = null, opts = {}) => {
         busy++;
-        queue = queue.then(() => request('POST', cfg.act, { action, payload, state, query: cfg.query || '', quiet: !!opts.quiet }))
+        queue = queue.then(() => request('POST', cfg.act, { action, payload, state, rev, query: cfg.query || '', quiet: !!opts.quiet }))
             .then((data) => apply(data, opts))
             .catch((e) => toast(e.message, true))
             .finally(() => { busy--; });
@@ -136,8 +137,9 @@
             const u = new URL(data.moved);
             history.replaceState(null, '', u.pathname + location.search);
         }
+        if (data.rev !== undefined) rev = data.rev;
         if (data.copy) copyLink(data.copy, data.stamp);
-        else if (data.stamp) toast(data.stamp);
+        else if (data.stamp) toast(data.stamp, !!data.stale);
         else if (data.errors && Object.keys(data.errors).length) toast(Object.values(data.errors)[0], true);
         markSelected(opts.scroll);
     };
@@ -243,7 +245,9 @@
             placeTools();
         };
         const onKey = (e) => {
-            if ((e.key === 'Enter' && line) || e.key === 'Escape') { e.preventDefault(); field.blur(); return; }
+            // Done typing here (finished at once: a window without focus may never say it lost it).
+            // (Not on to the page's own Enter, which would start typing here again.)
+            if ((e.key === 'Enter' && line) || e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); field.blur(); done(); return; }
             if (!formatted) return;
             if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
             const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
@@ -259,6 +263,7 @@
             document.execCommand('insertText', false, text);
         };
         const done = () => {
+            if (!field.hasAttribute('contenteditable')) return; // finished already
             // Into the link box above it: still typing here.
             if (formatted && linking) return;
             push();
@@ -545,6 +550,7 @@
     inner.addEventListener('change', (e) => {
         const box = e.target;
         if (box.matches('[data-home]')) { act('home', box.checked, { quiet: true }); return; }
+        if (box.matches('[data-alt]')) { act('alt', { path: box.dataset.alt, alt: box.value }, { quiet: true, redraw: true }); return; }
         if (!box.matches('[data-set]')) return;
         const id = box.closest('[data-section]') && box.closest('[data-section]').dataset.section;
         if (id) act('set', { id, field: box.dataset.set, value: box.type === 'checkbox' ? box.checked : box.value });
@@ -598,7 +604,35 @@
         const pub = bar.querySelector('[data-bar="publish"]');
         pub.disabled = b.status === 'live';
         pub.textContent = { draft: 'Publish', changed: 'Publish changes', scheduled: 'Publish now' }[b.status] || 'Published';
+        drawOthers(b.others || []);
     };
+    // Someone else building this page right now.
+    const drawOthers = (names) => {
+        const el = bar.querySelector('.bar__others');
+        el.hidden = names.length === 0;
+        el.textContent = names.length === 1 ? names[0] + ' is editing this page too' : names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' are editing this page too' : '';
+    };
+
+    // Still here, every 20 seconds: who else is, and whether the page changed (brought up to date if so).
+    const typingNow = () => !!((document.activeElement && document.activeElement.isContentEditable) || (ui.activeElement && ui.activeElement.matches('input, textarea, select')));
+    const ping = () => {
+        if (!editing || !cfg.here) return;
+        request('POST', cfg.here, {}).then((data) => {
+            drawOthers(data.others || []);
+            if (rev !== null && data.rev !== rev && busy === 0 && !typingNow() && !drag) {
+                const q = new URLSearchParams({ query: cfg.query || '', section: state.section || '', tab: state.tab });
+                request('GET', cfg.edit + '?' + q.toString()).then((fresh) => { apply(fresh); toast('This page changed elsewhere, so it’s brought up to date.'); });
+            }
+        }).catch(() => {});
+    };
+    setInterval(ping, 20000);
+    addEventListener('pagehide', () => {
+        if (!editing || !cfg.here || !navigator.sendBeacon) return;
+        const f = new FormData();
+        f.append('_token', cfg.token);
+        f.append('leaving', '1');
+        navigator.sendBeacon(cfg.here, f);
+    });
 
     bar.addEventListener('click', (e) => {
         const b = e.target.closest('[data-bar]');
@@ -629,7 +663,17 @@
     };
     inner.addEventListener('click', (e) => {
         const b = e.target.closest('[data-copy]');
-        if (b) { e.preventDefault(); copyLink(b.dataset.copy); }
+        if (b) { e.preventDefault(); copyLink(b.dataset.copy); return; }
+        // The spot that matters in a picture: where it's clicked, in percent.
+        const f = e.target.closest('[data-focus]');
+        if (f) {
+            const r = f.querySelector('img').getBoundingClientRect();
+            const x = Math.round(Math.min(100, Math.max(0, (e.clientX - r.left) / r.width * 100)));
+            const y = Math.round(Math.min(100, Math.max(0, (e.clientY - r.top) / r.height * 100)));
+            f.style.setProperty('--fx', x + '%');
+            f.style.setProperty('--fy', y + '%');
+            act('focus', { path: f.dataset.focus, x, y });
+        }
     });
 
     let toastTimer = null;
