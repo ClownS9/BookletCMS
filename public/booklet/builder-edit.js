@@ -135,7 +135,8 @@
             const u = new URL(data.moved);
             history.replaceState(null, '', u.pathname + location.search);
         }
-        if (data.stamp) toast(data.stamp);
+        if (data.copy) copyLink(data.copy, data.stamp);
+        else if (data.stamp) toast(data.stamp);
         else if (data.errors && Object.keys(data.errors).length) toast(Object.values(data.errors)[0], true);
         markSelected(opts.scroll);
     };
@@ -554,6 +555,17 @@
     };
     phone.querySelector('.phone__close').addEventListener('click', () => showPhone(false));
     phone.addEventListener('click', (e) => { if (e.target === phone) showPhone(false); });
+
+    // Copying a link (a proof copy's): to the clipboard, or shown to copy by hand.
+    const copyLink = (url, words) => {
+        const done = () => toast((words ? words + ' ' : '') + 'The link is copied.');
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, () => toast(url));
+        else toast((words ? words + ' ' : '') + url);
+    };
+    inner.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-copy]');
+        if (b) { e.preventDefault(); copyLink(b.dataset.copy); }
+    });
 
     let toastTimer = null;
     const toast = (words, bad = false) => {

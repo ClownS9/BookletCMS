@@ -280,3 +280,17 @@ a.d-link { color: inherit; display: inline-flex; align-items: center; }
 .d-checks__go::before { content: "→"; position: absolute; left: 0; }
 .d-checks__go:hover { color: var(--ink); text-decoration-color: currentColor; }
 .d-checks__ok::before { content: "✓ "; color: var(--ink); }
+.d-proofs { border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+.d-proofs summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 30px; }
+.d-proofs > .d-note { margin: 6px 0 10px; }
+.d-proof { display: grid; gap: 2px; margin-bottom: 6px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-3); }
+.d-proof__who { font-weight: 600; font-size: 14px; }
+.d-proof__meta { font-size: 12px; color: var(--faint); }
+.d-proof__do { display: flex; gap: 14px; }
+.d-proof-new { margin-top: 10px; padding: 12px; border: 1px dashed var(--rule-2); border-radius: 10px; }
+.d-proof-notes { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+.d-proof-notes li { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 22%, var(--paper-3)); }
+.d-proof-notes__who { margin: 0; font-size: 12px; color: var(--faint); }
+.d-proof-notes__who b { color: var(--ink); }
+.d-proof-notes blockquote { margin: 4px 0; padding-left: 8px; border-left: 2px solid var(--rule-2); font-size: 13px; color: var(--muted); }
+.d-proof-notes__body { margin: 4px 0; font-size: 14px; white-space: pre-line; }

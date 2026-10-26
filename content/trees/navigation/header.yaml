@@ -1,9 +1,6 @@
 tree:
   -
-    url: /home
-    title: Home
-    pb_was: a2fedd7e-300a-455e-a7e6-5e6a7db41893
-    pb_named: true
+    entry: a2fedd7e-300a-455e-a7e6-5e6a7db41893
   -
     entry: a2fedd7e-3040-4b0e-9b93-07b4c6235f65
   -

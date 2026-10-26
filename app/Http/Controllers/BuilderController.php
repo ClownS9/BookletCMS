@@ -66,6 +66,9 @@ class BuilderController extends Controller
             $state = $this->pages->stateFrom($result['form']);
         }
         $extra = is_array($result) && ! empty($result['moved']) ? ['moved' => url($result['moved'])] : [];
+        if (is_array($result) && ! empty($result['copy'])) {
+            $extra['copy'] = $result['copy']; // a link just made: offered to copy
+        }
 
         return $this->respond($page, $state, $stamp, $request->boolean('quiet'), [], $extra);
     }
@@ -152,6 +155,7 @@ class BuilderController extends Controller
                 'categories' => $selected && $selected['type'] === 'posts' ? $pages->categories() : [],
                 'history' => $state['tab'] === 'page' ? $pages->history($page) : [],
                 'checks' => $state['tab'] === 'page' ? $pages->checks($page) : [],
+                'proofing' => $state['tab'] === 'page' ? $pages->proofing($page) : null,
                 'shared' => $state['adding'] ? $pages->sharedFor($page) : [],
                 'sharedNow' => $selected && isset($selected['shared']) ? [
                     'name' => (string) ($pages->sharedAll()[$selected['shared']]->name ?? ''), 'uses' => $pages->usesOf($selected['shared']),

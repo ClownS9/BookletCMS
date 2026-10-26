@@ -97,6 +97,7 @@
         @include('builder.checks')
         @include('builder.status')
         @include('builder.history')
+        @include('builder.proofs')
 
         {{-- The page's (or post's) own details: they're its own, in the book too --}}
         @php

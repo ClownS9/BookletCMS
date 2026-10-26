@@ -1121,6 +1121,45 @@ class PageBuilder
                 return ['form' => array_merge($form, ['section' => $i === null ? ($back[0]['id'] ?? null) : $form['section'], 'picking' => null])];
             },
 
+            // Sharing the draft (a proof copy) --------------------------------------------------
+            // A private link to the draft, for someone without an account (they can leave notes).
+            'proof' => function (array $form, $payload, PageBuild $page) {
+                $entry = $page->entry();
+                if (! $entry || ! is_array($payload)) {
+                    return null;
+                }
+                $label = $this->builder->line($payload['label'] ?? '', 80);
+                $days = (int) ($payload['days'] ?? 7);
+                if (\App\Models\Proof::where('entry_id', $entry->id())->open()->count() >= \App\Models\Proof::MAX_OPEN) {
+                    throw ValidationException::withMessages(['form.proof' => 'There are '.\App\Models\Proof::MAX_OPEN.' open links already. Stop one you don’t need first.']);
+                }
+                [$proof] = \App\Models\Proof::issue((string) $entry->id(), request()->user(), $days, $label, (bool) ($payload['notes'] ?? false));
+                ActivityLog::record('made a proof copy of', 'edits', 'entry', (string) $entry->id(), $entry->title(), $proof->label ? ['for' => $proof->label] : []);
+
+                return ['stamp' => 'Link made. Copy it and send it'.($proof->label ? ' to '.$proof->label : '').'.', 'copy' => $proof->url()];
+            },
+            'proof-stop' => function (array $form, $id, PageBuild $page) {
+                $entry = $page->entry();
+                $proof = is_numeric($id) && $entry ? \App\Models\Proof::where('entry_id', $page->target)->find((int) $id) : null;
+                if (! $proof) {
+                    return null;
+                }
+                $proof->update(['revoked_at' => now()]);
+                ActivityLog::record('stopped sharing a proof copy of', 'edits', 'entry', $page->target, $entry->title());
+
+                return 'That link works no more.';
+            },
+            // A note from a proof copy: seen to (or not after all).
+            'proof-note' => function (array $form, $id, PageBuild $page) {
+                $note = is_numeric($id) ? \App\Models\ProofNote::where('entry_id', $page->target)->find((int) $id) : null;
+                if (! $note) {
+                    return null;
+                }
+                $note->update($note->resolved_at ? ['resolved_at' => null, 'resolved_by' => null] : ['resolved_at' => now(), 'resolved_by' => request()->user()?->id]);
+
+                return null;
+            },
+
             // Shared sections ------------------------------------------------------------------
             // This section, used on other pages too (from Add a section › Shared).
             'share' => function (array $form, $payload, PageBuild $page) use ($change, $locate, $sectionsOf) {
@@ -1176,6 +1215,35 @@ class PageBuilder
 
                 return '“'.$shared->name.'” is gone.';
             },
+        ];
+    }
+
+    // Sharing the draft -----------------------------------------------------------------------
+
+    /**
+     * The open links to this page's draft, and the notes left on them that
+     * aren't seen to yet (for the Page tab). The blog page has none: it
+     * isn't one of the pages.
+     *
+     * @return array{links: list<array{id: int, label: string|null, closes: string, opens: int, notes: int, url: string|null}>, notes: list<array{id: int, name: string, quote: string|null, body: string, when: string}>, done: int}|null
+     */
+    public function proofing(PageBuild $page): ?array
+    {
+        if ($page->isBlog() || ! $page->entry()) {
+            return null;
+        }
+        $links = \App\Models\Proof::withCount('notes')->where('entry_id', $page->target)->open()->latest()->get();
+        $notes = \App\Models\ProofNote::where('entry_id', $page->target)->latest()->limit(100)->get();
+
+        return [
+            'links' => $links->map(fn (\App\Models\Proof $p) => [
+                'id' => $p->id, 'label' => $p->label, 'closes' => $p->expires_at->timezone(config('app.timezone'))->format('j M'),
+                'opens' => $p->opens, 'notes' => (int) $p->getAttribute('notes_count'), 'url' => $p->url(),
+            ])->values()->all(),
+            'notes' => $notes->whereNull('resolved_at')->take(20)->map(fn (\App\Models\ProofNote $n) => [
+                'id' => $n->id, 'name' => $n->name, 'quote' => $n->quote, 'body' => $n->body, 'when' => $n->created_at->diffForHumans(),
+            ])->values()->all(),
+            'done' => $notes->whereNotNull('resolved_at')->count(),
         ];
     }
 
@@ -1453,8 +1521,12 @@ class PageBuilder
         if (! $page) {
             return null;
         }
-        // (Not in plain files or proof copies: nobody builds there.)
-        $builder = ! $request->attributes->get('booklet_static') && ! $request->attributes->has('booklet_proof') && $this->canBuild($request->user(), $entry);
+        // A proof copy: the draft as it stands, for whoever has the link (with their notes, never the editor).
+        if ($request->attributes->has('booklet_proof')) {
+            return [$page, true, false];
+        }
+        // (Not in plain files: nobody builds there.)
+        $builder = ! $request->attributes->get('booklet_static') && $this->canBuild($request->user(), $entry);
         if ($builder && $request->boolean('preview')) {
             return [$page, true, false];
         }

@@ -433,6 +433,48 @@ class PageBuilderTest extends TestCase
         $this->act($entry->id(), 'publish')->assertOk(); // never stopped
     }
 
+    public function test_the_draft_is_shared_with_a_private_link(): void
+    {
+        $about = $this->about();
+        $page = $this->startAbout();
+        $this->act($about->id(), 'publish');
+        $this->act($about->id(), 'set', ['id' => $page->draft[0]['id'], 'field' => 'title', 'value' => 'Who we are, draft']);
+
+        $r = $this->act($about->id(), 'proof', ['label' => 'Aisha', 'days' => 3, 'notes' => '1'], ['tab' => 'page'])
+            ->assertJsonPath('stamp', 'Link made. Copy it and send it to Aisha.');
+        $url = $r->json('copy');
+        $this->assertStringStartsWith(url('/proof/'), $url);
+        $drawer = (string) $r->json('drawer');
+        $this->assertStringContainsString('Aisha', $drawer);
+        $this->assertStringContainsString('data-copy="'.e($url).'"', $drawer);
+
+        // Whoever has it: the draft, with the notes, never the editor; readers still see what's published.
+        $html = $this->reader(parse_url($url, PHP_URL_PATH))->assertOk()->assertSee('Who we are, draft')->assertSee('data-proof', false)
+            ->assertDontSee('id="pb-editor"', false)->getContent();
+        $this->assertStringContainsString('noindex', $html);
+        $this->reader('/about')->assertDontSee('Who we are, draft');
+
+        // Their notes show in the Page tab, to see to.
+        $secret = basename(parse_url($url, PHP_URL_PATH));
+        $this->app['auth']->forgetGuards();
+        $this->post(route('proof.note', $secret), ['name' => 'Aisha', 'body' => 'Can the heading say “Who we are” only?'])->assertRedirect();
+        $drawer = (string) $this->act($about->id(), 'tab', 'page', ['tab' => 'page'])->json('drawer');
+        $this->assertStringContainsString('1 note to see to', $drawer);
+        $this->assertStringContainsString('Can the heading say', $drawer);
+        $note = \App\Models\ProofNote::firstOrFail();
+        $this->act($about->id(), 'proof-note', $note->id, ['tab' => 'page']);
+        $this->assertNotNull($note->fresh()->resolved_at);
+
+        // Stopped: the link works no more.
+        $proof = \App\Models\Proof::firstOrFail();
+        $this->act($about->id(), 'proof-stop', $proof->id, ['tab' => 'page'])->assertJsonPath('stamp', 'That link works no more.');
+        $this->reader(parse_url($url, PHP_URL_PATH))->assertNotFound();
+
+        // The blog page has no links to share (it isn't one of the pages).
+        $this->actingAs($this->admin)->getJson(route('builder.edit', 'blog'));
+        $this->assertStringNotContainsString('Share the draft', (string) $this->act('blog', 'tab', 'page', ['tab' => 'page'])->json('drawer'));
+    }
+
     public function test_the_slip_and_who_can_build(): void
     {
         $about = $this->about();
