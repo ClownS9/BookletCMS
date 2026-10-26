@@ -15,6 +15,11 @@ class CachePages
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Posts and pages whose time to come down has come do, before anything is shown.
+        if ($request->isMethodSafe()) {
+            \App\Support\Takedowns::settle();
+        }
+
         if (! PageCache::enabled() || ! PageCache::cacheable($request)) {
             return $next($request);
         }
