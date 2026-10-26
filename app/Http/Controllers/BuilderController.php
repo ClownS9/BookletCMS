@@ -18,7 +18,7 @@ use Throwable;
 class BuilderController extends Controller
 {
     /** What only looks, or changes nothing on the page: never too late. */
-    protected const LOOKING = ['select', 'tab', 'adding', 'pick', 'unpick', 'proof', 'proof-stop', 'proof-note', 'save-layout', 'forget-layout', 'forget-shared', 'alt', 'focus'];
+    protected const LOOKING = ['select', 'tab', 'adding', 'pick', 'unpick', 'proof', 'proof-stop', 'proof-note', 'save-layout', 'forget-layout', 'forget-shared', 'alt', 'focus', 'send'];
 
     /** How long someone counts as still here after their last word from the page (seconds). */
     protected const HERE_FOR = 60;
@@ -84,6 +84,9 @@ class BuilderController extends Controller
         if (is_array($result) && ! empty($result['copy'])) {
             $extra['copy'] = $result['copy']; // a link just made: offered to copy
         }
+        if (is_array($result) && ! empty($result['open'])) {
+            $extra['open'] = $result['open']; // somewhere to go and look
+        }
 
         return $this->respond($page, $state, $stamp, $request->boolean('quiet'), [], $extra);
     }
@@ -126,6 +129,20 @@ class BuilderController extends Controller
         \Illuminate\Support\Facades\Cache::put($key, $all, self::HERE_FOR * 2);
 
         return array_values(array_map(fn ($p) => (string) $p['name'], array_filter($all, fn ($p, $id) => $id !== $user?->id, ARRAY_FILTER_USE_BOTH)));
+    }
+
+    /**
+     * The pages a section could be sent to, by name (with its address, where
+     * two have the same name).
+     *
+     * @param  array<string, array{name: string, page: PageBuild}>  $targets
+     * @return array<string, string>
+     */
+    protected function sendNames(array $targets): array
+    {
+        $counts = array_count_values(array_column($targets, 'name'));
+
+        return array_map(fn ($t) => $counts[$t['name']] > 1 ? $t['name'].' ('.$this->pages->addressOf($t['page']).')' : $t['name'], $targets);
     }
 
     /** The draft as a phone shows it (the editor's Phone view): the page itself, with ?preview=1. */
@@ -195,6 +212,7 @@ class BuilderController extends Controller
                 'status' => $where,
                 'words' => $words,
                 'undoable' => (array) $page->history !== [],
+                'redoable' => (array) $page->redo !== [],
                 'address' => $pages->addressOf($page),
                 'blog' => $page->isBlog(),
                 'live' => $live,
@@ -218,6 +236,7 @@ class BuilderController extends Controller
                 'sharedNow' => $selected && isset($selected['shared']) ? [
                     'name' => (string) ($pages->sharedAll()[$selected['shared']]->name ?? ''), 'uses' => $pages->usesOf($selected['shared']),
                 ] : null,
+                'sendTo' => $selected ? $this->sendNames($pages->sendTargets($page, $selected['type'])) : [],
                 'canShare' => $selected && ! isset($selected['shared']) && $pages->shareable($selected['type']),
                 'stacy' => $selected && request()->user() && \App\Stacy\Writer::available(request()->user()),
                 'canMedia' => (bool) request()->user()?->canChangeMedia(),

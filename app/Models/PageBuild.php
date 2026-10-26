@@ -29,12 +29,12 @@ class PageBuild extends Model
 {
     public const BLOG = 'blog';
 
-    protected $fillable = ['target', 'draft', 'published', 'published_at', 'scheduled', 'scheduled_at', 'history', 'history_mark', 'fresh', 'rev', 'edited_by'];
+    protected $fillable = ['target', 'draft', 'published', 'published_at', 'scheduled', 'scheduled_at', 'history', 'history_mark', 'redo', 'fresh', 'rev', 'edited_by'];
 
     protected function casts(): array
     {
         return [
-            'draft' => 'array', 'published' => 'array', 'scheduled' => 'array', 'history' => 'array', 'history_mark' => 'array',
+            'draft' => 'array', 'published' => 'array', 'scheduled' => 'array', 'history' => 'array', 'history_mark' => 'array', 'redo' => 'array',
             'published_at' => 'datetime', 'scheduled_at' => 'datetime', 'fresh' => 'boolean',
         ];
     }

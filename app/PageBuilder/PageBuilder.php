@@ -562,7 +562,8 @@ class PageBuilder
             $history[] = $before;
             $history = array_slice($history, -30);
         }
-        $page->put(['draft' => $after, 'history' => $history, 'history_mark' => ['mark' => $mark, 'at' => now()->timestamp]]);
+        // A new change: what Undo took back can't come again.
+        $page->put(['draft' => $after, 'history' => $history, 'history_mark' => ['mark' => $mark, 'at' => now()->timestamp], 'redo' => null]);
         $this->keepShared($after);
         request()->attributes->remove('booklet.builder.uses');
 
@@ -1115,11 +1116,60 @@ class PageBuilder
                     return 'Nothing to undo.';
                 }
                 $back = $builder->clean(array_pop($history));
-                $page->put(['draft' => $back, 'history' => $history, 'history_mark' => []]);
+                $redo = array_slice([...(array) $page->redo, $this->sectionsOf($page)], -30);
+                $page->put(['draft' => $back, 'history' => $history, 'history_mark' => [], 'redo' => $redo]);
                 $this->keepShared($back);
                 [$i] = $locate($back, $form['section'] ?? null);
 
                 return ['form' => array_merge($form, ['section' => $i === null ? ($back[0]['id'] ?? null) : $form['section'], 'picking' => null])];
+            },
+            // What Undo took back, again.
+            'redo' => function (array $form, $payload, PageBuild $page) use ($builder, $locate) {
+                $redo = (array) $page->redo;
+                if ($redo === []) {
+                    return 'Nothing to redo.';
+                }
+                $again = $builder->clean(array_pop($redo));
+                $history = array_slice([...(array) $page->history, $this->sectionsOf($page)], -30);
+                $page->put(['draft' => $again, 'history' => $history, 'history_mark' => [], 'redo' => $redo]);
+                $this->keepShared($again);
+                [$i] = $locate($again, $form['section'] ?? null);
+
+                return ['form' => array_merge($form, ['section' => $i === null ? ($again[0]['id'] ?? null) : $form['section'], 'picking' => null])];
+            },
+
+            // A copy of this section on another page (at the end of its draft).
+            'send' => function (array $form, $payload, PageBuild $page) use ($locate, $sectionsOf) {
+                if (! is_array($payload)) {
+                    return null;
+                }
+                [, $s] = $locate($sectionsOf($page), $payload['id'] ?? null);
+                if (! $s) {
+                    return 'That section isn’t on the page any more.';
+                }
+                $to = $this->sendTargets($page, $s['type'])[(string) ($payload['to'] ?? '')] ?? null;
+                if (! $to) {
+                    throw ValidationException::withMessages(['form.send' => 'Choose a page to send it to.']);
+                }
+                $there = $to['page'];
+                $kind = (array) $this->builder->type($s['type']);
+                $already = $sectionsOf($there);
+                if (count($already) >= Builder::MAX_SECTIONS) {
+                    throw ValidationException::withMessages(['form.send' => '“'.$to['name'].'” has as many sections as a page can hold.']);
+                }
+                if (! empty($kind['once']) && collect($already)->contains('type', $s['type'])) {
+                    throw ValidationException::withMessages(['form.send' => '“'.$to['name'].'” has one already, and it shows once on a page.']);
+                }
+                $made = $this->builder->copy($s);
+                if (isset($made['shared']) && ! isset($this->sharedAll()[$made['shared']])) {
+                    unset($made['shared']);
+                }
+                $this->change($there, fn (array $sections) => [...$sections, $made]);
+                $there->isBlog()
+                    ? ActivityLog::record('sent a section to', 'edits', 'builder', PageBuild::BLOG, 'The blog')
+                    : ActivityLog::record('sent a section to', 'edits', 'entry', $there->target, $to['name']);
+
+                return ['stamp' => 'A copy is at the end of “'.$to['name'].'” (a draft change there, until it’s published).', 'open' => $this->editUrl($there)];
             },
 
             // Stacy writes the words for a section, as asked (one Undo step).
@@ -1576,6 +1626,31 @@ class PageBuilder
     // Shared sections ------------------------------------------------------------------------
 
     /** Every shared section, by id (looked up once a request). @return array<int, SharedSection> */
+    /**
+     * The other built pages a section of this kind could be sent to, that
+     * whoever is building may build: target => ['name' => …, 'page' => PageBuild].
+     *
+     * @return array<string, array{name: string, page: PageBuild}>
+     */
+    public function sendTargets(PageBuild $page, string $type): array
+    {
+        $kind = (array) $this->builder->type($type);
+        if ($kind === [] || ! empty($kind['required'])) {
+            return [];
+        }
+        $user = request()->user();
+        $out = [];
+        foreach (PageBuild::query()->where('target', '!=', $page->target)->latest('updated_at')->take(200)->get() as $other) {
+            if (! isset($this->typesFor($other)[$type]) || ! $this->canBuildThis($user, $other)) {
+                continue;
+            }
+            $out[$other->target] = ['name' => $other->isBlog() ? 'The blog page' : (string) $other->entry()?->title(), 'page' => $other];
+        }
+        uasort($out, fn ($a, $b) => strnatcasecmp($a['name'], $b['name']));
+
+        return $out;
+    }
+
     public function sharedAll(): array
     {
         $all = request()->attributes->get('booklet.builder.shared');
