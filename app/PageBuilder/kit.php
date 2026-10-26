@@ -220,6 +220,32 @@ return [
             'style' => ['width' => 'narrow'],
         ],
 
+        'free' => [
+            'name' => 'Columns of your own',
+            'about' => 'Two to four columns, each with any of a picture, a heading, words and a button.',
+            'group' => 'Lists',
+            'fields' => [
+                'title' => ['type' => 'text', 'label' => 'Heading', 'max' => 160],
+                'intro' => ['type' => 'words', 'label' => 'A line under it'],
+                'widths' => ['type' => 'select', 'label' => 'Widths (with two columns)', 'options' => ['even' => 'The same', 'left' => 'Wider on the left', 'right' => 'Wider on the right']],
+                'items' => ['type' => 'items', 'label' => 'Columns', 'one' => 'column', 'max_items' => 4, 'fields' => [
+                    'picture' => ['type' => 'picture', 'label' => 'Picture (optional)'],
+                    'title' => ['type' => 'text', 'label' => 'Heading (optional)'],
+                    'words' => ['type' => 'words', 'label' => 'Words (optional)', 'max' => 3000],
+                    'button' => ['type' => 'link', 'label' => 'Button (optional)'],
+                ]],
+            ],
+            'start' => [
+                'title' => '',
+                'intro' => '',
+                'widths' => 'even',
+                'items' => [
+                    ['picture' => '', 'title' => 'On the left', 'words' => 'Anything you like here: words, a picture, a button, or all three.', 'button' => ['label' => '', 'url' => '']],
+                    ['picture' => '', 'title' => 'On the right', 'words' => 'Each column has the same choices. Leave out what you don’t need.', 'button' => ['label' => '', 'url' => '']],
+                ],
+            ],
+        ],
+
         'stats' => [
             'name' => 'Numbers',
             'about' => 'A few big figures, each with what it counts.',
@@ -530,8 +556,9 @@ return [
         'align' => ['label' => 'Words', 'options' => ['left' => 'Left', 'center' => 'Centred']],
         'space' => ['label' => 'Space', 'options' => ['snug' => 'Snug', 'normal' => 'Normal', 'roomy' => 'Roomy']],
         'width' => ['label' => 'Width', 'options' => ['narrow' => 'Narrow', 'normal' => 'Normal', 'wide' => 'Wide']],
+        'show' => ['label' => 'Shows on', 'options' => ['all' => 'Every screen', 'computer' => 'Computers only', 'phone' => 'Phones only']],
     ],
-    'look' => ['background' => 'none', 'picture' => '', 'align' => 'left', 'space' => 'normal', 'width' => 'normal'],
+    'look' => ['background' => 'none', 'picture' => '', 'align' => 'left', 'space' => 'normal', 'width' => 'normal', 'show' => 'all'],
 
     // Pages to start from.
     'starters' => [

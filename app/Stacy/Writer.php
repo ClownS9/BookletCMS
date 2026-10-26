@@ -206,6 +206,54 @@ class Writer
         ];
     }
 
+    /**
+     * The words for one section of a built page, as asked: its text fields
+     * (and the things in its lists), in the same shape it's given. Nothing
+     * but words: pictures, addresses and choices stay as they are.
+     *
+     * @param  array<string, array<string, mixed>>  $fields  the section's text fields: name => ['label', 'type' (text|words|items), 'max', 'fields' for a list, 'max_items']
+     * @param  array<string, mixed>  $current  what's there now (the same shape)
+     * @return array<string, mixed>
+     */
+    public static function section(User $user, string $kind, string $about, array $fields, array $current, string $ask, string $page = '', string $around = ''): array
+    {
+        $ask = trim(mb_substr($ask, 0, 1000));
+        if ($ask === '') {
+            throw new StacyException('Say what it should be about, and I’ll write it.');
+        }
+        self::slowDown($user, 10);
+
+        $describe = function (array $fields, string $indent = '') use (&$describe): string {
+            $out = '';
+            foreach ($fields as $name => $f) {
+                if (($f['type'] ?? '') === 'items') {
+                    $out .= $indent.'- "'.$name.'": a list of up to '.(int) ($f['max_items'] ?? 8).' '.($f['one'] ?? 'item').'s, each an object with:'."\n".$describe((array) ($f['fields'] ?? []), $indent.'    ');
+                } else {
+                    $out .= $indent.'- "'.$name.'" ('.(string) ($f['label'] ?? $name).'): '.(($f['type'] ?? '') === 'words' ? 'a few sentences (an empty line between paragraphs)' : 'one short line')
+                        .', at most '.(int) ($f['max'] ?? (($f['type'] ?? '') === 'words' ? 600 : 120))." characters\n";
+                }
+            }
+
+            return $out;
+        };
+        $prompt = ($page !== '' ? "The page is called “{$page}”.\n" : '')
+            .($around !== '' ? "What else is on the page, for context (don't repeat it):\n<page>\n".mb_substr($around, 0, 2500)."\n</page>\n\n" : "\n")
+            ."Write the words for one section of it: a {$kind} ({$about}).\nIts fields:\n".$describe($fields)
+            ."\nWhat's in it now:\n".json_encode($current, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            ."\n\nWhat the person asked for:\n<ask>\n{$ask}\n</ask>\n\n"
+            .'Write in the language they asked in. You may use **bold**, *italic* and [a link](/address) in the few-sentences fields only. '
+            .'Don’t invent facts, prices, times, names or numbers you weren’t given: where one is needed, write what goes there in [square brackets] for them to fill in. '
+            .'Reply with only one JSON object with exactly those field names (and, for a list, the list of objects), nothing before or after it.';
+
+        $out = self::complete($user, self::system('You are Stacy, writing the words for a section of someone’s web page: clear, warm and to the point, in their voice.'), $prompt, 1800);
+        $json = json_decode((string) preg_replace('/^[^{]*|[^}]*$/s', '', $out), true);
+        if (! is_array($json)) {
+            throw new StacyException('I wrote something, but not in a shape I could put on the page. Try again?');
+        }
+
+        return $json;
+    }
+
     public static function languageName(string $code): string
     {
         return self::LANGUAGES[$code][0] ?? throw new StacyException('I can’t translate into that language yet.');

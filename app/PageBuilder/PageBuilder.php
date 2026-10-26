@@ -1121,6 +1121,70 @@ class PageBuilder
                 return ['form' => array_merge($form, ['section' => $i === null ? ($back[0]['id'] ?? null) : $form['section'], 'picking' => null])];
             },
 
+            // Stacy writes the words for a section, as asked (one Undo step).
+            'stacy' => function (array $form, $payload, PageBuild $page) {
+                $user = request()->user();
+                if (! is_array($payload) || ! $user || ! \App\Stacy\Writer::available($user)) {
+                    return null;
+                }
+                [, $s] = $this->locate($this->sectionsOf($page), $payload['id'] ?? null);
+                if (! $s) {
+                    return null;
+                }
+                $kind = (array) $this->builder->type($s['type']);
+                $fields = $this->wordFields((array) ($kind['fields'] ?? []));
+                if ($fields === []) {
+                    return 'There are no words in this one to write.';
+                }
+                try {
+                    $words = \App\Stacy\Writer::section($user, (string) $kind['name'], (string) ($kind['about'] ?? ''), $fields,
+                        $this->wordsOf($fields, (array) $s['fields']), (string) ($payload['ask'] ?? ''), $page->isBlog() ? 'The blog' : (string) $page->entry()?->title(),
+                        Fields::plain($this->asText(array_values(array_filter($this->sectionsOf($page), fn ($o) => $o['id'] !== $s['id'])))));
+                } catch (\App\Stacy\StacyException $e) {
+                    throw ValidationException::withMessages(['form.stacy' => $e->getMessage()]);
+                }
+                $why = $this->onSection($page, $s['id'], fn (array $section) => $this->fillWords($section, $fields, $words));
+                if ($why !== null) {
+                    return $why;
+                }
+
+                return 'Stacy wrote it. Read it over and change anything that isn’t right (anything in [brackets] is yours to fill in). Undo takes it back.';
+            },
+
+            // Layouts -------------------------------------------------------------------------
+            // Start again from a layout: one Booklet comes with ("starter:shop"), or a saved one ("saved:3").
+            'layout' => function (array $form, $key, PageBuild $page) {
+                $sections = $this->layoutSections($page, (string) $key);
+                if ($sections === null) {
+                    return 'That layout isn’t there any more.';
+                }
+                $this->change($page, fn () => $sections);
+
+                return ['stamp' => 'Started again from that layout. (Undo takes it back.)', 'form' => array_merge($form, ['section' => $sections[0]['id'] ?? null])];
+            },
+            // This page, saved as a layout to start others from.
+            'save-layout' => function (array $form, $payload, PageBuild $page) {
+                $name = $this->builder->line(is_array($payload) ? ($payload['name'] ?? '') : '', 80);
+                if ($name === '') {
+                    throw ValidationException::withMessages(['form.layout' => 'Give it a name, to choose it by.']);
+                }
+                if (\App\Models\PageLayout::count() >= \App\Models\PageLayout::MAX) {
+                    throw ValidationException::withMessages(['form.layout' => 'There are '.\App\Models\PageLayout::MAX.' layouts already. Forget one you don’t use first.']);
+                }
+                \App\Models\PageLayout::create(['name' => $name, 'sections' => $this->sectionsOf($page), 'created_by' => request()->user()?->id]);
+
+                return 'Saved as the layout “'.$name.'”. Start any page from it, under Start from a layout.';
+            },
+            'forget-layout' => function (array $form, $id, PageBuild $page) {
+                $layout = is_numeric($id) ? \App\Models\PageLayout::find((int) $id) : null;
+                if (! $layout) {
+                    return null;
+                }
+                $layout->delete();
+
+                return 'The layout “'.$layout->name.'” is gone. (Pages started from it stay as they are.)';
+            },
+
             // Sharing the draft (a proof copy) --------------------------------------------------
             // A private link to the draft, for someone without an account (they can leave notes).
             'proof' => function (array $form, $payload, PageBuild $page) {
@@ -1216,6 +1280,118 @@ class PageBuilder
                 return '“'.$shared->name.'” is gone.';
             },
         ];
+    }
+
+    // Stacy writing a section -----------------------------------------------------------------
+
+    /** The fields of a section that hold words (and lists of them), for Stacy. */
+    protected function wordFields(array $fields): array
+    {
+        $out = [];
+        foreach ($fields as $name => $f) {
+            if (in_array($f['type'] ?? '', ['text', 'words'], true)) {
+                $out[$name] = $f;
+            } elseif (($f['type'] ?? '') === 'items' && ($inner = $this->wordFields((array) ($f['fields'] ?? []))) !== []) {
+                $out[$name] = ['fields' => $inner] + $f;
+            }
+        }
+
+        return $out;
+    }
+
+    /** What's in those fields now. */
+    protected function wordsOf(array $fields, array $values): array
+    {
+        $out = [];
+        foreach ($fields as $name => $f) {
+            $out[$name] = ($f['type'] ?? '') === 'items'
+                ? array_map(fn ($item) => $this->wordsOf((array) $f['fields'], (array) $item), array_values(array_filter((array) ($values[$name] ?? []), 'is_array')))
+                : (string) ($values[$name] ?? '');
+        }
+
+        return $out;
+    }
+
+    /** A section with Stacy's words put in (each checked as if typed; lists take the number of things she wrote). */
+    protected function fillWords(array $section, array $fields, array $words): array
+    {
+        foreach ($fields as $name => $f) {
+            if (! array_key_exists($name, $words)) {
+                continue;
+            }
+            if (($f['type'] ?? '') === 'items') {
+                $wanted = array_values(array_filter((array) $words[$name], 'is_array'));
+                if ($wanted === []) {
+                    continue;
+                }
+                $list = array_values(array_filter((array) ($section['fields'][$name] ?? []), 'is_array'));
+                $kept = [];
+                foreach (array_slice($wanted, 0, (int) ($f['max_items'] ?? 20)) as $i => $item) {
+                    // The same thing as before (its picture, address…), or one like the last, with Stacy's words.
+                    $kept[] = $list[$i] ?? ($list !== [] ? end($list) : []);
+                }
+                $section['fields'][$name] = $kept;
+                foreach (array_slice($wanted, 0, count($kept)) as $i => $item) {
+                    foreach ($f['fields'] as $sub => $spec) {
+                        if (is_scalar($item[$sub] ?? null)) {
+                            $section = rescue(fn () => $this->builder->set($section, $name.'.'.$i.'.'.$sub, (string) $item[$sub], fn ($p) => $this->isPicture($p)), $section, false);
+                        }
+                    }
+                }
+            } elseif (is_scalar($words[$name])) {
+                $section = rescue(fn () => $this->builder->set($section, $name, (string) $words[$name], fn ($p) => $this->isPicture($p)), $section, false);
+            }
+        }
+
+        return $section;
+    }
+
+    // Layouts ---------------------------------------------------------------------------------
+
+    /**
+     * Layouts to start a page from: the ones Booklet comes with, and pages
+     * saved as layouts. (Not for the blog page: its posts are what it's for.)
+     *
+     * @return array{starters: list<array{key: string, name: string, about: string}>, saved: list<array{key: string, id: int, name: string, about: string}>}|null
+     */
+    public function layouts(PageBuild $page): ?array
+    {
+        if ($page->isBlog()) {
+            return null;
+        }
+        $types = $this->builder->types();
+        $saved = rescue(fn () => \App\Models\PageLayout::query()->orderBy('name')->get(), collect(), false);
+
+        return [
+            'starters' => collect($this->builder->starters())->map(fn ($s, $key) => ['key' => 'starter:'.$key, 'name' => (string) $s['name'], 'about' => (string) $s['about']])->values()->all(),
+            'saved' => $saved->map(fn (\App\Models\PageLayout $l) => [
+                'key' => 'saved:'.$l->id, 'id' => $l->id, 'name' => $l->name,
+                'about' => collect($l->sections)->map(fn ($s) => (string) ($types[$s['type'] ?? '']['name'] ?? ''))->filter()->take(6)->implode(', '),
+            ])->values()->all(),
+        ];
+    }
+
+    /** The sections to start again from a layout (new ones each time), or null. */
+    public function layoutSections(PageBuild $page, string $key): ?array
+    {
+        if ($page->isBlog()) {
+            return null;
+        }
+        if (preg_match('/^starter:([a-z-]+)$/', $key, $m) && isset($this->builder->starters()[$m[1]])) {
+            $sections = $this->builder->starter($m[1]);
+            $title = $page->entry()?->title();
+            if ($title && ($sections[0]['type'] ?? '') === 'hero') {
+                $sections[0]['fields']['title'] = $this->builder->line($title, 160);
+            }
+
+            return $sections;
+        }
+        $layout = preg_match('/^saved:(\d+)$/', $key, $m) ? \App\Models\PageLayout::find((int) $m[1]) : null;
+        if (! $layout) {
+            return null;
+        }
+        // Its sections, as new ones on this page (shared ones stay shared).
+        return array_map(fn ($s) => $this->builder->copy($s), array_values(array_filter($this->builder->clean($layout->sections), fn ($s) => empty($this->builder->type($s['type'])['blog']))));
     }
 
     // Sharing the draft -----------------------------------------------------------------------

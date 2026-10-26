@@ -156,11 +156,13 @@ class BuilderController extends Controller
                 'history' => $state['tab'] === 'page' ? $pages->history($page) : [],
                 'checks' => $state['tab'] === 'page' ? $pages->checks($page) : [],
                 'proofing' => $state['tab'] === 'page' ? $pages->proofing($page) : null,
+                'layouts' => $state['tab'] === 'page' ? $pages->layouts($page) : null,
                 'shared' => $state['adding'] ? $pages->sharedFor($page) : [],
                 'sharedNow' => $selected && isset($selected['shared']) ? [
                     'name' => (string) ($pages->sharedAll()[$selected['shared']]->name ?? ''), 'uses' => $pages->usesOf($selected['shared']),
                 ] : null,
                 'canShare' => $selected && ! isset($selected['shared']) && $pages->shareable($selected['type']),
+                'stacy' => $selected && request()->user() && \App\Stacy\Writer::available(request()->user()),
                 'canHome' => (bool) request()->user()?->isAdmin() && $entry && ! $entry->collection()?->dated(),
                 'pictures' => $state['picking'] ? Booklet::assets()->inContainer('media')->filter(fn ($a) => $a->isImage())
                     ->mapWithKeys(fn ($a) => [$a->path() => [
