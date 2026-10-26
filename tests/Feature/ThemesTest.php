@@ -348,7 +348,9 @@ class ThemesTest extends TestCase
             $this->assertSame('tide', $meta['key']);
             $installer->discard($token);
 
-            config(['booklet.inserts_path' => base_path('inserts')]);
+            config(['booklet.inserts_path' => base_path('tests/Fixtures/inserts')]);
+
+            $this->app->forgetInstance(\App\Inserts\InsertManager::class);
             $this->artisan('booklet:share', ['name' => 'events', '--to' => $to])->assertSuccessful()->expectsOutputToContain('booklet-insert');
             $this->assertFileExists($to.'/booklet-events-1.0.zip');
 
@@ -372,7 +374,9 @@ class ThemesTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.share.download', ['theme', 'tide']))->assertOk();
         $this->assertStringContainsString('booklet-tide-1.0.zip', (string) $response->headers->get('Content-Disposition'));
 
-        config(['booklet.inserts_path' => base_path('inserts')]);
+        config(['booklet.inserts_path' => base_path('tests/Fixtures/inserts')]);
+
+        $this->app->forgetInstance(\App\Inserts\InsertManager::class);
         app(\App\Inserts\InsertManager::class)->forget();
         $this->actingAs($this->admin)->get(route('admin.settings.inserts', ['insert' => 'events']))->assertOk()
             ->assertSee('Share Events')->assertSee('booklet-insert');

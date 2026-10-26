@@ -111,7 +111,7 @@ class StructuredDataTest extends TestCase
 
     public function test_events_are_events_with_a_date_and_place(): void
     {
-        config(['booklet.inserts_path' => base_path('inserts')]);
+        config(['booklet.inserts_path' => base_path('tests/Fixtures/inserts')]);
         $this->app->forgetInstance(InsertManager::class);
         $manager = app(InsertManager::class);
         $manager->enable('events');

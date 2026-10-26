@@ -97,7 +97,7 @@ See [Security](#security) for how Booklet protects your data, sign-ins and uploa
 ![Version control: the three steps to GitHub on the left, every change as a stitch in the binding on the right](docs/screenshots/version-control.png)
 
 ### Inserts
-Find them on GitHub from Settings › Inserts › Add, the same way as themes. Small add-ons that live in `inserts/`: they can add pages to the admin, cards on Contents, `[[slips]]` in writing, cut-outs, scheduled jobs, new skills for Stacy, and checks on the site's forms. **Events**, **Gallery** and **Guard** come with Booklet. **Guard** keeps robots out of the comment, contact and new-posts forms (and sign-in, if you like) with Cloudflare Turnstile, Google reCAPTCHA or hCaptcha, turns away words and addresses you list, and keeps a log of what it stopped. Add more from a .zip, a link or a GitHub repository in Settings › Inserts. See [`inserts/README.md`](inserts/README.md).
+Find them on GitHub from Settings › Inserts › Add, the same way as themes. Small add-ons that live in `inserts/`: they can add pages to the admin, cards on Contents, `[[slips]]` in writing, cut-outs, scheduled jobs, new skills for Stacy, and checks on the site's forms. **Events**, **Gallery** and **Guard** are inserts of their own, each in its own repository, so they're kept up to date like any other: add them from Settings › Inserts › Add. **Guard** keeps robots out of the comment, contact and new-posts forms (and sign-in, if you like) with Cloudflare Turnstile, Google reCAPTCHA or hCaptcha, turns away words and addresses you list, and keeps a log of what it stopped. Add more from a .zip, a link or a GitHub repository in Settings › Inserts. See [`inserts/README.md`](inserts/README.md).
 
 ---
 
@@ -334,7 +334,7 @@ app/Livewire/     the admin (Admin/) and the site's interactive parts (Site/)
 app/Stacy/        the assistant: chat, tools, providers, voice
 app/Support/      blocks, links, rows, crops, version control, backups, health…
 content/          content as files (when BOOKLET_DRIVER=file)
-inserts/          add-ons: events, gallery, and your own
+inserts/          add-ons you add or make (each its own folder)
 themes/           how the site looks: Harbour, and your own (see themes/README.md)
 resources/views/  admin, site and email templates
 public/booklet/   the admin's and site's styles and scripts

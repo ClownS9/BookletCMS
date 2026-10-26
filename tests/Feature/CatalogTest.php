@@ -166,7 +166,8 @@ class CatalogTest extends TestCase
 
     public function test_the_inserts_shelf_shows_them_and_what_you_have(): void
     {
-        config(['booklet.inserts_path' => base_path('inserts')]);
+        config(['booklet.inserts_path' => base_path('tests/Fixtures/inserts')]);
+        $this->app->forgetInstance(\App\Inserts\InsertManager::class);
         Http::fake([
             'api.github.com/search/repositories*' => Http::response(['total_count' => 1, 'items' => [$this->repo('booklet/booklet-events')]]),
             'raw.githubusercontent.com/booklet/booklet-events/main/insert.php' => Http::response("<?php\nreturn ['name' => 'Events', 'version' => '9.0', 'about' => 'Things happening.', 'needs' => '1.0'];"),

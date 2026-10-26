@@ -31,7 +31,7 @@ class InsertCardsTest extends TestCase
         Booklet::flush();
         $this->seed(BookletStarterSeeder::class);
         $this->admin = User::factory()->create(['role' => 'admin']);
-        config(['booklet.inserts_path' => base_path('inserts')]);
+        config(['booklet.inserts_path' => base_path('tests/Fixtures/inserts')]);
         $this->app->forgetInstance(InsertManager::class);
     }
 

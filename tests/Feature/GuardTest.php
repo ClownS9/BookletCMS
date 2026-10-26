@@ -38,7 +38,7 @@ class GuardTest extends TestCase
         Booklet::flush();
         $this->seed(BookletStarterSeeder::class);
         Notification::fake();
-        config(['booklet.inserts_path' => base_path('inserts')]);
+        config(['booklet.inserts_path' => base_path('tests/Fixtures/inserts')]);
         $this->admin = User::factory()->create(['role' => 'admin', 'email' => 'nur@example.com']);
         $this->entryId = (string) Booklet::entries()->findBySlug('posts', 'hello-from-booklet')->id();
         $this->manager()->forget();
