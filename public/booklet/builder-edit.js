@@ -126,6 +126,7 @@
             history.replaceState(null, '', u.pathname + location.search);
         }
         if (data.stamp) toast(data.stamp);
+        else if (data.errors && Object.keys(data.errors).length) toast(Object.values(data.errors)[0], true);
         markSelected(opts.scroll);
     };
 
@@ -275,7 +276,8 @@
             // Never under the bar, or under the drawer when it's a sheet from the bottom.
             let floor = bar.hidden ? innerHeight : bar.getBoundingClientRect().top;
             if (!drawer.hidden) { const d = drawer.getBoundingClientRect(); if (d.left < 40) floor = Math.min(floor, d.top); }
-            const top = Math.min(Math.max(r.top + 8, 8), Math.max(r.bottom - 44, 8), floor - 50);
+            // Astride the section's top edge (over its own padding, never its words), following it down while it's long.
+            const top = Math.min(Math.max(r.top - 18, 8), Math.max(r.bottom - 44, 8), floor - 50);
             tools.style.top = top + 'px';
             tools.style.left = Math.max(r.left + 8, 8) + 'px';
             const name = el.dataset.pbName || '';

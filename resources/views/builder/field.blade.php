@@ -2,14 +2,22 @@
     One field of the chosen section, in the drawer. Expects $spec, $path
     ('title', 'items.2.words'…), $value and $sid (the section).
 --}}
-@php $j = fn ($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); @endphp
+@php
+    $j = fn ($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // A value that couldn't go there: shown again as typed, with why, to fix.
+    $why = fn (string $p) => $errors['field:'.$p] ?? null;
+    $typed = fn (string $p, $v) => $why($p) !== null && request()->input('payload.field') === $p ? request()->input('payload.value') : $v;
+@endphp
 @switch ($spec['type'])
     @case ('text')
     @case ('url')
         <label class="d-field">
             <span>{{ $spec['label'] }}</span>
-            <input type="text" data-set="{{ $path }}" value="{{ is_scalar($value) ? $value : '' }}" maxlength="{{ $spec['type'] === 'url' ? 500 : ($spec['max'] ?? 200) }}"
+            @php $shown = $typed($path, $value); @endphp
+            <input type="text" data-set="{{ $path }}" value="{{ is_scalar($shown) ? $shown : '' }}" maxlength="{{ $spec['type'] === 'url' ? 500 : ($spec['max'] ?? 200) }}"
+                   @if ($why($path)) aria-invalid="true" @endif
                    @if ($spec['type'] === 'url') placeholder="{{ ! empty($spec['video']) ? 'https://www.youtube.com/watch?v=…' : '/about or https://…' }}" autocapitalize="off" spellcheck="false" @endif>
+            @if ($why($path)) <em class="d-error">{{ $why($path) }}</em> @endif
         </label>
         @break
 
@@ -17,14 +25,17 @@
         <label class="d-field">
             <span>{{ $spec['label'] }}</span>
             <textarea data-set="{{ $path }}" rows="{{ $path === 'body' ? 6 : 3 }}" maxlength="{{ $spec['max'] ?? 2000 }}">{{ is_scalar($value) ? $value : '' }}</textarea>
+            @if ($why($path)) <em class="d-error">{{ $why($path) }}</em> @endif
         </label>
         @break
 
     @case ('link')
         <div class="d-field" role="group" aria-label="{{ $spec['label'] }}">
             <span>{{ $spec['label'] }}</span>
-            <input type="text" data-set="{{ $path }}.label" aria-label="{{ $spec['label'] }}: its words" placeholder="Its words (empty: no button)" value="{{ $value['label'] ?? '' }}" maxlength="60">
-            <input type="text" data-set="{{ $path }}.url" aria-label="{{ $spec['label'] }}: where it goes" placeholder="Goes to: /about, https://…, an email" value="{{ $value['url'] ?? '' }}" maxlength="500" autocapitalize="off" spellcheck="false">
+            <input type="text" data-set="{{ $path }}.label" aria-label="{{ $spec['label'] }}: its words" placeholder="Its words (empty: no button)" value="{{ $typed($path.'.label', $value['label'] ?? '') }}" maxlength="60">
+            <input type="text" data-set="{{ $path }}.url" aria-label="{{ $spec['label'] }}: where it goes" placeholder="Goes to: /about, https://…, an email" value="{{ $typed($path.'.url', $value['url'] ?? '') }}" maxlength="500" autocapitalize="off" spellcheck="false"
+                   @if ($why($path.'.url')) aria-invalid="true" @endif>
+            @if ($why($path.'.url') ?? $why($path.'.label')) <em class="d-error">{{ $why($path.'.url') ?? $why($path.'.label') }}</em> @endif
         </div>
         @break
 
@@ -70,10 +81,12 @@
             <span class="d-label">{{ $spec['label'] }} · {{ count($items) }}</span>
             @foreach ($items as $n => $item)
                 @php
-                    $first = collect($spec['fields'])->keys()->first(fn ($k) => is_string($item[$k] ?? null) && trim($item[$k]) !== '' && in_array($spec['fields'][$k]['type'], ['text', 'words'], true));
+                    // Named by what it's called (its name, heading, question…), else its first words.
+                    $first = collect(['name', 'title', 'question', 'days', 'number'])->merge(array_keys($spec['fields']))->unique()
+                        ->first(fn ($k) => isset($spec['fields'][$k]) && is_string($item[$k] ?? null) && trim($item[$k]) !== '' && in_array($spec['fields'][$k]['type'], ['text', 'words'], true));
                     $title = $first ? \Illuminate\Support\Str::limit($item[$first], 40) : ucfirst($spec['one']).' '.($n + 1);
                 @endphp
-                <details class="d-thing" data-item="{{ $path }}.{{ $n }}">
+                <details class="d-thing" data-item="{{ $path }}.{{ $n }}" @if (collect($errors)->keys()->contains(fn ($k) => str_starts_with($k, 'field:'.$path.'.'.$n.'.'))) open @endif>
                     <summary>
                         <span class="d-thing__name">{{ $title }}</span>
                         <span class="d-thing__tools">

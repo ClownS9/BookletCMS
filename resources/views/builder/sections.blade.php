@@ -10,8 +10,8 @@
         $look = $s['look'];
         $f = new \App\PageBuilder\Fields($s['fields'], $live, '', $types[$s['type']]['fields'] ?? []);
         $bg = $look['background'] === 'picture' ? \App\PageBuilder\Fields::pictureFor((string) $look['picture']) : null;
-        // The first hero's (or heading's) is the page's own heading (h1); everything else is h2.
-        $h1 = ! $embedded && ! $headed && in_array($s['type'], ['hero', 'heading'], true);
+        // The first hero's (heading's, banner's) is the page's own heading (h1); everything else is h2.
+        $h1 = ! $embedded && ! $headed && in_array($s['type'], ['hero', 'heading', 'banner'], true);
         $headed = $headed || $h1;
     @endphp
     <section id="{{ $s['id'] }}" @class([

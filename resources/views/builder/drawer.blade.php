@@ -147,7 +147,7 @@
         <div class="d-row">
             <h2 class="d-h">{{ $kind['name'] }}</h2>
         </div>
-        <p class="d-note">Click words on the page to type into them. Everything else is here.</p>
+        <p class="d-note">{{ $kind['fields'] === [] ? 'It draws itself: there’s nothing to fill in. How it looks is below.' : 'Click words on the page to type into them. Everything else is here.' }}</p>
 
         @foreach ($kind['fields'] as $name => $spec)
             @include('builder.field', ['spec' => $spec, 'path' => $name, 'value' => $selected['fields'][$name] ?? null])

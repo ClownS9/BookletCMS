@@ -3,7 +3,7 @@
     :image-alt="$site->imageAlt($entry) ?: null" :image="$site->shareImage($entry) ?? \App\Support\ShareImage::urlFor($entry)" :robots="$draft ? 'noindex, nofollow' : null">
     @php \App\Support\StructuredData::page($entry); @endphp
     <div class="pb-page" data-pb-page="{{ $entry->id() }}">
-        @unless (collect($sections)->contains(fn ($s) => in_array($s['type'], ['hero', 'heading'], true)))
+        @unless (collect($sections)->contains(fn ($s) => in_array($s['type'], ['hero', 'heading', 'banner'], true)))
             <h1 class="sr-only">{{ $entry->title() }}</h1>
         @endunless
         @include('builder.sections', ['live' => false, 'embedded' => false])

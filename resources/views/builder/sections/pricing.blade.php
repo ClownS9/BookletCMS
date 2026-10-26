@@ -3,7 +3,9 @@
     @foreach ($f->items('items') as $i => $plan)
         <li @class(['pb-plan', 'pb-plan--featured' => $plan->get('featured')]){{ $f->itemAttrs('items', $i) }}>
             {{ $plan->text('name', 'h3', 'pb-plan__name') }}
-            <p class="pb-plan__price">{{ $plan->text('price', 'span', 'pb-plan__amount') }} {{ $plan->text('per', 'span', 'pb-plan__per') }}</p>
+            @if ($plan->has('price', 'per'))
+                <p class="pb-plan__price">{{ $plan->text('price', 'span', 'pb-plan__amount') }} {{ $plan->text('per', 'span', 'pb-plan__per') }}</p>
+            @endif
             @if ($plan->live)
                 {{ $plan->words('words', 'pb-plan__list pb-plan__list--edit') }}
             @elseif ($plan->lines('words') !== [])
