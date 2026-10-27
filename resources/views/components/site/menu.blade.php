@@ -14,7 +14,7 @@
                     <a href="{{ $item['url'] }}" class="menu__link" @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
                     @if ($opens)
                         <button type="button" class="menu__caret" data-menu-sub aria-expanded="false" aria-controls="menu-sub-{{ $n }}">
-                            <span class="sr-only">More under {{ $item['label'] }}</span>
+                            <span class="sr-only">{{ __('More under :name', ['name' => $item['label']]) }}</span>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                         </button>
                         @if ($item['mega'])

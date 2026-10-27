@@ -52,10 +52,15 @@
                 @endif
             </p>
         @else
+            <label class="check ticks__all">
+                <input type="checkbox" wire:click="tickAll(@js($pageIds))" @checked(array_diff($pageIds, $ticked) === [])>
+                {{ $lastPage > 1 ? __('Choose all on this page') : __('Choose all') }}
+            </label>
             <ul class="picks" @if ($structured) role="tree" aria-label="{{ __('Page tree') }}" @endif>
                 @foreach ($rows as $i => $row)
                     @php $entry = $row['entry']; @endphp
-                    <li wire:key="entry-{{ $entry->id() }}" @if ($structured) role="treeitem" aria-level="{{ $row['depth'] + 1 }}" @endif>
+                    <li wire:key="entry-{{ $entry->id() }}" class="picks__row" @if ($structured) role="treeitem" aria-level="{{ $row['depth'] + 1 }}" @endif>
+                        <input type="checkbox" class="pick-tick" wire:model.live="ticked" value="{{ $entry->id() }}" aria-label="{{ __('Choose “:name”', ['name' => $entry->title() ?: __('Untitled')]) }}">
                         <button type="button" @class(['pick', 'pick--tree' => $structured]) wire:click="pick('{{ $entry->id() }}')" aria-pressed="{{ $chosen?->id() === $entry->id() ? 'true' : 'false' }}">
                             @if ($structured && $row['depth'] > 0)
                                 <span class="pick__indent" style="--depth: {{ $row['depth'] }}" aria-hidden="true"></span>
@@ -77,6 +82,50 @@
                     </li>
                 @endforeach
             </ul>
+            @if ($ticked !== [])
+                <div class="ticks" role="region" aria-label="{{ __('Do to the chosen ones') }}" wire:key="ticks">
+                    <div class="ticks__head">
+                        <strong>{{ trans_choice(':count chosen|:count chosen', count($ticked)) }}</strong>
+                        <button type="button" class="btn btn--quiet btn--sm" wire:click="untickAll">{{ __('Clear') }}</button>
+                    </div>
+                    <div class="ticks__do">
+                        @if ($canArrange)
+                            <button type="button" class="btn btn--sm" wire:click="publishTicked">{{ __('Publish') }}</button>
+                            <button type="button" class="btn btn--sm" wire:click="draftTicked">{{ __('Make drafts') }}</button>
+                        @endif
+                        <button type="button" class="btn btn--danger btn--sm" wire:click="binTicked" wire:confirm="{{ trans_choice('Move :count to the bin? It waits there for 30 days.|Move :count to the bin? They wait there for 30 days.', count($ticked)) }}">{{ __('Move to the bin') }}</button>
+                    </div>
+                    @if ($termFields !== [])
+                        <form class="ticks__term" wire:submit="termTicked">
+                            @if (count($termFields) > 1)
+                                <label for="bulk-field" class="sr-only">{{ __('Add to') }}</label>
+                                <select id="bulk-field" class="input" wire:model.live="bulkField">
+                                    @foreach ($termFields as $handle => $f)
+                                        <option value="{{ $handle }}">{{ __($f['label']) }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+                            <label for="bulk-words" class="sr-only">{{ __($termFields[$bulkField]['label'] ?? 'Tags') }}</label>
+                            <input id="bulk-words" class="input" type="text" wire:model="bulkWords" list="bulk-terms" maxlength="80" autocomplete="off"
+                                placeholder="{{ __('Type or choose…') }}">
+                            <datalist id="bulk-terms">
+                                @foreach ($termTitles as $t)
+                                    <option value="{{ $t }}"></option>
+                                @endforeach
+                            </datalist>
+                            <button type="submit" class="btn btn--sm">{{ __('Add') }}</button>
+                        </form>
+                        @error('bulkWords') <p class="field__error" style="margin: 6px 0 0">{{ $message }}</p> @enderror
+                    @endif
+                </div>
+            @endif
+            @if ($lastPage > 1)
+                <nav class="picks-pager" aria-label="{{ __('Pages of :what', ['what' => $model->title()]) }}">
+                    <button type="button" class="btn btn--quiet btn--sm" wire:click="turnTo({{ $page - 1 }})" @disabled($page <= 1)>{{ __('← Newer') }}</button>
+                    <span class="field__hint" style="margin: 0">{{ __('Page :n of :count', ['n' => $page, 'count' => $lastPage]) }} · {{ trans_choice(':count entry|:count entries', $shown) }}</span>
+                    <button type="button" class="btn btn--quiet btn--sm" wire:click="turnTo({{ $page + 1 }})" @disabled($page >= $lastPage)>{{ __('Older →') }}</button>
+                </nav>
+            @endif
         @endif
 
         <x-admin.folio side="left" />

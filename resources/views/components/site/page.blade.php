@@ -92,24 +92,24 @@
     {{ $head }}
 </head>
 <body class="{{ trim(\App\Support\Look::bodyClasses($look).' '.$bodyClass) }}">
-    <a href="#main" class="skip">Skip to the words</a>
+    <a href="#main" class="skip">{{ __('Skip to the words') }}</a>
     <div class="progress" aria-hidden="true"><span></span></div>
 
     @if ($proof = request()->attributes->get('booklet_proof'))
         <div class="preview-bar proof-bar" role="status">
-            <span class="sticker" style="--tilt: -2deg; background: var(--mint)">Proof copy</span>
+            <span class="sticker" style="--tilt: -2deg; background: var(--mint)">{{ __('Proof copy') }}</span>
             <span>
-                {{ request()->attributes->get('booklet_preview') === 'published' ? 'This is live already.' : 'Not published yet: only people with this link can see it.' }}
-                @if ($proof['by']) Shared by {{ $proof['by'] }}@if ($proof['for']) for {{ $proof['for'] }}@endif. @endif
-                <span class="proof-bar__closes">The link closes {{ $proof['closes']->timezone(config('app.timezone'))->format('j M') }}.</span>
+                {{ request()->attributes->get('booklet_preview') === 'published' ? __('This is live already.') : __('Not published yet: only people with this link can see it.') }}
+                @if ($proof['by']) {{ $proof['for'] ? __('Shared by :name for :for.', ['name' => $proof['by'], 'for' => $proof['for']]) : __('Shared by :name.', ['name' => $proof['by']]) }} @endif
+                <span class="proof-bar__closes">{{ __('The link closes :date.', ['date' => $proof['closes']->timezone(config('app.timezone'))->translatedFormat('j M')]) }}</span>
             </span>
             @if ($proof['notes'])
-                <a href="#proof-notes" class="proof-bar__note" data-proof-open>Leave a note</a>
+                <a href="#proof-notes" class="proof-bar__note" data-proof-open>{{ __('Leave a note') }}</a>
             @endif
         </div>
     @elseif ($previewing = request()->attributes->get('booklet_preview'))
         <div class="preview-bar" role="status">
-            <span class="sticker" style="--tilt: -2deg; background: var(--sun)">Preview</span>
+            <span class="sticker" style="--tilt: -2deg; background: var(--sun)">{{ __('Preview') }}</span>
             This is how it will look. It’s {{ $previewing === 'published' ? 'live already' : 'not published yet' }}, so only signed-in people can see this page.
         </div>
     @endif
@@ -120,7 +120,7 @@
         @include('site.partials.proof-notes', ['proof' => $proof])
     @endif
 
-    <button type="button" class="to-top" data-to-top aria-label="Back to the top">
+    <button type="button" class="to-top" data-to-top aria-label="{{ __('Back to the top') }}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
     </button>
 

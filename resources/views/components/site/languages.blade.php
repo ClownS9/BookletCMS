@@ -6,7 +6,7 @@
     $label = ['ms' => 'Baca dalam', 'id' => 'Baca dalam', 'zh' => '语言', 'ja' => '言語', 'ko' => '언어', 'fr' => 'Lire en', 'es' => 'Leer en', 'de' => 'Lesen auf', 'it' => 'Leggi in', 'pt' => 'Ler em', 'nl' => 'Lees in', 'ar' => 'اقرأ بـ', 'ta' => 'மொழி', 'th' => 'อ่านเป็น', 'vi' => 'Đọc bằng', 'tl' => 'Basahin sa', 'hi' => 'भाषा'][$here] ?? 'Read in';
 @endphp
 @if ($versions->count() > 1)
-    <nav class="langs" aria-label="Read this in another language">
+    <nav class="langs" aria-label="{{ __('Read this in another language') }}">
         <span class="langs__label">{{ $label }}</span>
         <ul>
             @foreach ($versions as $version)

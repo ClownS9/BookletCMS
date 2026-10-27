@@ -10,7 +10,7 @@
         @if ($footer)
             @if (collect($footer)->contains(fn ($item) => $item['children']))
                 {{-- With groups: a column per top item, its links underneath --}}
-                <nav aria-label="Footer" class="colophon__groups">
+                <nav aria-label="{{ __('Footer') }}" class="colophon__groups">
                     @foreach ($footer as $item)
                         <div class="colophon__group">
                             <a href="{{ $item['url'] }}" class="colophon__heading">{{ $item['label'] }}</a>
@@ -28,13 +28,13 @@
                     @endforeach
                 </nav>
             @else
-                <nav aria-label="Footer" class="colophon__menu">
+                <nav aria-label="{{ __('Footer') }}" class="colophon__menu">
                     @foreach ($footer as $item)
                         <a href="{{ $item['url'] }}">{{ $item['label'] }}</a>
                     @endforeach
                 </nav>
             @endif
         @endif
-        <span class="colophon__made"><a href="{{ route('site.feed') }}">RSS</a> · made with booklet</span>
+        <span class="colophon__made"><a href="{{ route('site.feed') }}">RSS</a> {{ __('· made with booklet') }}</span>
     </div>
 </footer>

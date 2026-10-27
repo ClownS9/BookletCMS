@@ -28,7 +28,7 @@
             @endforeach
             @if ($mega['latest'])
                 <div class="menu__mega-col menu__mega-latest">
-                    <span class="menu__mega-heading">Newest</span>
+                    <span class="menu__mega-heading">{{ __('Newest') }}</span>
                     <ul>
                         @foreach ($mega['latest'] as $post)
                             <li><a href="{{ $post['url'] }}" class="menu__sublink">{{ $post['label'] }} @if ($post['date']) <small>{{ $post['date'] }}</small> @endif</a></li>

@@ -60,7 +60,7 @@
                             <option value="{{ $code }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="field__hint">Of your public site.</p>
+                    <p class="field__hint">Of your public site: the words around your writing (buttons, dates, messages to readers) follow it.</p>
                     @error('language') <p class="field__error">{{ $message }}</p> @enderror
                 </div>
             </div>
