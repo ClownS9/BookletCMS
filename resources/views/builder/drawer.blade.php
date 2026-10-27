@@ -238,9 +238,20 @@
             @include('builder.field', ['spec' => $spec, 'path' => $name, 'value' => $selected['fields'][$name] ?? null])
         @endforeach
 
-        <details class="d-look" open>
+        <details class="d-look" open data-keep="look">
             <summary>How it looks</summary>
             @foreach ($looks as $key => $look)
+                @continue (! $builder->lookApplies($key, $selected['look']))
+                @if (! empty($look['text']))
+                    @php $lookWhy = $errors['look:'.$key] ?? null; @endphp
+                    <label class="d-field d-look__row">
+                        <span class="d-label">{{ $look['label'] }}</span>
+                        <span class="d-address"><i>#</i><input type="text" data-look="{{ $key }}" value="{{ $lookWhy ? request()->input('payload.value') : $selected['look'][$key] }}" maxlength="40" placeholder="prices" autocapitalize="off" spellcheck="false" @if ($lookWhy) aria-invalid="true" @endif></span>
+                        @if ($lookWhy) <em class="d-error">{{ $lookWhy }}</em> @endif
+                        <small>{{ $look['hint'] ?? '' }}</small>
+                    </label>
+                    @continue
+                @endif
                 <div class="d-look__row" role="group" aria-label="{{ $look['label'] }}">
                     <span class="d-label">{{ $look['label'] }}</span>
                     <span class="d-choices">
@@ -248,16 +259,16 @@
                             @if ($key === 'background' && $value === 'picture' && $selected['look']['picture'] === '')
                                 <button type="button" class="d-pill" aria-pressed="false" data-do="pick" data-payload="{{ $j(['id' => $sid, 'field' => 'look.picture']) }}">{{ $words }}</button>
                             @else
-                                <button type="button" class="d-pill" aria-pressed="{{ $selected['look'][$key] === $value ? 'true' : 'false' }}"
-                                        data-do="look" data-payload="{{ $j(['id' => $sid, 'key' => $key, 'value' => $value]) }}">{{ $words }}</button>
+                                <button type="button" @class(['d-pill', 'd-pill--swatch' => $key === 'background']) aria-pressed="{{ $selected['look'][$key] === $value ? 'true' : 'false' }}"
+                                        data-do="look" data-payload="{{ $j(['id' => $sid, 'key' => $key, 'value' => $value]) }}">@if ($key === 'background')<span class="d-swatch d-swatch--{{ $value }}" aria-hidden="true"></span>@endif{{ $words }}</button>
                             @endif
                         @endforeach
                     </span>
                 </div>
+                @if ($key === 'background' && $selected['look']['background'] === 'picture')
+                    <button type="button" class="d-link" data-do="pick" data-payload="{{ $j(['id' => $sid, 'field' => 'look.picture']) }}">Change the background picture</button>
+                @endif
             @endforeach
-            @if ($selected['look']['background'] === 'picture')
-                <button type="button" class="d-link" data-do="pick" data-payload="{{ $j(['id' => $sid, 'field' => 'look.picture']) }}">Change the background picture</button>
-            @endif
         </details>
 
     @else

@@ -526,16 +526,33 @@
     };
     $('.drawer__close').addEventListener('click', () => openDrawer(false));
 
+    // Fold-outs in the drawer stay as they were left (open or shut) when it's drawn again:
+    // "How it looks" for every section, the others for each section on its own.
+    const folds = new Map();
+    const foldKey = (d) => {
+        if (d.dataset.keep) return d.dataset.keep;
+        const x = d.closest('[data-section]');
+        const same = [...inner.querySelectorAll('details:not([data-keep]):not([data-item])')].filter((o) => o.className === d.className);
+        return (x ? x.dataset.section : '') + '|' + (d.dataset.item || d.className + ':' + same.indexOf(d));
+    };
+    inner.addEventListener('toggle', (e) => {
+        if (e.target.matches && e.target.matches('details') && !e.target.dataset.drawing) folds.set(foldKey(e.target), e.target.open);
+    }, true);
+
     const drawDrawer = (html, quiet) => {
         // While a box in the drawer is being typed in, leave it be.
         if (quiet && ui.activeElement && inner.contains(ui.activeElement) && ui.activeElement.matches('input, textarea, select')) return;
-        const open = [...inner.querySelectorAll('details[data-item][open]')].map((d) => d.dataset.item);
         // Same view as before (the same section, tab…): keep the place; a different one starts at the top.
         const view = (d) => { const x = d && d.querySelector('.d'); return x ? (x.dataset.section || '') + '|' + (x.dataset.view || '') : ''; };
         const before = view(inner);
         const y = inner.scrollTop;
         inner.innerHTML = html;
-        open.forEach((key) => { const d = inner.querySelector('details[data-item="' + CSS.escape(key) + '"]'); if (d) d.open = true; });
+        inner.querySelectorAll('details').forEach((d) => {
+            const want = folds.get(foldKey(d));
+            // One with a problem to fix opens anyway.
+            if (want === undefined || (d.querySelector('.d-error') && d.open)) return;
+            if (d.open !== want) { d.dataset.drawing = '1'; d.open = want; requestAnimationFrame(() => { delete d.dataset.drawing; }); }
+        });
         inner.scrollTop = before === view(inner) ? y : 0;
     };
 
@@ -554,6 +571,11 @@
         const box = e.target;
         if (box.matches('[data-home]')) { act('home', box.checked, { quiet: true }); return; }
         if (box.matches('[data-alt]')) { act('alt', { path: box.dataset.alt, alt: box.value }, { quiet: true, redraw: true }); return; }
+        if (box.matches('[data-look]')) {
+            const sid = box.closest('[data-section]') && box.closest('[data-section]').dataset.section;
+            if (sid) act('look', { id: sid, key: box.dataset.look, value: box.value }, { redraw: true });
+            return;
+        }
         if (!box.matches('[data-set]')) return;
         const id = box.closest('[data-section]') && box.closest('[data-section]').dataset.section;
         if (id) act('set', { id, field: box.dataset.set, value: box.type === 'checkbox' ? box.checked : box.value });
