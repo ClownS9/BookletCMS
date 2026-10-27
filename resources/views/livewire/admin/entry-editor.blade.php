@@ -259,6 +259,19 @@
             </div>
         @endif
 
+        @if ($this->model->dated() && $people->count() > 1)
+            {{-- Who it's credited to: editors and admins can give it to someone else --}}
+            <div class="field">
+                <label for="entry-author">{{ __('Written by') }}</label>
+                <select id="entry-author" wire:model="author">
+                    @foreach ($people as $person)
+                        <option value="{{ $person->id }}">{{ ($person->byline ?: $person->name).($person->byline && $person->byline !== $person->name ? ' ('.$person->name.')' : '') }}</option>
+                    @endforeach
+                </select>
+                <p class="field__hint">{{ __('Shown on the post as its byline.') }}</p>
+            </div>
+        @endif
+
         @if ($this->model->dated())
             {{-- Part of a numbered series ("Part 2 of 5", with the parts either side) --}}
             <details class="takedown series-pick" @if ($series !== '' || $errors->has('series') || $errors->has('seriesPart')) open @endif>
