@@ -45,6 +45,14 @@ class Comments extends Component
         $this->entryId = $entryId;
     }
 
+    /** Each change speaks the post's language (a translation's notes in its own). */
+    public function hydrate(): void
+    {
+        if ($entry = Booklet::entries()->find($this->entryId)) {
+            app()->setLocale(app(Site::class)->languageOf($entry));
+        }
+    }
+
     /** A note people can reply to: approved, under this entry, and the first in its conversation. */
     protected function replyable(?int $id): ?Comment
     {
@@ -87,8 +95,8 @@ class Comments extends Component
             'email' => ['nullable', 'email:rfc', 'max:190'],
             'body' => ['required', 'string', 'min:2', 'max:5000'],
         ], [
-            'name.not_regex' => 'Just your name, please (no links).',
-        ], ['body' => 'note']);
+            'name.not_regex' => __('Just your name, please (no links).'),
+        ], ['body' => __('note')]);
 
         // A guarding insert (a CAPTCHA, a block list) has its say first.
         if (! $this->guarded('comment', ['name' => $this->name, 'email' => $this->email, 'body' => $this->body])) {
@@ -97,7 +105,7 @@ class Comments extends Component
 
         $key = 'comment:'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->addError('body', 'That’s a lot of notes at once. Please wait a few minutes.');
+            $this->addError('body', __('That’s a lot of notes at once. Please wait a few minutes.'));
 
             return;
         }

@@ -158,7 +158,9 @@ class SiteController extends Controller
     /** Which language this page is in, and where its other languages are (for the page's head). */
     protected function languages(Entry $entry): void
     {
-        request()->attributes->set('booklet_lang', $this->site()->languageOf($entry));
+        request()->attributes->set('booklet_lang', $lang = $this->site()->languageOf($entry));
+        // The words around it (dates, "min read", the buttons) in its language too.
+        app()->setLocale($lang);
         request()->attributes->set('booklet_alternates', $this->site()->languages($entry)->all());
     }
 

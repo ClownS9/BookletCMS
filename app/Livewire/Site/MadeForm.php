@@ -64,16 +64,16 @@ class MadeForm extends Component
 
         [$rules, $names] = Forms::rules($form);
         $this->validate($rules, [
-            'values.*.required' => 'Please fill this in.',
-            'values.*.email' => 'That doesn’t look like an email address.',
-            'values.*.numeric' => 'Just a number, please.',
-            'values.*.max' => 'That’s a little long. Please shorten it.',
-            'values.*.not_regex' => 'Just words, please (no < or >).',
-            'values.*.*.in' => 'Choose from the choices.',
-            'values.*.accepted' => 'Tick this to send the form.',
-            'values.*.regex' => 'That doesn’t look like a phone number.',
-            'values.*.date_format' => 'Choose a day.',
-            'values.*.in' => 'Choose one of the choices.',
+            'values.*.required' => __('Please fill this in.'),
+            'values.*.email' => __('That doesn’t look like an email address.'),
+            'values.*.numeric' => __('Just a number, please.'),
+            'values.*.max' => __('That’s a little long. Please shorten it.'),
+            'values.*.not_regex' => __('Just words, please (no < or >).'),
+            'values.*.*.in' => __('Choose from the choices.'),
+            'values.*.accepted' => __('Tick this to send the form.'),
+            'values.*.regex' => __('That doesn’t look like a phone number.'),
+            'values.*.date_format' => __('Choose a day.'),
+            'values.*.in' => __('Choose one of the choices.'),
         ], $names);
         $answers = Forms::clean($form, $this->values);
 
@@ -83,7 +83,7 @@ class MadeForm extends Component
 
         $key = 'forms:'.$form->handle().':'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->addError('guard', 'That’s a few already. Please wait a little while and try again.');
+            $this->addError('guard', __('That’s a few already. Please wait a little while and try again.'));
 
             return;
         }

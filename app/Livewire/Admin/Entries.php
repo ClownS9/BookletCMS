@@ -44,8 +44,18 @@ class Entries extends Component
     #[Url(as: 'entry', except: null)]
     public ?string $selected = null;
 
+    /** A page of a dated chapter's list: a book with thousands of posts shows them fifty at a time. */
+    #[Url(except: 1)]
+    public int $page = 1;
+
+    public const PER_PAGE = 50;
+
+    /** On first opening with ?entry=…, turn to the page it's on. */
+    protected bool $findChosen = false;
+
     public function mount(string $collection): void
     {
+        $this->findChosen = $this->selected !== null && $this->page === 1;
         abort_unless(Booklet::collections()->find($collection) !== null, 404);
         abort_unless(request()->user()->canOpen($collection), 403, 'Your role doesn’t open this chapter.');
 
@@ -55,6 +65,194 @@ class Entries extends Component
     public function pick(string $id): void
     {
         $this->selected = $id;
+    }
+
+    public function turnTo(int $page): void
+    {
+        $this->page = max(1, $page);
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->page = 1;
+    }
+
+    // Many at once ------------------------------------------------------------
+
+    /** Entries ticked in the list. */
+    public array $ticked = [];
+
+    /** Adding a category or tag to the ticked ones: which kind, and the words. */
+    public string $bulkField = '';
+
+    public string $bulkWords = '';
+
+    /** Tick every entry on this page (or untick them, if they all are). */
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_filter($ids, 'is_string'));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    public function untickAll(): void
+    {
+        $this->ticked = [];
+    }
+
+    /**
+     * The ticked entries this person may change: in this chapter, and for a
+     * writer only their own. $publishing: only editors and admins.
+     *
+     * @return \Illuminate\Support\Collection<int, Entry>
+     */
+    protected function tickedEntries(bool $publishing = false): \Illuminate\Support\Collection
+    {
+        abort_if($publishing && ! $this->canArrange(), 403);
+        $me = (string) request()->user()?->id;
+
+        return collect($this->ticked)->take(500)
+            ->map(fn ($id) => is_string($id) ? Booklet::entries()->find($id) : null)
+            ->filter(fn (?Entry $e) => $e && $e->collectionHandle() === $this->collection
+                && ($this->canArrange() || (string) $e->get('author') === $me))
+            ->values();
+    }
+
+    /** History and who's waiting on a review, as the writing page does it. */
+    protected function noted(Entry $entry, string $action): void
+    {
+        Booklet::revisions()->snapshot($entry->revisionKey(), $entry, $action, (string) request()->user()?->id);
+        ActivityLog::record($action, $action === 'published' || $action === 'unpublished' ? 'publishing' : 'edits', 'entry', $entry->id(), $entry->title(), ['many' => true]);
+    }
+
+    public function publishTicked(): void
+    {
+        $model = Booklet::collections()->find($this->collection);
+        $done = 0;
+        foreach ($this->tickedEntries(publishing: true) as $entry) {
+            if ($entry->status() === 'published') {
+                continue;
+            }
+            // Out now: a draft without a day, or one set for later, goes out today.
+            if ($model?->dated() && (! $entry->date() || $entry->date()->isFuture())) {
+                $entry->setAttribute('date', now());
+            }
+            $entry->setAttribute('published', true)->remove('taken_down_at')->save();
+            app(\App\Inserts\InsertManager::class)->fire('entry.published', $entry);
+            \App\Support\Reviews::settle($entry, request()->user());
+            $this->noted($entry, 'published');
+            $done++;
+        }
+        $this->finishMany($done, __(':count published.'), __('Those were already out.'));
+    }
+
+    public function draftTicked(): void
+    {
+        $done = 0;
+        foreach ($this->tickedEntries(publishing: true) as $entry) {
+            if ($entry->status() === 'draft') {
+                continue;
+            }
+            $entry->setAttribute('published', false)->save();
+            $this->noted($entry, 'unpublished');
+            $done++;
+        }
+        $this->finishMany($done, __(':count made drafts. Readers can’t see them now.'), __('Those were drafts already.'));
+    }
+
+    public function termTicked(): void
+    {
+        $field = $this->termFields()[$this->bulkField] ?? null;
+        $title = trim(preg_replace('/\s+/', ' ', $this->bulkWords) ?? '');
+        if (! $field || $title === '' || Str::slug($title) === '') {
+            $this->addError('bulkWords', __('Choose or type one to add.'));
+
+            return;
+        }
+        $slug = Str::slug($title);
+        if (! Booklet::terms()->findBySlug($field['taxonomy'], $slug)) {
+            Booklet::terms()->make(['taxonomy' => $field['taxonomy'], 'slug' => $slug], ['title' => mb_substr($title, 0, 80)])->save();
+        }
+
+        $done = 0;
+        foreach ($this->tickedEntries() as $entry) {
+            $now = array_values(array_filter((array) $entry->get($field['handle'], []), 'is_string'));
+            if (in_array($slug, $now, true)) {
+                continue;
+            }
+            // Only room for one (a post's category): this one takes its place.
+            $new = $field['max'] === 1 ? [$slug] : array_merge($now, [$slug]);
+            if ($field['max'] > 1 && count($new) > $field['max']) {
+                continue;
+            }
+            $entry->set($field['handle'], $new)->save();
+            $this->noted($entry, 'edited');
+            $done++;
+        }
+        $this->bulkWords = '';
+        $this->finishMany($done, $field['max'] === 1 ? __(':count now in “:name”.', ['name' => $title, 'count' => ':count']) : __('“:name” added to :count.', ['name' => $title, 'count' => ':count']), __('They all had it already.'));
+    }
+
+    public function binTicked(): void
+    {
+        $binned = [];
+        foreach ($this->tickedEntries() as $entry) {
+            $binned[] = \App\Support\Bin::entry($entry, request()->user());
+        }
+        if ($this->selected && in_array($this->selected, $this->ticked, true)) {
+            $this->selected = null;
+        }
+        $this->ticked = [];
+        if ($binned === []) {
+            return;
+        }
+        // One can be put straight back; more wait in the bin.
+        $this->stamp(count($binned) === 1
+            ? 'Moved to the bin.'
+            : trans_choice(':count moved to the bin. They wait there for 30 days.|:count moved to the bin. They wait there for 30 days.', count($binned)),
+            undo: count($binned) === 1 ? $binned[0]->id : null);
+    }
+
+    protected function finishMany(int $done, string $said, string $nothing): void
+    {
+        $this->ticked = [];
+        $this->stamp($done > 0 ? str_replace(':count', (string) $done, $said) : $nothing);
+    }
+
+    /**
+     * The chapter's category and tag boxes: handle => taxonomy, label, how many fit.
+     *
+     * @return array<string, array{handle: string, taxonomy: string, label: string, max: int}>
+     */
+    protected function termFields(): array
+    {
+        $model = Booklet::collections()->find($this->collection);
+        $blueprint = $model?->blueprints()->first();
+        $out = [];
+        foreach ((array) $blueprint?->tabs() as $tab) {
+            foreach ((array) ($tab['sections'] ?? []) as $section) {
+                foreach ((array) ($section['fields'] ?? []) as $field) {
+                    $config = (array) ($field['field'] ?? []);
+                    $taxonomy = ((array) ($config['taxonomies'] ?? []))[0] ?? null;
+                    if (($config['type'] ?? '') === 'terms' && is_string($taxonomy) && isset($field['handle'])) {
+                        $out[(string) $field['handle']] = [
+                            'handle' => (string) $field['handle'],
+                            'taxonomy' => $taxonomy,
+                            'label' => (string) ($config['display'] ?? Str::headline((string) $field['handle'])),
+                            'max' => (int) ($config['max_items'] ?? 0),
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    public function updatedStatus(): void
+    {
+        $this->page = 1;
     }
 
     /** Edit and publish anyone's entries in this chapter (editors, admins, and cards that publish here). */
@@ -146,6 +344,11 @@ class Entries extends Component
         /** @var Collection $collection */
         $collection = Booklet::collections()->find($this->collection);
         $all = Booklet::entries()->whereCollection($this->collection);
+        $termFields = $this->termFields();
+        if (! isset($termFields[$this->bulkField])) {
+            $this->bulkField = (string) array_key_first($termFields);
+        }
+        $this->ticked = array_values(array_intersect($this->ticked, $all->map(fn (Entry $e) => $e->id())->all()));
 
         $counts = $all->countBy(fn (Entry $e) => $e->status());
         $reviewStates = $all->mapWithKeys(fn (Entry $e) => [$e->id() => \App\Support\Reviews::state($e)])->filter();
@@ -160,11 +363,18 @@ class Entries extends Component
             ->values();
 
         $structured = $collection->structured();
+        // The page tree is shown whole (it's arranged by dragging); dated chapters a page at a time.
+        $lastPage = $structured ? 1 : max(1, (int) ceil($entries->count() / self::PER_PAGE));
+        if ($this->findChosen && ! $structured && ($at = $entries->search(fn (Entry $e) => $e->id() === $this->selected)) !== false) {
+            $this->page = intdiv((int) $at, self::PER_PAGE) + 1;
+        }
+        $this->page = min(max(1, $this->page), $lastPage);
         $rows = $structured
             ? $this->treeRows($entries)
-            : $entries->map(fn (Entry $e) => ['entry' => $e, 'depth' => 0, 'parent' => null])->all();
+            : $entries->forPage($this->page, self::PER_PAGE)->map(fn (Entry $e) => ['entry' => $e, 'depth' => 0, 'parent' => null])->values()->all();
 
-        $selected = $entries->first(fn (Entry $e) => $e->id() === $this->selected) ?? ($rows[0]['entry'] ?? null);
+        $selected = $entries->first(fn (Entry $e) => $e->id() === $this->selected && collect($rows)->contains(fn ($row) => $row['entry']->id() === $e->id()))
+            ?? ($rows[0]['entry'] ?? null);
 
         // The entry shown on the right is the one the buttons act on. Without this, the
         // first entry was shown by default but nothing was "chosen", so setting its
@@ -199,6 +409,13 @@ class Entries extends Component
             'model' => $collection,
             'entries' => $entries,
             'rows' => $rows,
+            'pageIds' => array_map(fn ($row) => $row['entry']->id(), $rows),
+            'termFields' => $termFields,
+            'termTitles' => $termFields === [] ? [] : Booklet::terms()->all()
+                ->filter(fn ($t) => $t->attribute('taxonomy') === ($termFields[$this->bulkField]['taxonomy'] ?? null))
+                ->map(fn ($t) => $t->title())->sort()->values()->all(),
+            'lastPage' => $lastPage,
+            'shown' => $entries->count(),
             'structured' => $structured,
             'canArrange' => $this->canArrange(),
             'templates' => self::TEMPLATES,

@@ -35,7 +35,7 @@ class Subscribe extends Component
         }
 
         $this->email = mb_strtolower(trim($this->email));
-        $this->validate(['email' => ['required', 'email:rfc', 'max:190']], [], ['email' => 'email address']);
+        $this->validate(['email' => ['required', 'email:rfc', 'max:190']], [], ['email' => __('email address')]);
 
         if (! $this->guarded('subscribe', ['email' => $this->email])) {
             return;
@@ -43,7 +43,7 @@ class Subscribe extends Component
 
         $key = 'subscribe:'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            $this->addError('email', 'That’s a lot of tries. Please wait a few minutes.');
+            $this->addError('email', __('That’s a lot of tries. Please wait a few minutes.'));
 
             return;
         }

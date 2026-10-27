@@ -74,7 +74,7 @@ class ContactForm extends Component
             ]));
             $names['values.'.$handle] = mb_strtolower($f['label']);
         }
-        $this->validate($rules, ['values.name.not_regex' => 'Just your name, please (no links).'], $names);
+        $this->validate($rules, ['values.name.not_regex' => __('Just your name, please (no links).')], $names);
 
         if (! $this->guarded('contact', $values)) {
             return;
@@ -82,7 +82,7 @@ class ContactForm extends Component
 
         $key = 'contact:'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 3)) {
-            $this->addError('values.'.array_key_last($fields), 'That’s a few messages already. Please wait a little while and try again.');
+            $this->addError('values.'.array_key_last($fields), __('That’s a few messages already. Please wait a little while and try again.'));
 
             return;
         }
