@@ -563,15 +563,22 @@ return [
         ],
     ],
 
-    // How every section can look.
+    // How every section can look. A look with 'when' only shows (and only counts)
+    // when another is set that way; 'text' takes a short name instead of a choice.
     'looks' => [
-        'background' => ['label' => 'Background', 'options' => ['none' => 'Paper', 'soft' => 'Soft', 'accent' => 'Accent', 'ink' => 'Dark', 'picture' => 'A picture']],
+        'background' => ['label' => 'Background', 'options' => ['none' => 'Paper', 'soft' => 'Soft', 'accent' => 'Accent', 'sun' => 'Sunny', 'mint' => 'Mint', 'sky' => 'Sky', 'rose' => 'Rose', 'ink' => 'Dark', 'picture' => 'A picture']],
+        'shade' => ['label' => 'Over the picture', 'options' => ['light' => 'A light shade', 'normal' => 'A shade', 'strong' => 'A dark shade'], 'when' => ['background', ['picture']]],
+        'frame' => ['label' => 'Shape', 'options' => ['band' => 'Edge to edge', 'card' => 'A rounded box'], 'when' => ['background', ['soft', 'accent', 'sun', 'mint', 'sky', 'rose', 'ink', 'picture']]],
         'align' => ['label' => 'Words', 'options' => ['left' => 'Left', 'center' => 'Centred']],
-        'space' => ['label' => 'Space', 'options' => ['snug' => 'Snug', 'normal' => 'Normal', 'roomy' => 'Roomy']],
-        'width' => ['label' => 'Width', 'options' => ['narrow' => 'Narrow', 'normal' => 'Normal', 'wide' => 'Wide']],
+        'size' => ['label' => 'Text size', 'options' => ['small' => 'Smaller', 'normal' => 'Normal', 'large' => 'Larger']],
+        'space' => ['label' => 'Space', 'options' => ['none' => 'None', 'snug' => 'Snug', 'normal' => 'Normal', 'roomy' => 'Roomy']],
+        'width' => ['label' => 'Width', 'options' => ['narrow' => 'Narrow', 'normal' => 'Normal', 'wide' => 'Wide', 'full' => 'The whole screen']],
+        'line' => ['label' => 'A line', 'options' => ['none' => 'None', 'above' => 'Above', 'below' => 'Below']],
+        'motion' => ['label' => 'As it scrolls into view', 'options' => ['none' => 'Stays still', 'fade' => 'Fades in', 'rise' => 'Rises in']],
         'show' => ['label' => 'Shows on', 'options' => ['all' => 'Every screen', 'computer' => 'Computers only', 'phone' => 'Phones only']],
+        'anchor' => ['label' => 'Its name for links', 'text' => true, 'hint' => 'Link straight to it from a menu or a button: /about#prices. Letters, numbers and dashes.'],
     ],
-    'look' => ['background' => 'none', 'picture' => '', 'align' => 'left', 'space' => 'normal', 'width' => 'normal', 'show' => 'all'],
+    'look' => ['background' => 'none', 'picture' => '', 'shade' => 'normal', 'frame' => 'band', 'align' => 'left', 'size' => 'normal', 'space' => 'normal', 'width' => 'normal', 'line' => 'none', 'motion' => 'none', 'show' => 'all', 'anchor' => ''],
 
     // Pages to start from.
     'starters' => [

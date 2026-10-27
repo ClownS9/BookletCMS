@@ -1064,7 +1064,13 @@ class PageBuilder
                     return null;
                 }
 
-                return $onSection($page, $payload['id'] ?? null, fn (array $s) => $builder->setLook($s, $payload['key'], $payload['value'] ?? '', $isPicture));
+                $why = $onSection($page, $payload['id'] ?? null, fn (array $s) => $builder->setLook($s, $payload['key'], $payload['value'] ?? '', $isPicture));
+                if ($why !== null && ! empty($builder->looks()[$payload['key']]['text'])) {
+                    // A name typed in a box: said under it, with what was typed kept to fix.
+                    throw ValidationException::withMessages(['form.look:'.$payload['key'] => $why]);
+                }
+
+                return $why;
             },
             'item' => function (array $form, $payload, PageBuild $page) use ($builder, $onSection) {
                 if (! is_array($payload) || ! in_array($payload['do'] ?? '', ['add', 'move', 'remove'], true)) {

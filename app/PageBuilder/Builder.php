@@ -82,7 +82,9 @@ class Builder
             }
             $look = array_merge($this->kit['look'], is_array($s['look'] ?? null) ? $s['look'] : []);
             foreach ($this->kit['looks'] as $key => $l) {
-                if (! array_key_exists((string) $look[$key], $l['options'])) {
+                if (! empty($l['text'])) {
+                    $look[$key] = $this->anchor($look[$key]);
+                } elseif (! is_scalar($look[$key]) || ! array_key_exists((string) $look[$key], $l['options'])) {
                     $look[$key] = $this->kit['look'][$key];
                 }
             }
@@ -181,8 +183,17 @@ class Builder
 
             return $section;
         }
-        $options = $this->kit['looks'][$key]['options'] ?? throw new InvalidArgumentException('That isn’t a look.');
-        $section['look'][$key] = $this->choice($value, $options);
+        $look = $this->kit['looks'][$key] ?? throw new InvalidArgumentException('That isn’t a look.');
+        if (! empty($look['text'])) {
+            $name = $this->anchor($value);
+            if (is_scalar($value) && trim((string) $value) !== '' && $name === '') {
+                throw new InvalidArgumentException('Use letters, numbers and dashes, starting with a letter: prices, opening-hours.');
+            }
+            $section['look'][$key] = $name;
+
+            return $section;
+        }
+        $section['look'][$key] = $this->choice($value, $look['options']);
 
         return $section;
     }
@@ -310,6 +321,22 @@ class Builder
         }
 
         return null;
+    }
+
+    /** A section's name for links (#prices): lower case letters, numbers and dashes, starting with a letter. */
+    public function anchor(mixed $value): string
+    {
+        $name = Str::slug(is_scalar($value) ? Str::limit(ltrim((string) $value, '#'), 60, '') : '');
+
+        return preg_match('/^[a-z][a-z0-9-]{0,39}$/', $name) ? $name : '';
+    }
+
+    /** Is this look shown, given the others (a picture's shade only with a picture)? */
+    public function lookApplies(string $key, array $look): bool
+    {
+        $when = $this->kit['looks'][$key]['when'] ?? null;
+
+        return ! $when || in_array($look[$when[0]] ?? null, $when[1], true);
     }
 
     public function choice(mixed $value, array $options): string
