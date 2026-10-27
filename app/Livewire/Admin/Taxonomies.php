@@ -32,6 +32,8 @@ class Taxonomies extends Component
 
     public string $newCategory = '';
 
+    public string $newTag = '';
+
     public string $rename = '';
 
     public string $mergeInto = '';
@@ -94,6 +96,33 @@ class Taxonomies extends Component
 
         $this->newCategory = '';
         $this->stamp('Category added.');
+    }
+
+    public function addTag(): void
+    {
+        abort_unless($this->canManage(), 403);
+
+        $this->validate(['newTag' => ['required', 'string', 'max:80']], [], ['newTag' => 'tag']);
+        $title = trim(ltrim(trim($this->newTag), '#'));
+        $slug = Str::slug($title);
+
+        if ($slug === '') {
+            $this->addError('newTag', 'Use some letters or numbers.');
+
+            return;
+        }
+        if (Booklet::terms()->findBySlug('tags', $slug)) {
+            $this->addError('newTag', 'There’s already a tag called that.');
+
+            return;
+        }
+
+        Booklet::terms()->make(['taxonomy' => 'tags', 'slug' => $slug], ['title' => $title])->save();
+        ActivityLog::record('added the tag', 'settings', 'term', 'tags/'.$slug, $title);
+
+        $this->newTag = '';
+        $this->choose('tags', $slug);
+        $this->stamp('Tag added. Choose it on any post.');
     }
 
     protected function chosenTerm(): Term

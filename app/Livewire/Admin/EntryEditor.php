@@ -994,6 +994,61 @@ class EntryEditor extends Component
         return $out;
     }
 
+    /**
+     * Boxes that can start from something already written: the search title
+     * from the title, the search description from the standfirst (or the first
+     * lines), the cover caption from the picture's description in Media.
+     * Offered only while the box is empty and there's something to start from.
+     *
+     * @return array<string, string> handle => what the button says
+     */
+    protected function fills(): array
+    {
+        $out = [];
+        foreach (array_keys(self::FILLS) as $handle) {
+            if (trim((string) ($this->values[$handle] ?? '')) === '' && $this->fillFor($handle) !== '') {
+                $out[$handle] = $handle === 'meta_description' && trim((string) ($this->values['excerpt'] ?? '')) === ''
+                    ? __('Use the first lines') : __(self::FILLS[$handle]);
+            }
+        }
+
+        return $out;
+    }
+
+    /** handle => the button's words */
+    protected const FILLS = [
+        'meta_title' => 'Use the title',
+        'meta_description' => 'Use the standfirst',
+        'cover_caption' => 'Use the picture’s description',
+    ];
+
+    protected function fillFor(string $handle): string
+    {
+        if (! array_key_exists($handle, $this->values)) {
+            return '';
+        }
+
+        return match ($handle) {
+            'meta_title' => Str::limit(trim((string) ($this->values['title'] ?? '')), 70, ''),
+            'meta_description' => Str::limit(trim((string) preg_replace('/\s+/', ' ', (string) (trim((string) ($this->values['excerpt'] ?? '')) !== ''
+                ? $this->values['excerpt']
+                : strip_tags((string) Str::markdown((string) ($this->values['content'] ?? ''), ['html_input' => 'strip']))))), 160),
+            'cover_caption' => ($cover = (string) ($this->values['cover'] ?? '')) !== ''
+                ? trim((string) (Booklet::assets()->find(['container' => 'media', 'path' => $cover])?->get('alt', '') ?? ''))
+                : '',
+            default => '',
+        };
+    }
+
+    /** Fill an empty box from what it can start from (see fills()). */
+    public function fillFrom(string $handle): void
+    {
+        if (! array_key_exists($handle, self::FILLS) || trim((string) ($this->values[$handle] ?? '')) !== '') {
+            return;
+        }
+        $this->values[$handle] = $this->fillFor($handle);
+    }
+
     /** Who a post can be credited to (editors and admins choose; writers write as themselves). */
     protected function people(): \Illuminate\Support\Collection
     {
@@ -1473,6 +1528,8 @@ class EntryEditor extends Component
             'canTakeDown' => $this->canPublish() && $this->status !== 'draft',
             'seriesNames' => $this->model->dated() ? \App\Support\Series::all() : [],
             'termChoices' => $this->termChoices(),
+            'addresses' => Links::addresses(),
+            'fills' => $this->fills(),
             'people' => $this->canPublish() ? $this->people() : collect(),
             'isHome' => $this->entryId && (string) app(\App\Booklet\Site::class)->setting('homepage', 'posts') === $this->entryId,
             'review' => ($reviewed = $this->entryId ? Booklet::entries()->find($this->entryId) : null) ? \App\Support\Reviews::state($reviewed) : null,

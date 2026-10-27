@@ -236,6 +236,7 @@ class BuilderController extends Controller
                 'sharedNow' => $selected && isset($selected['shared']) ? [
                     'name' => (string) ($pages->sharedAll()[$selected['shared']]->name ?? ''), 'uses' => $pages->usesOf($selected['shared']),
                 ] : null,
+                'addresses' => $selected ? \App\Support\Links::addresses() : [],
                 'sendTo' => $selected ? $this->sendNames($pages->sendTargets($page, $selected['type'])) : [],
                 'canShare' => $selected && ! isset($selected['shared']) && $pages->shareable($selected['type']),
                 'stacy' => $selected && request()->user() && \App\Stacy\Writer::available(request()->user()),
