@@ -1020,5 +1020,15 @@
     "it isn’t a web address": "ia bukan alamat web",
     "it uses an unusual port": "ia menggunakan port yang luar biasa",
     "the site’s name couldn’t be found": "nama laman itu tidak dapat ditemui",
-    "it points inside a private network": "ia menghala ke dalam rangkaian peribadi"
+    "it points inside a private network": "ia menghala ke dalam rangkaian peribadi",
+    "Add “:name”": "Tambah “:name”",
+    "Take out :name": "Keluarkan :name",
+    "Nothing like that yet: press Enter to add it.": "Belum ada yang sebegitu: tekan Enter untuk menambahnya.",
+    "Chosen": "Dipilih",
+    "Find or add a :one": "Cari atau tambah :one",
+    "Find or add :list": "Cari atau tambah :list",
+    "Choose one, or type a new one and press Enter.": "Pilih satu, atau taip yang baharu dan tekan Enter.",
+    "Choose from the ones you’ve used, or type a new one and press Enter. New ones are added to :list.": "Pilih daripada yang pernah digunakan, atau taip yang baharu dan tekan Enter. Yang baharu ditambah ke :list.",
+    "Written by": "Ditulis oleh",
+    "Shown on the post as its byline.": "Ditunjukkan pada catatan sebagai nama penulis."
 }

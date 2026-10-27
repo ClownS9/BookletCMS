@@ -89,6 +89,9 @@ class EntryEditor extends Component
     /** Email this post to subscribers when it goes live. */
     public bool $emailIt = true;
 
+    /** Who it's credited to (a user id); editors and admins can change it. */
+    public string $author = '';
+
     /** The series it's part of ("Kuih from scratch"), and its part number (see App\Support\Series). */
     public string $series = '';
 
@@ -136,6 +139,7 @@ class EntryEditor extends Component
             $this->date = $planned.'T09:00';
         }
 
+        $this->author = (string) request()->user()?->id; // whoever starts it, unless an editor credits someone else
         $this->fill($this->valuesFrom([]));
     }
 
@@ -864,6 +868,7 @@ class EntryEditor extends Component
     /** Clear the date it comes down (the button beside it). */
     protected function readSeries(Entry $entry): void
     {
+        $this->author = (string) ($entry->get('author') ?? '');
         $this->series = (string) \App\Support\Series::name($entry);
         $this->seriesPart = ($n = \App\Support\Series::partNumber($entry)) ? (string) $n : null;
     }
@@ -954,6 +959,45 @@ class EntryEditor extends Component
                 'fields' => array_values(array_intersect(['meta_title', 'meta_description'], array_column($this->allFields(), 'handle'))),
             ];
         }, null, false);
+    }
+
+    /**
+     * The categories and tags there are already, most used first, for the pickers
+     * (so nobody has to remember how a tag was spelt).
+     *
+     * @return array<string, list<array{title: string, count: int}>> taxonomy => choices
+     */
+    protected function termChoices(): array
+    {
+        $taxonomies = collect($this->allFields())->where('type', 'terms')->pluck('taxonomy')->filter()->unique()->values();
+        if ($taxonomies->isEmpty()) {
+            return [];
+        }
+        $entries = rescue(fn () => Booklet::entries()->all(), collect(), false);
+        $out = [];
+        foreach ($taxonomies as $taxonomy) {
+            $used = [];
+            foreach ($entries as $entry) {
+                foreach ((array) $entry->get((string) $taxonomy, []) as $slug) {
+                    if (is_string($slug)) {
+                        $used[$slug] = ($used[$slug] ?? 0) + 1;
+                    }
+                }
+            }
+            $out[$taxonomy] = rescue(fn () => Booklet::terms()->all(), collect(), false)
+                ->filter(fn ($t) => $t->attribute('taxonomy') === $taxonomy)
+                ->map(fn ($t) => ['title' => $t->title(), 'count' => $used[(string) $t->attribute('slug')] ?? 0])
+                ->sort(fn ($a, $b) => [$b['count'], mb_strtolower($a['title'])] <=> [$a['count'], mb_strtolower($b['title'])])
+                ->values()->all();
+        }
+
+        return $out;
+    }
+
+    /** Who a post can be credited to (editors and admins choose; writers write as themselves). */
+    protected function people(): \Illuminate\Support\Collection
+    {
+        return \App\Models\User::query()->orderBy('name')->get(['id', 'name', 'byline', 'role']);
     }
 
     protected function termSlugs(string $input, array $field): array
@@ -1054,6 +1098,10 @@ class EntryEditor extends Component
         }
         if ($isNew) {
             $data['author'] = request()->user()?->id;
+        }
+        // Credited to someone else: only by an editor or admin, and only to someone in the book.
+        if ($this->canPublish() && $this->author !== '' && \App\Models\User::whereKey($this->author)->exists()) {
+            $data['author'] = (int) $this->author;
         }
         $data = array_filter($data, fn ($value) => $value !== null);
 
@@ -1424,6 +1472,8 @@ class EntryEditor extends Component
                 ? rescue(fn () => ($at = Booklet::entries()->find($this->entryId)?->get('taken_down_at')) ? Carbon::parse($at) : null, null, false) : null,
             'canTakeDown' => $this->canPublish() && $this->status !== 'draft',
             'seriesNames' => $this->model->dated() ? \App\Support\Series::all() : [],
+            'termChoices' => $this->termChoices(),
+            'people' => $this->canPublish() ? $this->people() : collect(),
             'isHome' => $this->entryId && (string) app(\App\Booklet\Site::class)->setting('homepage', 'posts') === $this->entryId,
             'review' => ($reviewed = $this->entryId ? Booklet::entries()->find($this->entryId) : null) ? \App\Support\Reviews::state($reviewed) : null,
             'reviewInfo' => $reviewed ? \App\Support\Reviews::details($reviewed) : null,

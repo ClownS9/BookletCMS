@@ -1686,3 +1686,92 @@ window.bookletPasskey = (what) => ({
         }
     },
 });
+
+/*
+ * Categories and tags: what's chosen as stickers, the ones used most to pick
+ * with a press, and a box to find one (or add a new one with Enter). What's
+ * saved is still the plain list in the hidden box ("Kuih, Weekend"), so the
+ * server side doesn't change.
+ *   x-data="bookletTerms({ input, model, choices: [{ title, count }], max, words })"
+ */
+window.bookletTerms = ({ input, model, value = '', choices = [], max = 0, words = {} }) => ({
+    box: null, // declared here, or setting it would land on the writing page's own data (shared by every picker)
+    chosen: [],
+    query: '',
+    open: false,
+    at: 0,
+    words,
+    init() {
+        this.box = document.getElementById(input);
+        this.chosen = this.split(value); // what the page was drawn with (the hidden box may not be filled yet)
+        // Changed on the server (a newer version loaded, Stacy's suggestions): show that.
+        if (model && this.$wire && this.$wire.$watch) {
+            this.$wire.$watch(model, (v) => { this.chosen = this.split(v); });
+        }
+        this.$watch('query', () => { this.at = 0; this.open = true; });
+    },
+    split(text) {
+        const seen = new Set();
+        return String(text || '').split(',').map((t) => t.trim()).filter((t) => {
+            const k = t.toLocaleLowerCase();
+            if (!t || seen.has(k)) return false;
+            seen.add(k);
+            return true;
+        });
+    },
+    has(name) { const k = name.toLocaleLowerCase(); return this.chosen.some((c) => c.toLocaleLowerCase() === k); },
+    full() { return max > 0 && this.chosen.length >= max && max !== 1; },
+    // The ones used most that aren't chosen yet (all of them for a pick-one list like Category).
+    often() { return choices.filter((c) => !this.has(c.title)).slice(0, max === 1 ? 24 : 10); },
+    matches() {
+        const q = this.query.trim().toLocaleLowerCase();
+        if (!q) return [];
+        const starts = [], within = [];
+        choices.forEach((c) => {
+            if (this.has(c.title)) return;
+            const t = c.title.toLocaleLowerCase();
+            if (t.startsWith(q)) starts.push(c); else if (t.includes(q)) within.push(c);
+        });
+        return starts.concat(within).slice(0, 8);
+    },
+    isNew() {
+        const q = this.query.trim();
+        return q !== '' && !q.includes(',') && !choices.some((c) => c.title.toLocaleLowerCase() === q.toLocaleLowerCase()) && !this.has(q);
+    },
+    add(name) {
+        name = String(name || '').replace(/,/g, ' ').trim();
+        if (!name) return;
+        // An existing one, spelt as it was first written.
+        const same = choices.find((c) => c.title.toLocaleLowerCase() === name.toLocaleLowerCase());
+        if (same) name = same.title;
+        if (max === 1) this.chosen = [name];
+        else if (!this.has(name) && !this.full()) this.chosen.push(name);
+        this.query = '';
+        this.at = 0;
+        this.sync();
+    },
+    drop(i) {
+        this.chosen.splice(i, 1);
+        this.sync();
+        this.$nextTick(() => { const f = document.getElementById(input + '-find'); if (f) f.focus(); });
+    },
+    key(e) {
+        const list = this.matches();
+        const last = list.length + (this.isNew() ? 1 : 0) - 1;
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.open = true; this.at = Math.min(this.at + 1, Math.max(last, 0)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.at = Math.max(this.at - 1, 0); }
+        else if (e.key === 'Enter' || e.key === ',' || (e.key === 'Tab' && this.query.trim() !== '')) {
+            if (this.query.trim() === '') return;
+            e.preventDefault();
+            this.add(this.at < list.length ? list[this.at].title : this.query);
+        } else if (e.key === 'Backspace' && this.query === '' && this.chosen.length) {
+            this.chosen.pop();
+            this.sync();
+        } else if (e.key === 'Escape') { this.open = false; }
+    },
+    sync() {
+        if (!this.box) return;
+        this.box.value = this.chosen.join(', ');
+        this.box.dispatchEvent(new Event('input', { bubbles: true })); // the saved list, and "Unsaved changes"
+    },
+});

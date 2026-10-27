@@ -5760,3 +5760,24 @@ body.night .size-print small { color: var(--faint); }
     .hook-log > li { grid-template-columns: minmax(0, 1fr) auto; }
     .hook-log__state { grid-column: 1 / -1; }
 }
+
+/* Categories and tags: chosen ones as stickers, the ones used most to pick, a box to find or add */
+.terms-pick { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.terms-pick__chosen { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.terms-pick__chip { display: inline-flex; align-items: center; gap: 2px; min-height: 32px; padding: 0 4px 0 12px; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: 14px; max-width: 100%; }
+.terms-pick__chip > span { overflow-wrap: anywhere; }
+.terms-pick__chip button { display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 16px; line-height: 1; cursor: pointer; }
+.terms-pick__chip button:hover { background: color-mix(in srgb, var(--paper) 20%, transparent); }
+.terms-pick__chip button:focus-visible { outline: 2px solid var(--sun); outline-offset: 1px; }
+.terms-pick__box { position: relative; }
+.field .terms-pick__find { width: 100%; }
+.terms-pick__list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 4px; max-height: 260px; overflow-y: auto; border: 1px solid var(--edge-2, var(--rule)); border-radius: 12px; background: var(--paper-3); box-shadow: 0 12px 28px rgba(30, 28, 24, .16); }
+.terms-pick__list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 38px; padding: 6px 10px; border-radius: 8px; font-size: 14px; cursor: pointer; overflow-wrap: anywhere; }
+.terms-pick__list li:hover, .terms-pick__list li.is-at { background: var(--hover); }
+.terms-pick__count { flex: none; font-size: 12px; color: var(--faint); font-family: var(--mono); }
+.terms-pick__new { color: var(--muted); font-style: italic; }
+.terms-pick__often { display: flex; flex-wrap: wrap; gap: 6px; }
+.terms-pick__pill { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 12px; border: 1px dashed var(--rule-2, var(--rule)); border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; max-width: 100%; }
+.terms-pick__pill > span:last-child { overflow-wrap: anywhere; }
+.terms-pick__pill:hover { border-style: solid; color: var(--ink); background: var(--hover); }
+.terms-pick__pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }

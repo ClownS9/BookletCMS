@@ -36,7 +36,7 @@
                     wire:click="toggle('{{ $field['handle'] }}')"></button>
         </div>
     @else
-        <label for="{{ $id }}">{{ __($field['display']) }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</label>
+        <label for="{{ $field['type'] === 'terms' ? $id.'-find' : $id }}">{{ __($field['display']) }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</label>
         @if ($field['instructions']) <p class="field__hint">{{ __($field['instructions']) }}</p> @endif
 
         @switch($field['type'])
@@ -55,8 +55,46 @@
                 @break
 
             @case('terms')
-                <input id="{{ $id }}" type="text" wire:model{{ $live }}="{{ $model }}" placeholder="{{ __('food, city, evening') }}">
-                <p class="field__hint">{{ __('Separate with commas. New ones are added to :list.', ['list' => __(str($field['taxonomy'] ?? 'the list')->headline()->toString())]) }}</p>
+                @php
+                    $listName = __(str($field['taxonomy'] ?? 'the list')->headline()->toString());
+                    $one = (int) ($field['max_items'] ?? 0) === 1;
+                @endphp
+                {{-- Chosen ones as stickers; the ones there are already to pick from; type to find or add one.
+                     The plain box underneath is what's saved (names, separated by commas). --}}
+                <div class="terms-pick" wire:ignore
+                     x-data="bookletTerms({ input: @js($id), model: @js($model), value: @js((string) ($termInputs[$field['handle']] ?? '')), choices: @js($termChoices[$field['taxonomy']] ?? []), max: {{ (int) ($field['max_items'] ?? 0) }},
+                         words: { add: @js(__('Add “:name”', ['name' => '%s'])), remove: @js(__('Take out :name', ['name' => '%s'])), none: @js(__('Nothing like that yet: press Enter to add it.')) } })">
+                    <ul class="terms-pick__chosen" x-show="chosen.length" aria-label="{{ __('Chosen') }}">
+                        <template x-for="(name, i) in chosen" :key="name">
+                            <li class="terms-pick__chip">
+                                <span x-text="name"></span>
+                                <button type="button" x-on:click="drop(i)" :aria-label="words.remove.replace('%s', name)">×</button>
+                            </li>
+                        </template>
+                    </ul>
+                    <div class="terms-pick__box" x-show="!full()">
+                        <input id="{{ $id }}-find" type="text" class="terms-pick__find" x-model="query" autocomplete="off" spellcheck="false"
+                               role="combobox" aria-autocomplete="list" :aria-expanded="open && matches().length > 0 ? 'true' : 'false'" aria-controls="{{ $id }}-list"
+                               x-on:focus="open = true" x-on:click.outside="open = false" x-on:keydown="key($event)"
+                               placeholder="{{ $one ? __('Find or add a :one', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($listName))]) : __('Find or add :list', ['list' => \Illuminate\Support\Str::lower($listName)]) }}">
+                        <ul id="{{ $id }}-list" class="terms-pick__list" role="listbox" x-show="open && query.trim() !== ''" x-cloak>
+                            <template x-for="(c, i) in matches()" :key="c.title">
+                                <li role="option" :aria-selected="i === at ? 'true' : 'false'" :class="{ 'is-at': i === at }" x-on:mousedown.prevent="add(c.title)">
+                                    <span x-text="c.title"></span> <span class="terms-pick__count" x-show="c.count" x-text="c.count"></span>
+                                </li>
+                            </template>
+                            <li role="option" class="terms-pick__new" x-show="isNew()" :aria-selected="at === matches().length ? 'true' : 'false'" :class="{ 'is-at': at === matches().length }"
+                                x-on:mousedown.prevent="add(query)" x-text="words.add.replace('%s', query.trim())"></li>
+                        </ul>
+                    </div>
+                    <div class="terms-pick__often" x-show="query.trim() === '' && often().length && !full()">
+                        <template x-for="c in often()" :key="c.title">
+                            <button type="button" class="terms-pick__pill" x-on:click="add(c.title)"><span aria-hidden="true">+</span> <span x-text="c.title"></span></button>
+                        </template>
+                    </div>
+                    <input id="{{ $id }}" type="hidden" wire:model{{ $live }}="{{ $model }}">
+                </div>
+                <p class="field__hint">{{ $one ? __('Choose one, or type a new one and press Enter.') : __('Choose from the ones you’ve used, or type a new one and press Enter. New ones are added to :list.', ['list' => $listName]) }}</p>
                 @break
 
             @case('assets')
