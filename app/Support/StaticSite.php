@@ -324,14 +324,18 @@ class StaticSite
     protected function searchIndex(): void
     {
         $site = app(Site::class);
+        $before = app()->getLocale();
+        app()->setLocale($site->language());
         $index = $site->published()->map(fn (Entry $e) => [
             't' => $e->title(),
             'u' => $site->url($e),
-            'k' => $e->collection()?->dated() ? 'Post' : 'Page',
-            'd' => $e->date()?->format('j F Y') ?? '',
+            'k' => $e->collection()?->dated() ? __('Post') : __('Page'),
+            'p' => $e->collection()?->dated() ? 1 : 0,
+            'd' => $e->date()?->translatedFormat('j F Y') ?? '',
             'x' => $site->excerpt($e, 160),
             's' => Str::limit(Str::lower(app(\App\PageBuilder\PageBuilder::class)->readerText($e) ?? strip_tags((string) Str::markdown((string) $e->get('content', ''))).' '.Blocks::textOf($e)), 4000, ''),
         ])->values()->all();
+        app()->setLocale($before);
         $this->write('search-index.json', (string) json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 

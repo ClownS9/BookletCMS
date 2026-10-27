@@ -161,13 +161,61 @@ class Milestones
      */
     protected static function myPublished(User $user): Collection
     {
+        return Remember::for('milestones.mine:'.$user->id, function () use ($user) {
+            $counts = self::wordCounts();
+            $mine = self::myPublishedNow($user, $counts);
+            self::keepWordCounts($counts);
+
+            return $mine;
+        });
+    }
+
+    /**
+     * Words in each post, kept between visits: counting every post's words
+     * on each visit to the contents page is slow in a big book. Each count
+     * is redone when that post's words change.
+     */
+    public const WORDS_KEY = 'booklet.milestones.words';
+
+    /** @return array{0: array<string, array{0: int, 1: int}>, 1: bool} the kept counts, and whether any changed */
+    protected static function wordCounts(): array
+    {
+        return [(array) rescue(fn () => \Illuminate\Support\Facades\Cache::get(self::WORDS_KEY, []), [], false), false];
+    }
+
+    protected static function keepWordCounts(array $counts): void
+    {
+        if ($counts[1]) {
+            rescue(fn () => \Illuminate\Support\Facades\Cache::forever(self::WORDS_KEY, $counts[0]), null, false);
+        }
+    }
+
+    /** A post's words, from the kept counts when its words haven't changed. */
+    protected static function wordsOf(Entry $e, array &$counts): int
+    {
+        $content = $e->get('content');
+        $stamp = crc32(is_string($content) ? $content : (string) json_encode($content));
+        $id = (string) $e->id();
+        if (($counts[0][$id][0] ?? null) === $stamp) {
+            return $counts[0][$id][1];
+        }
+        $counts[0][$id] = [$stamp, $words = self::words($content)];
+        $counts[1] = true;
+
+        return $words;
+    }
+
+    protected static function myPublishedNow(User $user, array &$counts): Collection
+    {
         return rescue(fn () => Booklet::entries()->all(), collect(), false)
             ->filter(fn (Entry $e) => $e->status() === 'published' && (string) $e->get('author') === (string) $user->id)
             ->reject(fn (Entry $e) => (string) $e->get('translation_of', '') !== '') // a translation isn't a new post
-            ->map(fn (Entry $e) => [
-                'at' => $e->date() ?? ($e->lastModified() ? Carbon::parse($e->lastModified()) : now()),
-                'words' => self::words($e->get('content')),
-            ])
+            ->map(function (Entry $e) use (&$counts) {
+                return [
+                    'at' => $e->date() ?? ($e->lastModified() ? Carbon::parse($e->lastModified()) : now()),
+                    'words' => self::wordsOf($e, $counts),
+                ];
+            })
             ->sortBy(fn ($e) => $e['at']->timestamp)
             ->values();
     }
@@ -225,15 +273,16 @@ class Milestones
     {
         $best = 0;
         $run = 0;
-        $last = null;
+        $last = null; // the last week counted
         $at = null;
 
         foreach ($days as $day) {
-            $week = $day->copy()->startOfWeek(Carbon::MONDAY);
-            if ($last && $week->equalTo($last)) {
+            // Each week as a whole number, Monday to Sunday (counted from Monday 5 January 1970), so thousands of posts are quick.
+            $week = intdiv((int) $day->format('U') + $day->getOffset() - 4 * 86400, 7 * 86400);
+            if ($last !== null && $week === $last) {
                 continue;
             }
-            $run = $last && $week->equalTo($last->copy()->addWeek()) ? $run + 1 : 1;
+            $run = $last !== null && $week === $last + 1 ? $run + 1 : 1;
             $last = $week;
             $best = max($best, $run);
             if (! $at && $run >= $goal) {

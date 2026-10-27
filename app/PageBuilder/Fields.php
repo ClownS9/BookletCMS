@@ -21,12 +21,30 @@ class Fields
     /** path => ['url' => …, 'srcset' => …, 'alt' => …, 'focus' => …] for a picture in Media, or null. Set by PageBuilder. */
     public static $pictures = null;
 
+    /** Words Booklet puts in a section itself, besides each kind's starting words (the blog page's heading). */
+    public const OURS = ['The blog'];
+
     public function __construct(
         public readonly array $data,
         public readonly bool $live = false,
         protected string $prefix = '',
         protected array $spec = [],
+        protected array $start = [],
     ) {}
+
+    /**
+     * What readers see for a piece of words: the words a section starts
+     * with, left as they were, speak the site's language ("Recently" is
+     * "Baru-baru ini" on a Malay site); anything typed stays as typed.
+     */
+    public function say(string $key): string
+    {
+        $value = trim((string) $this->get($key, ''));
+
+        $ours = ($this->start[$key] ?? null) === $value || in_array($value, self::OURS, true);
+
+        return ! $this->live && $value !== '' && $ours ? __($value) : $value;
+    }
 
     public function get(string $key, mixed $default = null): mixed
     {
@@ -72,7 +90,7 @@ class Fields
     /** One line of words. */
     public function text(string $key, string $tag = 'p', string $class = ''): HtmlString
     {
-        $value = trim((string) $this->get($key, ''));
+        $value = $this->say($key);
         $tag = preg_match('/^(h[1-6]|p|span|div|strong|em|figcaption|summary|b|cite|small)$/', $tag) ? $tag : 'p';
         if ($value === '' && ! $this->live) {
             return new HtmlString('');
@@ -86,7 +104,7 @@ class Fields
     /** A few lines: paragraphs split by an empty line, kept as typed, with **bold**, *italic* and [links](/about). */
     public function words(string $key, string $class = '', string $tag = 'div'): HtmlString
     {
-        $value = trim((string) $this->get($key, ''));
+        $value = $this->say($key);
         $tag = in_array($tag, ['div', 'p', 'blockquote'], true) ? $tag : 'div';
         if ($value === '' && ! $this->live) {
             return new HtmlString('');

@@ -9,7 +9,8 @@ use Illuminate\Support\Carbon;
  * The language the book (the admin) speaks: each person chooses theirs in
  * Your account; before signing in, the sign-in pages follow the last
  * choice made in this browser, or the browser's own language. Readers'
- * pages are never touched: the site keeps its own language.
+ * pages are left to the site: they speak its language (Settings), or a
+ * translated post's own.
  *
  * Words are translated with Laravel's JSON files (lang/ms.json): the key is
  * the English, so anything not translated yet simply stays English.

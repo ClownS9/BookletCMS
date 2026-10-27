@@ -306,9 +306,7 @@ class SearchIndex
      */
     public function recentlyEdited(int $take = 5): array
     {
-        return Booklet::entries()->all()
-            ->sortByDesc(fn (Entry $e) => $e->lastModified())
-            ->take($take)
+        return Booklet::entries()->latest($take)
             ->map(fn (Entry $e) => $this->entryItem($e, $e->collectionHandle()))
             ->values()
             ->all();

@@ -64,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Support\PageCache::flush();
         };
         \Illuminate\Support\Facades\Event::listen('booklet.changed', function (string $what): void {
+            \App\Support\Remember::forget();
             if ($what === 'entries') {
                 \App\Support\Webhooks::entriesChanged(); // a scheduled post that just went live is caught first
             }
