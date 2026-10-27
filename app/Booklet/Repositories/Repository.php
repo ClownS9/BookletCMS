@@ -23,6 +23,13 @@ class Repository
     /** Single finds, including misses (false), so repeat lookups are free. */
     protected array $found = [];
 
+    /**
+     * Every item, made once from the records and handed out again until
+     * something is saved or deleted: a page that asks for all() many times
+     * (the contents page, the sitemap) makes each item once, not each time.
+     */
+    protected ?Collection $items = null;
+
     public function __construct(
         protected Definition $definition,
         protected Store $store,
@@ -35,6 +42,7 @@ class Repository
     {
         $this->records = null;
         $this->found = [];
+        $this->items = null;
     }
 
     /**
@@ -75,7 +83,24 @@ class Repository
      */
     public function all(): Collection
     {
-        return $this->hydrateMany(array_values($this->records()));
+        $this->items ??= $this->hydrateMany(array_values($this->records()));
+
+        // A new list each time (callers may sort or push), the same items in it.
+        return new Collection($this->items->all());
+    }
+
+    /**
+     * The most recently changed items, newest first.
+     *
+     * @return Collection<int, TItem>
+     */
+    public function latest(int $take): Collection
+    {
+        if ($this->records === null && method_exists($this->store, 'latest')) {
+            return $this->hydrateMany($this->store->latest($take));
+        }
+
+        return $this->all()->sortByDesc(fn (Item $item) => $item->lastModified())->take($take)->values();
     }
 
     /**
@@ -112,6 +137,20 @@ class Repository
      */
     public function where(array $filters): Collection
     {
+        // Already read whole this request: look through that rather than asking again.
+        if ($this->records !== null && array_diff(array_keys($filters), $this->definition->columns) === []) {
+            return $this->hydrateMany(array_values(array_filter($this->records, function (array $record) use ($filters) {
+                foreach ($filters as $key => $value) {
+                    $actual = $record['attributes'][$key] ?? null;
+                    if (is_array($value) ? ! in_array($actual, $value) : $actual != $value) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })));
+        }
+
         return $this->hydrateMany($this->store->where($filters));
     }
 
@@ -150,6 +189,7 @@ class Repository
         if ($this->records !== null) {
             $this->records[$string] = $record;
         }
+        $this->items = null;
 
         app('events')->dispatch('booklet.changed', [$this->definition->name]);
 
@@ -165,6 +205,7 @@ class Repository
         $string = $this->definition->keyString($key);
         $this->found[$string] = false;
         unset($this->records[$string]);
+        $this->items = null;
 
         app('events')->dispatch('booklet.changed', [$this->definition->name]);
     }

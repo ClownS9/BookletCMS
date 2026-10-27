@@ -26,6 +26,8 @@ class EntryRepository extends Repository
             $filters['site'] = $site;
         }
 
+        // Read whole once a request (almost every page reads everything anyway), then picked from.
+        $this->records();
         $entries = $this->where($filters);
         $model = Booklet::collections()->find($collection);
 
@@ -152,13 +154,12 @@ class EntryRepository extends Repository
     protected function uniqueSlug(Entry $entry): string
     {
         $base = (string) $entry->attribute('slug');
-        $taken = $this->whereCollection($entry->collectionHandle(), $entry->site())
-            ->reject(fn (Entry $other) => $other->id() === $entry->id())
-            ->map(fn (Entry $other) => $other->slug())
-            ->flip();
+        // Asked one address at a time, so a book with thousands of posts isn't read whole on every save.
+        $taken = fn (string $slug) => $this->where(['collection' => $entry->collectionHandle(), 'site' => $entry->site(), 'slug' => $slug])
+            ->contains(fn (Entry $other) => $other->id() !== $entry->id());
 
         $slug = $base;
-        for ($n = 2; $taken->has($slug); $n++) {
+        for ($n = 2; $taken($slug); $n++) {
             $slug = $base.'-'.$n;
         }
 

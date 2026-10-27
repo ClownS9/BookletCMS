@@ -23,6 +23,9 @@ class Site
 
     protected ?Collection $published = null;
 
+    /** Published entries by the original they belong to (see languages()). */
+    protected ?Collection $versions = null;
+
     // Settings -------------------------------------------------------------
 
     public function setting(string $key, mixed $default = null): mixed
@@ -129,8 +132,9 @@ class Site
     {
         $rootId = $this->isTranslation($entry) ? (string) $entry->get('translation_of') : (string) $entry->id();
 
-        $versions = $this->published()
-            ->filter(fn (Entry $e) => (string) $e->id() === $rootId || (string) $e->get('translation_of') === $rootId);
+        // Grouped once a request: the sitemap asks this for every entry.
+        $this->versions ??= $this->published()->groupBy(fn (Entry $e) => $this->isTranslation($e) ? (string) $e->get('translation_of') : (string) $e->id());
+        $versions = $this->versions->get($rootId, collect());
 
         if ($versions->count() < 2) {
             return collect();

@@ -26,6 +26,17 @@ class DatabaseStore implements Store
         return $this->query()->get()->map(fn ($row) => $this->toRecord((array) $row))->all();
     }
 
+    /**
+     * The most recently changed, newest first: asked of the table, so a
+     * big book isn't read whole for "Recently edited".
+     *
+     * @return array<int, array{attributes: array, data: array, updated_at: ?string}>
+     */
+    public function latest(int $take): array
+    {
+        return $this->query()->orderByDesc('updated_at')->limit($take)->get()->map(fn ($row) => $this->toRecord((array) $row))->all();
+    }
+
     public function find(array $key): ?array
     {
         $row = $this->query()->where($key)->first();
