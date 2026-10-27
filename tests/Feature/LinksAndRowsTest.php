@@ -116,12 +116,14 @@ class LinksAndRowsTest extends TestCase
             ->assertSee('Link a post')
             ->call('openShelf', 'related')
             ->assertSee('Link from the shelf')
-            ->assertSee('Kopi at dawn')
-            ->assertDontSee('Contact'); // pages aren't on this shelf
+            ->assertSee('Kopi at dawn');
+        // Pages aren't on this shelf.
+        $this->assertNotContains('contact', $editor->instance()->shelfEntries->map->slug()->all());
         $this->assertNotContains($this->about()->id(), $editor->instance()->shelfEntries->map->id()->all());
 
-        $editor->set('linkSearch', 'kuih')->assertSee('Kuih lapis')->assertDontSee('Kopi at dawn')
-            ->call('linkEntry', $kuih->id())
+        $editor->set('linkSearch', 'kuih')->assertSee('Kuih lapis');
+        $this->assertNotContains($kopi->id(), $editor->instance()->shelfEntries->map->id()->all(), 'found by its words');
+        $editor->call('linkEntry', $kuih->id())
             ->call('linkEntry', $contact->id())       // not from Posts: ignored
             ->call('linkEntry', $kuih->id())          // already there
             ->call('linkEntry', $draft->id())

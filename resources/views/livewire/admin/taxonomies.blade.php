@@ -45,11 +45,24 @@
     <section class="page page--right" style="--ribbon: var(--rose)">
         <div class="ribbon" aria-hidden="true"></div>
 
-        <h2 class="heading">Tags</h2>
-        <p style="margin-top: 6px; font-size: 14px; color: var(--muted)">Bigger stickers are used more. Pick one to rename, merge or remove it.</p>
+        <div class="ribbon-clear">
+            <h2 class="heading">Tags</h2>
+            <p style="margin-top: 6px; font-size: 14px; color: var(--muted)">Bigger stickers are used more. Pick one to rename, merge or remove it.</p>
+        </div>
+
+        @if ($canManage)
+            <form wire:submit="addTag" style="margin-top: 14px; display: flex; gap: 10px; align-items: flex-start; max-width: 460px">
+                <div class="field" style="flex: 1 1 auto">
+                    <label for="new-tag" class="sr-only">New tag</label>
+                    <input id="new-tag" type="text" wire:model="newTag" placeholder="New tag" autocomplete="off" maxlength="80">
+                    @error('newTag') <p class="field__error">{{ $message }}</p> @enderror
+                </div>
+                <button type="submit" class="btn btn--ink">Add</button>
+            </form>
+        @endif
 
         @if ($tags->isEmpty())
-            <p class="empty-note">No tags yet. Add some to a post in its margin notes.</p>
+            <p class="empty-note">No tags yet. Add one above, or on a post as you write it.</p>
         @else
             <div class="tag-cloud">
                 @foreach ($tags as $i => $tag)

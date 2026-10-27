@@ -86,4 +86,35 @@ class EditorPickersTest extends TestCase
         Booklet::flush();
         $this->assertSame($hana->id, (int) Booklet::entries()->find($mine->id())->get('author'));
     }
+
+    public function test_empty_boxes_start_from_whats_written_and_links_suggest_pages(): void
+    {
+        Booklet::assets()->make(['container' => 'media', 'path' => 'kaya.jpg'], ['alt' => 'Kaya toast on a blue plate'])->save();
+        $entry = $this->makePost('kaya', ['title' => 'Kaya toast, properly', 'excerpt' => 'Butter first, then kaya.', 'cover' => ['kaya.jpg']]);
+
+        $page = Livewire::actingAs($this->admin)->test(EntryEditor::class, ['collection' => 'posts', 'entry' => $entry->id()])
+            ->assertSee('Use the title')->assertSee('Use the standfirst')->assertSee('Use the picture’s description')
+            ->assertSee('<datalist id="booklet-addresses">', false)->assertSee('<option value="/about">About</option>', false)
+            ->call('fillFrom', 'meta_title')->assertSet('values.meta_title', 'Kaya toast, properly')
+            ->call('fillFrom', 'meta_description')->assertSet('values.meta_description', 'Butter first, then kaya.')
+            ->call('fillFrom', 'cover_caption')->assertSet('values.cover_caption', 'Kaya toast on a blue plate')
+            ->assertDontSee('Use the title');
+
+        // Never over what's been written, and only those boxes.
+        $page->set('values.meta_title', 'Mine')->call('fillFrom', 'meta_title')->assertSet('values.meta_title', 'Mine')
+            ->call('fillFrom', 'title')->assertSet('values.title', 'Kaya toast, properly');
+    }
+
+    public function test_tags_can_be_made_on_the_index_page(): void
+    {
+        $index = Livewire::actingAs($this->admin)->test(\App\Livewire\Admin\Taxonomies::class)->assertSee('New tag')
+            ->set('newTag', '#Rainy days')->call('addTag')->assertHasNoErrors()->assertSee('Rainy days');
+        $this->assertSame('Rainy days', Booklet::terms()->findBySlug('tags', 'rainy-days')?->title());
+        $index->set('newTag', 'rainy  DAYS')->call('addTag')->assertHasErrors('newTag');
+        $index->set('newTag', '###')->call('addTag')->assertHasErrors('newTag');
+
+        $writer = User::factory()->create(['role' => 'writer']);
+        Livewire::actingAs($writer)->test(\App\Livewire\Admin\Taxonomies::class)->assertDontSee('New tag')
+            ->set('newTag', 'Sneaky')->call('addTag')->assertForbidden();
+    }
 }

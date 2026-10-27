@@ -16,7 +16,7 @@
             @php $shown = $typed($path, $value); @endphp
             <input type="text" data-set="{{ $path }}" value="{{ is_scalar($shown) ? $shown : '' }}" maxlength="{{ $spec['type'] === 'url' ? 500 : ($spec['max'] ?? 200) }}"
                    @if ($why($path)) aria-invalid="true" @endif
-                   @if ($spec['type'] === 'url') placeholder="{{ ! empty($spec['video']) ? 'https://www.youtube.com/watch?v=…' : '/about or https://…' }}" autocapitalize="off" spellcheck="false" @endif>
+                   @if ($spec['type'] === 'url') placeholder="{{ ! empty($spec['video']) ? 'https://www.youtube.com/watch?v=…' : 'Choose a page, or https://…' }}" autocapitalize="off" spellcheck="false" @if (empty($spec['video'])) list="pb-addresses" autocomplete="off" @endif @endif>
             @if ($why($path)) <em class="d-error">{{ $why($path) }}</em> @endif
         </label>
         @break
@@ -35,7 +35,7 @@
         <div class="d-field" role="group" aria-label="{{ $spec['label'] }}">
             <span>{{ $spec['label'] }}</span>
             <input type="text" data-set="{{ $path }}.label" aria-label="{{ $spec['label'] }}: its words" placeholder="Its words (empty: no button)" value="{{ $typed($path.'.label', $value['label'] ?? '') }}" maxlength="60">
-            <input type="text" data-set="{{ $path }}.url" aria-label="{{ $spec['label'] }}: where it goes" placeholder="Goes to: /about, https://…, an email" value="{{ $typed($path.'.url', $value['url'] ?? '') }}" maxlength="500" autocapitalize="off" spellcheck="false"
+            <input type="text" data-set="{{ $path }}.url" list="pb-addresses" autocomplete="off" aria-label="{{ $spec['label'] }}: where it goes" placeholder="Goes to: choose a page, or https://…, an email" value="{{ $typed($path.'.url', $value['url'] ?? '') }}" maxlength="500" autocapitalize="off" spellcheck="false"
                    @if ($why($path.'.url')) aria-invalid="true" @endif>
             @if ($why($path.'.url') ?? $why($path.'.label')) <em class="d-error">{{ $why($path.'.url') ?? $why($path.'.label') }}</em> @endif
         </div>

@@ -271,6 +271,11 @@
             @endforeach
         </details>
 
+        {{-- Addresses on the site, suggested in every "Goes to" box --}}
+        <datalist id="pb-addresses">
+            @foreach ($addresses as $path => $title) <option value="{{ $path }}">{{ $title }}</option> @endforeach
+        </datalist>
+
     @else
         <p class="d-note d-hint">Click a section on the page to change it, or <button type="button" class="d-link" data-do="adding" data-payload="true">add one</button>.</p>
     @endif

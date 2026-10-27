@@ -568,4 +568,8 @@
             </div>
         </div>
     @endif
+    {{-- Addresses on the site, suggested in every "Goes to" box --}}
+    <datalist id="booklet-addresses">
+        @foreach ($addresses as $path => $title) <option value="{{ $path }}">{{ $title }}</option> @endforeach
+    </datalist>
 </form>
