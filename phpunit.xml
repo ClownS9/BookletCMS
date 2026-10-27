@@ -41,6 +41,7 @@
         <env name="BOOKLET_ASSETS_DRIVER" value="database" force="true"/>
         <env name="BOOKLET_REVISIONS_DRIVER" value="database" force="true"/>
         <env name="BOOKLET_FORMS_DRIVER" value="database" force="true"/>
+        <env name="BOOKLET_UPDATES_CHECK" value="false" force="true"/>
         <env name="LOG_CHANNEL" value="null" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>

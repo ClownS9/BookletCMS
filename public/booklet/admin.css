@@ -5812,3 +5812,34 @@ body.night .size-print small { color: var(--faint); }
 .field__fill { align-self: flex-start; min-height: 30px; padding: 0; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .field__fill:hover { color: var(--ink); }
 .field__fill::before { content: "↳ "; text-decoration: none; display: inline-block; margin-right: 2px; }
+
+/* Settings › Updates */
+.update-now { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border: 1px solid var(--rule); border-radius: 14px; background: var(--paper-3); }
+.update-history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.update-history li { display: flex; flex-direction: column; gap: 1px; padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
+.update-history li .muted { font-size: 12.5px; }
+.update-notes { margin-top: 10px; max-width: 640px; font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.update-notes :is(h1, h2, h3, h4) { margin: 18px 0 6px; font-family: var(--serif); font-weight: 500; font-size: 19px; line-height: 1.3; }
+.update-notes :is(p, ul, ol) { margin: 0 0 10px; }
+.update-notes :is(ul, ol) { padding-left: 20px; }
+.update-notes li + li { margin-top: 3px; }
+.update-notes code { font-family: var(--mono); font-size: 13px; padding: 1px 5px; border-radius: 5px; background: var(--paper-3); }
+.update-notes a { color: inherit; }
+.update-go { display: flex; flex-direction: column; gap: 14px; max-width: 640px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--rule); }
+.update-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.update-steps li { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 10px; color: var(--faint); font-size: 14.5px; }
+.update-steps li.is-done { color: var(--ink); }
+.update-steps li.is-done .setup__n { background: var(--mint); }
+.update-steps li.is-current { background: var(--chosen); color: var(--ink); }
+.update-steps li.is-current .setup__n { background: var(--ink); color: var(--paper); }
+.update-steps .setup__n { width: 26px; height: 26px; }
+.update-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.update-working { display: flex; align-items: center; gap: 10px; font-size: 14.5px; }
+.update-back { display: flex; flex-direction: column; gap: 8px; max-width: 640px; margin-top: 26px; padding: 14px 16px; border: 1px dashed var(--rule-2); border-radius: 14px; }
+.update-back form { margin-top: 4px; }
+/* The new-version notice on the contents page */
+.update-notice { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; align-items: start; margin-top: 22px; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, var(--sun) 22%, var(--paper)); border: 1px solid color-mix(in srgb, var(--sun) 55%, var(--paper)); }
+.update-notice__title { display: block; font-family: var(--serif); font-size: 18px; color: var(--ink); text-decoration: none; }
+.update-notice__title:hover { text-decoration: underline; }
+.update-notice small { display: block; margin-top: 2px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.update-notice__do { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 4px; }

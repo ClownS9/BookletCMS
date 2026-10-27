@@ -129,6 +129,24 @@ php artisan serve
 
 Then open **http://localhost:8000**. The first visit takes you to a short setup: your site's name, your colour, and the first admin account.
 
+### On shared hosting (no terminal)
+
+Download the ready-made `booklet-x.y.zip` from the [releases](https://github.com/ClownS9/BookletCMS/releases) (it has everything, the `vendor` folder included), then:
+
+1. Upload what's inside it to your host. Best: point your domain at Booklet's `public` folder. If you can't, upload it into your main folder (`public_html`, say); Booklet's `.htaccess` sends visitors to `public` so its own files are never reachable.
+2. Open your site. Booklet checks the server (PHP version, extensions, folders it needs to write to) and says how to fix anything missing.
+3. Choose where Booklet keeps things: a database file (nothing to set up), or a MySQL/MariaDB database from your hosting panel. Booklet writes its settings file (`.env`, with a new secret key), makes the tables, and takes you to the short setup above.
+
+Hosts that don't allow the `public/storage` link still work: Booklet hands out uploaded files itself. Add the scheduler (below) from your panel's “Cron jobs” page when you can.
+
+### Updating
+
+When a new version is out, admins see it on the contents page and in **Settings › Updates**, with what changed. **Update** makes a backup of the book, downloads the release, checks it against GitHub's fingerprint and that it's whole, then swaps Booklet's own files (keeping the old ones) and updates the database. Your posts, uploads, settings, `.env` and themes you added aren't touched. If anything goes wrong it goes back by itself, and **Go back** undoes an update afterwards.
+
+A copy kept with git is updated with git instead (`git pull`, `composer install`, `php artisan migrate`). New versions come from `BOOKLET_UPDATES_REPO` (default `ClownS9/BookletCMS`); `BOOKLET_UPDATES_CHECK=false` stops the daily look.
+
+**Making a release:** `composer install --no-dev --optimize-autoloader`, raise `version` in `config/booklet.php`, run `php artisan booklet:package`, and attach the .zip it makes to a GitHub release tagged with that version, with what changed in the release notes.
+
 ### Keep content as files (recommended)
 
 Booklet can keep content in a database or as **flat files**: plain text files on disk instead of database tables. A flat-file setup needs no database server for content at all.
@@ -177,6 +195,7 @@ In **Settings › Stacy's brain**, pick an AI service and paste its key, or poin
 | `php artisan booklet:pages-clear` | Make every cached page fresh |
 | `php artisan booklet:insert-install` / `insert-update` / `insert-undo` | Add, update or roll back an insert |
 | `php artisan booklet:send-posts` | Send new posts to subscribers now |
+| `php artisan booklet:package` | Pack Booklet into the .zip people install and update from |
 | `php artisan booklet:share` | Pack a theme or insert into a .zip to share, checked as Booklet checks one being added |
 | `php artisan booklet:make-theme` | Make a theme in `themes/` to change (`--templates` to start from Booklet's templates) |
 | `php artisan booklet:publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |

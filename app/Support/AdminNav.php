@@ -81,6 +81,7 @@ class AdminNav
             $user?->isAdmin() ? ['static', __('Publish as plain files'), __('For GitHub Pages or any host'), route('admin.settings.static'), 'printer', 'sand', $r->routeIs('admin.settings.static'), null, 'you'] : null,
             $user?->isAdmin() ? ['api', __('Content API'), __('Your posts as JSON for apps'), route('admin.settings.api'), 'code', 'sand', $r->routeIs('admin.settings.api'), null, 'you'] : null,
             $user?->isAdmin() ? ['webhooks', __('Webhooks'), __('Tell other services what happened'), route('admin.settings.webhooks'), 'redirect', 'sand', $r->routeIs('admin.settings.webhooks'), null, 'you'] : null,
+            $user?->isAdmin() ? ['updates', __('Updates'), __('New versions of Booklet'), route('admin.settings.updates'), 'history', 'sand', $r->routeIs('admin.settings.updates'), \App\Support\Updates::available() ? '1' : null, 'you'] : null,
             $user?->isAdmin() ? ['import', __('Move in from WordPress'), __('Bring an old site across'), route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,
             ['account', __('Your account'), __('Profile & password'), route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account'), null, 'you'],
         ];
@@ -228,6 +229,7 @@ class AdminNav
         $add('look', 'back', __('Appendix C'), __('Settings'), __('The cover'), route('admin.settings.look'), 'sand');
         $add('api', 'back', __('Appendix C'), __('Settings'), __('Content API'), route('admin.settings.api'), 'sand');
         $add('webhooks', 'back', __('Appendix C'), __('Settings'), __('Webhooks'), route('admin.settings.webhooks'), 'sand');
+        $add('updates', 'back', __('Appendix C'), __('Settings'), __('Updates'), route('admin.settings.updates'), 'sand');
         $add('import', 'back', __('Appendix C'), __('Settings'), __('Move in from WordPress'), route('admin.import'), 'sand');
         $add('inserts', 'back', __('Appendix C'), __('Settings'), __('Inserts'), route('admin.settings.inserts'), 'sand');
         $add('stacy-settings', 'back', __('Appendix D'), __('Stacy’s brain'), __('Stacy’s brain'), route('admin.settings.stacy'), 'ink');
@@ -339,6 +341,7 @@ class AdminNav
             $r->routeIs('admin.settings.look') => 'look',
             $r->routeIs('admin.settings.api') => 'api',
             $r->routeIs('admin.settings.webhooks') => 'webhooks',
+            $r->routeIs('admin.settings.updates') => 'updates',
             $r->routeIs('admin.settings.inserts') => 'inserts',
             $r->routeIs('admin.insert') => 'insert:'.$r->route('insert'),
             $r->routeIs('admin.settings.stacy') => 'stacy-settings',

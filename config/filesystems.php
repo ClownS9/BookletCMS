@@ -34,6 +34,9 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/private'),
             'serve' => true,
+            // Its signed links (previews of uploads) live apart from /storage, which is the public files'
+            // (served by Booklet itself on hosts that don't allow the public/storage link).
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/private-files',
             'throw' => false,
             'report' => false,
         ],

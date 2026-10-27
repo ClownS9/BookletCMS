@@ -9,6 +9,12 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function (): void {
+            // The end of installing without a terminal: before the tables exist, so no sessions, cookies
+            // or rate limits (they're kept in the database). Its one-time code can't be guessed.
+            \Illuminate\Support\Facades\Route::get('/install/finish', [\App\Http\Controllers\InstallController::class, 'finish'])
+                ->name('install.finish');
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Signed-in people who open /login go to their book; everyone else signs in first.
@@ -18,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // The reading beacon is sent without a form; it only ever adds one to a counter.
         // Mail apps' one-click Unsubscribe posts without a form token (RFC 8058); the long link is the proof.
         $middleware->validateCsrfTokens(except: ['read', 'unsubscribe/*', 'conversation/*/stop']);
+
+        // While Booklet swaps its files for a new version, readers wait a moment; finishing the update still works.
+        $middleware->preventRequestsDuringMaintenance(except: ['admin/updates/finish']);
 
         // Setup comes before sign in: a new book's /admin goes straight to setup, not to /login first.
         $middleware->prependToPriorityList(

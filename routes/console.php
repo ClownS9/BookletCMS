@@ -51,6 +51,8 @@ rescue(fn () => app(\App\Inserts\InsertManager::class)->schedule(app(\Illuminate
 
 // Newer versions of inserts added from a link: looked for once a day, shown on the shelf.
 \Illuminate\Support\Facades\Schedule::call(fn () => app(\App\Inserts\InsertInstaller::class)->check())->dailyAt('5:40')->name('inserts-update-check')->withoutOverlapping();
+// A new version of Booklet: looked for once a day (it shows on the contents page and in Settings › Updates).
+\Illuminate\Support\Facades\Schedule::call(fn () => \App\Support\Updates::checkIfDue())->dailyAt('5:30')->name('booklet-update-check')->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::call(fn () => app(\App\Themes\ThemeInstaller::class)->check())->dailyAt('5:50')->name('themes-update-check')->withoutOverlapping();
 
 // Version control: commits the book's changes once things have been quiet for a couple of minutes.

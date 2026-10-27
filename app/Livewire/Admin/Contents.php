@@ -44,6 +44,19 @@ class Contents extends Component
             $this->alsoEarned = $fresh->count() - 1;
             \App\Support\Milestones::markSeen($user, $fresh->pluck('key'));
         }
+        // Admins: is a new Booklet out? Asked after the page is sent, at most once a day.
+        if ($user->isAdmin()) {
+            app()->terminating(fn () => \App\Support\Updates::checkIfDue());
+        }
+    }
+
+    /** "Not now" on the new-version notice: hidden until the next version. */
+    public function notNowUpdate(): void
+    {
+        $user = request()->user();
+        abort_unless($user->isAdmin(), 403);
+        $version = \App\Support\Updates::available()['version'] ?? null;
+        $user->forceFill(['preferences' => array_merge((array) $user->preferences, ['update_seen' => $version])])->save();
     }
 
     /**
@@ -145,8 +158,14 @@ class Contents extends Component
 
         $hour = now()->hour;
 
+        $newer = $user->isAdmin() ? \App\Support\Updates::available() : null;
+
         return view('livewire.admin.contents', [
             'user' => $user,
+            'update' => $newer && (((array) $user->preferences)['update_seen'] ?? null) !== $newer['version'] ? [
+                'version' => $newer['version'],
+                'line' => \App\Support\Updates::summary($newer),
+            ] : null,
             'greeting' => $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening'),
             'collections' => $collections->map(fn ($c) => [
                 'model' => $c,

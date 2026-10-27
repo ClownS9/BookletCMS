@@ -54,6 +54,10 @@ Route::get('/storage/'.\App\Support\Crops::FOLDER.'/{size}/{spec}/{path}', \App\
     ->where('size', '[a-z][a-z0-9_]{0,30}')->where('spec', '\d+x\d+-\d+-\d+')->where('path', '.+\.webp')
     ->middleware('throttle:240,1')->name('picture.cropped');
 
+// Any other uploaded file the web server didn't find: on hosts that don't allow the public/storage link.
+Route::get('/storage/{path}', [\App\Http\Controllers\InstallController::class, 'file'])
+    ->where('path', '.+')->middleware('throttle:600,1')->name('storage.file');
+
 // "Read most of the way": sent once per page by the site's script (no cookies, no personal data).
 Route::post('/read', function (Request $request) {
     $path = (string) $request->input('path', '');
@@ -144,6 +148,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     })->where(['kind' => 'theme|insert', 'key' => '[a-z][a-z0-9-]{0,59}'])->name('share.download');
     Route::get('/settings/content-api', Admin\ContentApiSettings::class)->name('settings.api');
     Route::get('/settings/webhooks', Admin\Webhooks::class)->name('settings.webhooks');
+    // New versions of Booklet: the page, then swapping the files and finishing (outside Livewire:
+    // the files a request is running change under it).
+    Route::get('/settings/updates', Admin\Updates::class)->name('settings.updates');
+    Route::post('/updates/apply', [\App\Http\Controllers\Admin\UpdateController::class, 'apply'])->name('updates.apply');
+    Route::get('/updates/finish', [\App\Http\Controllers\Admin\UpdateController::class, 'finish'])->name('updates.finish');
+    Route::post('/updates/undo', [\App\Http\Controllers\Admin\UpdateController::class, 'undo'])->name('updates.undo');
     Route::get('/settings/plain-files/download', function () {
         abort_unless(request()->user()->isAdmin(), 403);
         try {

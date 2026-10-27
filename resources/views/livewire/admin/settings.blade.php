@@ -224,6 +224,18 @@
         @endif
 
         @if (request()->user()->isAdmin())
+            @php $newer = \App\Support\Updates::available(); @endphp
+            <a href="{{ route('admin.settings.updates') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
+                <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ $newer ? 'sun' : 'sand' }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="history" size="18" /></span>
+                <span style="min-width: 0">
+                    <span style="display: block; font-size: 15px; font-weight: 500">{{ __('Updates') }}</span>
+                    <span style="display: block; font-size: 13px; color: var(--faint)">{{ $newer ? __('Booklet :version is out', ['version' => $newer['version']]) : __('This is Booklet :version', ['version' => \App\Support\Updates::current()]) }}</span>
+                </span>
+                <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
+            </a>
+        @endif
+
+        @if (request()->user()->isAdmin())
             @php $health = rescue(fn () => \App\Support\Health::summary(), ['fail' => [], 'warn' => []], true); $hf = count($health['fail']); $hw = count($health['warn']); @endphp
             <a href="{{ route('admin.settings.health') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
                 <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ $hf ? 'coral' : ($hw ? 'sun' : 'mint') }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="pulse" size="18" /></span>

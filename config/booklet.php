@@ -63,6 +63,13 @@ return [
     // GitHub says to slow down): a token that can read them.
     'github_token' => env('BOOKLET_GITHUB_TOKEN'),
 
+    // Where new versions of Booklet come from (GitHub releases with a booklet-x.y.zip
+    // attached, made by `php artisan booklet:package`), and whether to look daily.
+    'updates' => [
+        'repo' => env('BOOKLET_UPDATES_REPO', 'ClownS9/BookletCMS'),
+        'check' => (bool) env('BOOKLET_UPDATES_CHECK', true),
+    ],
+
     'drivers' => [
         'collections' => env('BOOKLET_COLLECTIONS_DRIVER'),
         'blueprints' => env('BOOKLET_BLUEPRINTS_DRIVER'),   // blueprints + fieldsets
