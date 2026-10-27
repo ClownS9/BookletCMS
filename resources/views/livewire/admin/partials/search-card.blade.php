@@ -62,6 +62,7 @@
             <label for="field-meta_title">Search title <span class="muted">(optional)</span></label>
             <input id="field-meta_title" type="text" wire:model.live.debounce.500ms="values.meta_title" maxlength="120" placeholder="{{ $values['title'] ?? '' }}">
             <span @class(['search-card__counter', 'is-over' => $n['title'] > \App\Support\SearchCard::TITLE_MAX])>{{ $n['title'] }} / {{ \App\Support\SearchCard::TITLE_MAX }} with the site’s name</span>
+            @if (isset($fills['meta_title'])) <button type="button" class="link-button field__fill" wire:click="fillFrom('meta_title')">{{ $fills['meta_title'] }}</button> @endif
         </div>
     @endif
     @if (in_array('meta_description', $searchCard['fields'], true))
@@ -69,6 +70,7 @@
             <label for="field-meta_description">Search description</label>
             <textarea id="field-meta_description" rows="3" wire:model.live.debounce.500ms="values.meta_description" maxlength="300" placeholder="One or two sentences on what readers will find. About 150 letters."></textarea>
             <span @class(['search-card__counter', 'is-over' => $n['description'] > \App\Support\SearchCard::DESCRIPTION_MAX, 'is-short' => $n['description'] > 0 && $n['description'] < \App\Support\SearchCard::DESCRIPTION_MIN])>{{ $n['description'] }} / {{ \App\Support\SearchCard::DESCRIPTION_MAX }}</span>
+            @if (isset($fills['meta_description'])) <button type="button" class="link-button field__fill" wire:click="fillFrom('meta_description')">{{ $fills['meta_description'] }}</button> @endif
         </div>
     @endif
 

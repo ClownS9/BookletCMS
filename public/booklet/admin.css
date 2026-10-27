@@ -5781,3 +5781,8 @@ body.night .size-print small { color: var(--faint); }
 .terms-pick__pill > span:last-child { overflow-wrap: anywhere; }
 .terms-pick__pill:hover { border-style: solid; color: var(--ink); background: var(--hover); }
 .terms-pick__pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* "Use the title": start an empty box from what's already written */
+.field__fill { align-self: flex-start; min-height: 30px; padding: 0; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.field__fill:hover { color: var(--ink); }
+.field__fill::before { content: "↳ "; text-decoration: none; display: inline-block; margin-right: 2px; }

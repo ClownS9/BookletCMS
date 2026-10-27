@@ -132,4 +132,30 @@ class Links
             ->take($limit)
             ->values();
     }
+
+    /**
+     * Every address on the site worth linking to (published pages and posts,
+     * the blog), for "Goes to" boxes to suggest: path => title.
+     *
+     * @return array<string, string>
+     */
+    public static function addresses(int $max = 400): array
+    {
+        // Straight from the entries (not the site's kept list, which a request may still use after a save).
+        $site = app(\App\Booklet\Site::class);
+        $home = (string) $site->setting('homepage', 'posts');
+        $out = [];
+        foreach (rescue(fn () => Booklet::entries()->all()->filter(fn (Entry $e) => $e->status() === 'published' && $e->uri()), collect(), false) as $entry) {
+            /** @var Entry $entry */
+            $path = $entry->id() === $home ? '/' : (string) $entry->uri();
+            if ($path !== '' && ! isset($out[$path])) {
+                $out[$path] = $entry->title() ?: $path;
+            }
+        }
+        $blog = '/'.ltrim((string) parse_url($site->blogUrl(), PHP_URL_PATH), '/');
+        $out[$blog] ??= __('The blog');
+        uasort($out, fn ($a, $b) => strnatcasecmp($a, $b));
+
+        return array_slice($out, 0, $max, true);
+    }
 }

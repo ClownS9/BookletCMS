@@ -129,7 +129,7 @@
                 @break
 
             @case('link')
-                <input id="{{ $id }}" type="url" wire:model{{ $live }}="{{ $model }}" placeholder="{{ __('https://') }}">
+                <input id="{{ $id }}" type="text" inputmode="url" wire:model{{ $live }}="{{ $model }}" list="booklet-addresses" autocomplete="off" placeholder="{{ __('Choose a page, or https://…') }}">
                 @break
 
             @default
@@ -137,6 +137,9 @@
         @endswitch
     @endif
 
+    @if (isset($fills[$field['handle']]))
+        <button type="button" class="link-button field__fill" wire:click="fillFrom('{{ $field['handle'] }}')">{{ $fills[$field['handle']] }}</button>
+    @endif
     @error($model) <p class="field__error">{{ $message }}</p> @enderror
 </div>
 @endif

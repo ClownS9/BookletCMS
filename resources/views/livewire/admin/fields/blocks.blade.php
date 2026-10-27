@@ -138,7 +138,7 @@
                                             </select>
                                             @break
                                         @case('link')
-                                            <input id="{{ $fid }}" type="text" inputmode="url" wire:model="{{ $model }}" placeholder="{{ __('https://… or /a-page-here') }}">
+                                            <input id="{{ $fid }}" type="text" inputmode="url" wire:model="{{ $model }}" list="booklet-addresses" autocomplete="off" placeholder="{{ __('Choose a page, or https://…') }}">
                                             @break
                                         @case('number')
                                             <input id="{{ $fid }}" type="number" wire:model="{{ $model }}">
