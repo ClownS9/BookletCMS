@@ -20,8 +20,8 @@
         @unless ($template === 'landing')
             <header class="post-head">
                 @if ($trail !== [])
-                    <nav class="crumbs" aria-label="You are here">
-                        <a href="{{ url('/') }}">Home</a>
+                    <nav class="crumbs" aria-label="{{ __('You are here') }}">
+                        <a href="{{ url('/') }}">{{ __('Home') }}</a>
                         @foreach ($trail as $crumb)
                             <span aria-hidden="true">/</span>
                             <a href="{{ $crumb['url'] }}">{{ $crumb['title'] }}</a>
@@ -30,8 +30,8 @@
                         <span aria-current="page">{{ $entry->title() }}</span>
                     </nav>
                 @elseif (! request()->is('/'))
-                    <nav class="crumbs" aria-label="You are here">
-                        <a href="{{ url('/') }}">Home</a> <span aria-hidden="true">/</span> <span aria-current="page">{{ $entry->title() }}</span>
+                    <nav class="crumbs" aria-label="{{ __('You are here') }}">
+                        <a href="{{ url('/') }}">{{ __('Home') }}</a> <span aria-hidden="true">/</span> <span aria-current="page">{{ $entry->title() }}</span>
                     </nav>
                 @endif
                 <h1 class="post-head__title">{{ $entry->title() }}</h1>
@@ -58,7 +58,7 @@
 
         @if ($people->isNotEmpty())
             <section class="people" aria-labelledby="people-title">
-                <h2 id="people-title" class="serif">The people behind it</h2>
+                <h2 id="people-title" class="serif">{{ __('The people behind it') }}</h2>
                 <ul>
                     @foreach ($people as $person)
                         <li>
@@ -75,8 +75,8 @@
 
         @if ($contact && $contact->id() !== $entry->id() && $people->isNotEmpty())
             <aside class="say-hello">
-                <p class="serif">Want to say hello?</p>
-                <a href="{{ $site->url($contact) }}" class="button button--ink">Get in touch</a>
+                <p class="serif">{{ __('Want to say hello?') }}</p>
+                <a href="{{ $site->url($contact) }}" class="button button--ink">{{ __('Get in touch') }}</a>
             </aside>
         @endif
     </article>

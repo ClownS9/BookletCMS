@@ -47,7 +47,7 @@
                             <div style="display: flex; align-items: center; gap: 12px">
                                 <x-site.portrait :user="$author" size="48" />
                                 <span>
-                                    <span class="eyebrow" style="display: block">Written by</span>
+                                    <span class="eyebrow" style="display: block">{{ __('Written by') }}</span>
                                     <span class="serif" style="display: block; font-size: 20px">{{ $author->byline ?: $author->name }}</span>
                                 </span>
                             </div>

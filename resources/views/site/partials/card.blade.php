@@ -23,5 +23,5 @@
     </span>
     <span class="card__title">{{ $entry->title() }}</span>
     <span class="card__excerpt">{{ $site->excerpt($entry, 150) }}</span>
-    <span class="card__meta">{{ $entry->date()?->format('j F Y') }} · {{ $site->readingTime($entry) }} min read</span>
+    <span class="card__meta">{{ $entry->date()?->translatedFormat('j F Y') }} · {{ __(':count min read', ['count' => $site->readingTime($entry)]) }}</span>
 </a>

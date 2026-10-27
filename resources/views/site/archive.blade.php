@@ -1,7 +1,7 @@
 <x-site.layout :title="$term->title()" :description="$term->get('description')">
     @php \App\Support\StructuredData::listing($term->title(), $paginator->getCollection(), $term); @endphp
     <div class="wrap wrap--narrow section">
-        <a href="{{ $site->blogUrl() }}" class="back-link">← The blog</a>
+        <a href="{{ $site->blogUrl() }}" class="back-link">{{ __('← The blog') }}</a>
         <div class="archive-head">
             <div>
                 <p class="eyebrow">{{ $taxonomy?->title() ?? 'Chapter' }}</p>
@@ -14,14 +14,14 @@
         @endif
 
         @if ($paginator->isEmpty())
-            <p class="note" style="margin-top: 32px">Nothing in this chapter yet.</p>
+            <p class="note" style="margin-top: 32px">{{ __('Nothing in this chapter yet.') }}</p>
         @else
             <ol class="index">
                 @foreach ($paginator as $i => $entry)
                     @php $cover = $site->image($entry); @endphp
                     <li>
                         <a href="{{ $site->url($entry) }}" class="index__row">
-                            <span class="index__date">{{ $entry->date()?->format('j M Y') }}</span>
+                            <span class="index__date">{{ $entry->date()?->translatedFormat('j M Y') }}</span>
                             <span>
                                 <span class="index__title">{{ $entry->title() }}</span>
                                 <span class="index__excerpt">{{ $site->excerpt($entry, 140) }}</span>

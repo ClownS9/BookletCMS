@@ -23,7 +23,7 @@
                                         @endif
                                         @break
                                     @case('toggle')
-                                        @if ($row[$h]) <span aria-label="Yes">✓</span> @else <span class="sr-only">No</span> @endif
+                                        @if ($row[$h]) <span aria-label="{{ __('Yes') }}">✓</span> @else <span class="sr-only">{{ __('No') }}</span> @endif
                                         @break
                                     @case('link')
                                         @if ($link = \App\Support\Blocks::safeLink((string) $row[$h]))

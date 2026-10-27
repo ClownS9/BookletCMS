@@ -1,7 +1,7 @@
 <x-site.layout :title="request()->is('/') ? null : 'Blog'" :description="$site->tagline()">
     @php \App\Support\StructuredData::listing($category !== '' ? ($categories->first(fn ($c) => $c->slug() === $category)?->title() ?? 'Blog') : 'Blog', $featured ? collect([$featured])->merge($posts) : $posts); @endphp
     <div class="wrap section">
-        <h1 class="eyebrow">@if (request()->is('/'))<span class="sr-only">{{ $site->name() }}: </span>@endif The blog</h1>
+        <h1 class="eyebrow">@if (request()->is('/'))<span class="sr-only">{{ $site->name() }}: </span>@endif {{ __('The blog') }}</h1>
 
         @if ($featured)
             @php
@@ -15,23 +15,23 @@
                     @else
                         <span class="card__blank" aria-hidden="true"></span>
                     @endif
-                    <span class="sticker feature__flag" style="--tilt: -4deg; background: var(--sun)">Featured</span>
+                    <span class="sticker feature__flag" style="--tilt: -4deg; background: var(--sun)">{{ __('Featured') }}</span>
                 </span>
                 <span class="feature__words">
                     @if ($featuredCategory) <span class="sticker" style="--tilt: -2deg">{{ $featuredCategory->title() }}</span> @endif
                     <span class="feature__title">{{ $featured->title() }}</span>
                     <span class="feature__excerpt">{{ $site->excerpt($featured, 220) }}</span>
                     <span class="card__meta">
-                        @if ($author = $site->author($featured)) by {{ $author->byline ?: $author->name }} · @endif
-                        {{ $featured->date()?->format('j F') }} · {{ $site->readingTime($featured) }} min read
+                        @if ($author = $site->author($featured)) {{ __('by :name', ['name' => $author->byline ?: $author->name]) }} · @endif
+                        {{ $featured->date()?->translatedFormat('j F') }} · {{ __(':count min read', ['count' => $site->readingTime($featured)]) }}
                     </span>
                 </span>
             </a>
         @endif
 
         @if ($categories->isNotEmpty())
-            <nav class="chips" aria-label="Categories">
-                <a href="{{ $site->blogUrl() }}" @class(['chip', 'chip--all']) @if ($category === '') aria-current="page" @endif>All</a>
+            <nav class="chips" aria-label="{{ __('Categories') }}">
+                <a href="{{ $site->blogUrl() }}" @class(['chip', 'chip--all']) @if ($category === '') aria-current="page" @endif>{{ __('All') }}</a>
                 @foreach ($categories as $i => $term)
                     <a href="{{ request()->attributes->get('booklet_static') && $term->attribute('uri') ? url($term->attribute('uri')) : $site->blogUrl().'?category='.$term->slug() }}" class="chip" style="--tilt: {{ $i % 2 ? '2deg' : '-2deg' }}" @if ($category === $term->slug()) aria-current="page" @endif>{{ $term->title() }}</a>
                 @endforeach
@@ -41,7 +41,7 @@
         <div class="with-aside">
             <div class="with-aside__main">
                 @if ($posts->isEmpty() && ! $featured)
-                    <p class="note">Nothing in this chapter yet.</p>
+                    <p class="note">{{ __('Nothing in this chapter yet.') }}</p>
                 @else
                     <div class="cards">
                         @foreach ($posts as $i => $entry)
@@ -58,7 +58,7 @@
             <aside class="with-aside__side">
                 @if ($site->tagline())
                     <div class="note">
-                        <h2>About this blog</h2>
+                        <h2>{{ __('About this blog') }}</h2>
                         <p>{{ $site->tagline() }}</p>
                     </div>
                 @endif
@@ -66,7 +66,7 @@
                 @php $recent = $site->posts()->take(4); @endphp
                 @if ($recent->count() > 1)
                     <div>
-                        <h2 class="eyebrow">Recently</h2>
+                        <h2 class="eyebrow">{{ __('Recently') }}</h2>
                         <ul class="plain-list">
                             @foreach ($recent as $other)
                                 <li><a href="{{ $site->url($other) }}">{{ $other->title() }}</a></li>
@@ -78,7 +78,7 @@
                 @php $cloud = $site->tagCloud(); @endphp
                 @if ($cloud->isNotEmpty())
                     <div>
-                        <h2 class="eyebrow">Tags</h2>
+                        <h2 class="eyebrow">{{ __('Tags') }}</h2>
                         <div class="tags">
                             @foreach ($cloud as $i => $tag)
                                 <a href="{{ url($tag->attribute('uri')) }}" class="sticker" style="--tilt: {{ $i % 2 ? '2deg' : '-2deg' }}">{{ $tag->title() }}</a>
