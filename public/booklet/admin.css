@@ -5521,6 +5521,10 @@ body.night .size-print small { color: var(--faint); }
 .vc-files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
 .vc-files li { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .vc-files code { font-size: 11px; overflow-wrap: anywhere; }
+/* Long file names (no spaces to break at) wrap inside the page instead of running off it */
+.vc-log, .vc-commit-row, .vc-commit-row__head, .vc-commit-row__body, .vc-files li > span:last-child, .vc-waiting li { min-width: 0; max-width: 100%; }
+.vc-commit-row__subject, .vc-commit-row__lines, .vc-files li, .vc-waiting li, .vc-paths li, .vc-status dd, .vc-note code, .vc-commit-row__meta { overflow-wrap: anywhere; }
+.vc-commit-row__meta { max-width: 100%; }
 .vc-restore { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 18%, var(--paper-3)); border: 1px solid color-mix(in srgb, var(--sun) 60%, var(--rule)); font-size: 14px; line-height: 1.5; }
 
 @media (max-width: 640px) {
