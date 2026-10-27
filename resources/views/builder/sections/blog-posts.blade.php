@@ -28,7 +28,7 @@
                     {{ $f->text('about_title', 'h2') }}
                     @if ($f->live)
                         {{ $f->words('about_words', '', 'p') }}
-                        @if (! $f->filled('about_words') && $about !== '') <p class="pb-note-hint">(Empty: readers see the site’s tagline, “{{ $about }}”)</p> @endif
+                        @if (! $f->filled('about_words') && $about !== '') <p class="pb-note-hint">{{ __('(Empty: readers see the site’s tagline, “:about”)', ['about' => $about]) }}</p> @endif
                     @else
                         <p class="pb-words">{{ $f->filled('about_words') ? $f->rich('about_words') : $about }}</p>
                     @endif

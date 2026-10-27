@@ -8,7 +8,7 @@
                     referrerpolicy="strict-origin-when-cross-origin" @if ($f->live) tabindex="-1" @endif></iframe>
         </div>
     @elseif ($f->live)
-        <div class="pb-video__frame pb-video__none"><span>Paste a YouTube or Vimeo address on the left</span></div>
+        <div class="pb-video__frame pb-video__none"><span>{{ __('Paste a YouTube or Vimeo address on the left') }}</span></div>
     @endif
     @if ($f->has('caption')) <figcaption>{{ $f->text('caption', 'span') }}</figcaption> @endif
 </figure>

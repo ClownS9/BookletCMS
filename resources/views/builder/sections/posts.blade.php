@@ -14,7 +14,7 @@
     </header>
 @endif
 @if ($posts->isEmpty())
-    @if ($f->live) <p class="pb-nothing">No posts to show yet. They appear here as they’re published.</p> @endif
+    @if ($f->live) <p class="pb-nothing">{{ __('No posts to show yet. They appear here as they’re published.') }}</p> @endif
 @else
     <div class="cards pb-posts">
         @foreach ($posts as $i => $entry)

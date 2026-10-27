@@ -10,7 +10,7 @@
     <div class="pb-contact__form">
         @if (! $made)
             @if ($f->live)
-                <p class="pb-nothing">Choose which form goes here, in this section’s settings. Make one in the book, under Comments › Forms.</p>
+                <p class="pb-nothing">{{ __('Choose which form goes here, in this section’s settings. Make one in the book, under Comments › Forms.') }}</p>
             @endif
         @elseif ($f->live)
             {{-- While editing: how it looks (the real form works for readers). --}}
@@ -20,9 +20,9 @@
                 @endforeach
                 <b>{{ $made->get('button') ?: 'Send' }}</b>
             </div>
-            @unless (\App\Support\Forms::open($made)) <p class="pb-nothing">It isn’t taking answers now, so readers see that it’s closed.</p> @endunless
+            @unless (\App\Support\Forms::open($made)) <p class="pb-nothing">{{ __('It isn’t taking answers now, so readers see that it’s closed.') }}</p> @endunless
         @elseif (request()->attributes->get('booklet_static'))
-            <p class="pb-nothing">The form works on the live site.</p>
+            <p class="pb-nothing">{{ __('The form works on the live site.') }}</p>
         @else
             <livewire:site.made-form :handle="$made->handle()" :page="request()->path()" :key="'pb-form-'.$s['id']" />
         @endif

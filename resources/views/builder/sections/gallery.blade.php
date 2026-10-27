@@ -17,5 +17,5 @@
         @endforeach
     </ul>
 @elseif ($f->live)
-    <button type="button" class="pb-pick pb-pick--wide" data-pb-pick="pictures"><span>Choose pictures from Media</span></button>
+    <button type="button" class="pb-pick pb-pick--wide" data-pb-pick="pictures"><span>{{ __('Choose pictures from Media') }}</span></button>
 @endif

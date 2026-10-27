@@ -16,11 +16,11 @@
             <span class="feature__title">{{ $featured->title() }}</span>
             <span class="feature__excerpt">{{ $site->excerpt($featured, 220) }}</span>
             <span class="card__meta">
-                @if ($author = $site->author($featured)) by {{ $author->byline ?: $author->name }} · @endif
-                {{ $featured->date()?->format('j F') }} · {{ $site->readingTime($featured) }} min read
+                @if ($author = $site->author($featured)) {{ __('by :name', ['name' => $author->byline ?: $author->name]) }} · @endif
+                {{ $featured->date()?->translatedFormat('j F') }} · {{ __(':count min read', ['count' => $site->readingTime($featured)]) }}
             </span>
         </span>
     </a>
 @elseif ($f->live)
-    <p class="pb-nothing">The newest post shows here, large, on the first page of the blog.</p>
+    <p class="pb-nothing">{{ __('The newest post shows here, large, on the first page of the blog.') }}</p>
 @endif

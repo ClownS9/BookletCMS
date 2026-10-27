@@ -8,7 +8,7 @@
 @foreach ($sections as $s)
     @php
         $look = $s['look'];
-        $f = new \App\PageBuilder\Fields($s['fields'], $live, '', $types[$s['type']]['fields'] ?? []);
+        $f = new \App\PageBuilder\Fields($s['fields'], $live, '', $types[$s['type']]['fields'] ?? [], $types[$s['type']]['start'] ?? []);
         $bg = $look['background'] === 'picture' ? \App\PageBuilder\Fields::pictureFor((string) $look['picture']) : null;
         // The first hero's (heading's, banner's) is the page's own heading (h1); everything else is h2.
         $h1 = ! $embedded && ! $headed && in_array($s['type'], ['hero', 'heading', 'banner'], true);
