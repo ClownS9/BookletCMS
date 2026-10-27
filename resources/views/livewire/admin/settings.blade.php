@@ -212,6 +212,18 @@
         @endif
 
         @if (request()->user()->isAdmin())
+            @php $hooks = rescue(fn () => \App\Models\Webhook::query()->get(['active', 'failures']), collect(), false); $hooksOn = $hooks->where('active', true); $hooksFailing = $hooksOn->where('failures', '>', 0)->count(); @endphp
+            <a href="{{ route('admin.settings.webhooks') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
+                <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ $hooksFailing ? 'coral' : ($hooksOn->isNotEmpty() ? 'sky' : 'sand') }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="redirect" size="18" /></span>
+                <span style="min-width: 0">
+                    <span style="display: block; font-size: 15px; font-weight: 500">{{ __('Webhooks') }}</span>
+                    <span style="display: block; font-size: 13px; color: {{ $hooksFailing ? 'var(--danger)' : 'var(--faint)' }}">{{ $hooksFailing ? trans_choice(':count webhook isn’t going through|:count webhooks aren’t going through', $hooksFailing) : ($hooksOn->isNotEmpty() ? trans_choice(':count webhook on|:count webhooks on', $hooksOn->count()) : __('Off. Rebuild a static site, tell Slack or Discord, start a Zap')) }}</span>
+                </span>
+                <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
+            </a>
+        @endif
+
+        @if (request()->user()->isAdmin())
             @php $health = rescue(fn () => \App\Support\Health::summary(), ['fail' => [], 'warn' => []], true); $hf = count($health['fail']); $hw = count($health['warn']); @endphp
             <a href="{{ route('admin.settings.health') }}" class="bookplate" style="padding: 12px 16px" wire:navigate>
                 <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ $hf ? 'coral' : ($hw ? 'sun' : 'mint') }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="pulse" size="18" /></span>

@@ -16,6 +16,27 @@
         {{ $entry->date()?->format('j F Y') }} · {{ $site->readingTime($entry) }} min read
     </p>
     <x-site.languages :entry="$entry" />
+    @if ($series ?? null)
+        {{-- Part of a series: which part, and every part --}}
+        <details class="series-box">
+            <summary>
+                <span class="eyebrow">Part {{ $series['part'] }} of {{ $series['count'] }}</span>
+                <span class="series-box__name">{{ $series['name'] }}</span>
+                <span class="series-box__more" aria-hidden="true">All parts</span>
+            </summary>
+            <ol class="series-box__parts">
+                @foreach ($series['parts'] as $part)
+                    <li>
+                        @if ($part->id() === $entry->id() || $part->id() === $entry->get('translation_of'))
+                            <span aria-current="page">{{ $part->title() }}</span>
+                        @else
+                            <a href="{{ $site->url($part) }}">{{ $part->title() }}</a>
+                        @endif
+                    </li>
+                @endforeach
+            </ol>
+        </details>
+    @endif
 </header>
 
 @if ($cover = $site->image($entry))

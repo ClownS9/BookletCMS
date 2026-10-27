@@ -54,17 +54,6 @@
                             @if ($author->bio) <p>{{ $author->bio }}</p> @endif
                         </div>
                     @endif
-
-                    @if ($related->isNotEmpty())
-                        <div>
-                            <h2 class="eyebrow">More to read</h2>
-                            <ul class="plain-list">
-                                @foreach ($related as $other)
-                                    <li><a href="{{ $site->url($other) }}">{{ $other->title() }}</a></li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
                 </aside>
             </div>
 

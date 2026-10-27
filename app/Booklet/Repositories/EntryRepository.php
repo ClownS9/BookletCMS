@@ -64,6 +64,8 @@ class EntryRepository extends Repository
         $before = $item->id() ? $this->find($item->id()) : null;
         $wasLive = $before && $before->status() === 'published' && $before->uri();
         $oldUri = $before?->uri();
+        // Where it was, for a webhook saying it came down (worked out only when one is listening).
+        $oldUrl = $before && $before->status() === 'published' && \App\Support\Webhooks::wants('entry.unpublished') ? rescue(fn () => app(\App\Booklet\Site::class)->absolute(app(\App\Booklet\Site::class)->url($before)), null, false) : null;
 
         $saved = parent::save($item);
 
@@ -71,7 +73,24 @@ class EntryRepository extends Repository
             rescue(fn () => \App\Support\Redirects::moved($oldUri, $saved->uri(), $saved->id()), null, false);
         }
 
+        // Webhooks: went live, changed while live, or came down.
+        rescue(fn () => \App\Support\Webhooks::entrySaved($saved, $before?->status() === 'published', $oldUrl), null, true);
+
         return $saved;
+    }
+
+    /**
+     * @param  Entry|string|array  $item
+     */
+    public function delete(Item|string|array $item): void
+    {
+        $entry = $item instanceof Entry ? $item : (is_string($item) ? $this->find($item) : null);
+
+        parent::delete($item);
+
+        if ($entry) {
+            rescue(fn () => \App\Support\Webhooks::entryDeleted($entry), null, true);
+        }
     }
 
     /**

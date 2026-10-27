@@ -245,6 +245,7 @@ class SearchIndex
                 ['label' => __('Backups'), 'meta' => __('Download the whole book, or restore it'), 'href' => route('admin.backups'), 'tone' => 'var(--sand)', 'icon' => 'book'],
                 ['label' => __('Move in from WordPress'), 'meta' => __('Import posts, pages, pictures and comments'), 'href' => route('admin.import'), 'tone' => 'var(--sand)', 'icon' => 'upload'],
                 ['label' => __('Inserts'), 'meta' => __('Extras for the book: switch them on and off'), 'href' => route('admin.settings.inserts'), 'tone' => 'var(--sun)', 'icon' => 'layers'],
+                ['label' => __('Webhooks'), 'meta' => __('Rebuild a static site, tell Slack or Discord, start a Zap'), 'href' => route('admin.settings.webhooks'), 'tone' => 'var(--sky)', 'icon' => 'redirect'],
             ))
             // Pages of the inserts that are switched on (for whoever may open them).
             ->merge(rescue(fn () => app(\App\Inserts\InsertManager::class)->active()

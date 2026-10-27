@@ -174,11 +174,9 @@ class SiteController extends Controller
         $index = $posts->search(fn (Entry $e) => $e->id() === $original->id());
 
         $category = $this->site()->terms($entry, 'categories')->first();
-        $related = $posts
-            ->reject(fn (Entry $e) => $e->id() === $original->id())
-            ->sortByDesc(fn (Entry $e) => $category && in_array($category->slug(), (array) $e->get('categories', []), true))
-            ->take(3)
-            ->values();
+        // More like this (by hand, then by categories and tags), and its series, if it's in one.
+        $related = \App\Support\Related::for($original, $posts);
+        $series = \App\Support\Series::of($original, $posts);
 
         $data = [
             'site' => $this->site(),
@@ -189,6 +187,7 @@ class SiteController extends Controller
             'newer' => $index !== false && $index > 0 ? $posts[$index - 1] : null,
             'older' => $index !== false ? $posts->get($index + 1) : null,
             'related' => $related,
+            'series' => $series,
             'builder' => $this->buildButton($entry),
         ];
         // Built of sections, on the page itself: its head, the sections, then what follows a post.

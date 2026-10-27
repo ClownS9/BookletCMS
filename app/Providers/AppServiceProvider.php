@@ -64,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
             \App\Support\PageCache::flush();
         };
         \Illuminate\Support\Facades\Event::listen('booklet.changed', function (string $what): void {
+            if ($what === 'entries') {
+                \App\Support\Webhooks::entriesChanged(); // a scheduled post that just went live is caught first
+            }
             \App\Support\PageCache::changed($what);
             if (! in_array($what, ['revisions', 'form_submissions'], true)) {
                 rescue(fn () => \App\Support\StaticSite::changed(), null, false); // published as plain files: due again
@@ -75,6 +78,14 @@ class AppServiceProvider extends ServiceProvider
             }
         });
         \App\Models\Comment::deleted($flush);
+        // Webhooks that are due go out after each response (and from the scheduler).
+        $this->app->terminating(function (): void {
+            if (! $this->app->runningInConsole() || $this->app->runningUnitTests()) {
+                rescue(fn () => \App\Support\Webhooks::settle(), null, true);
+            }
+        });
+        \App\Models\Webhook::saved(fn () => \App\Support\Webhooks::forget());
+        \App\Models\Webhook::deleted(fn () => \App\Support\Webhooks::forget());
         \App\Models\User::saved(function ($u) use ($flush): void {
             if ($u->wasRecentlyCreated || $u->wasChanged(['name', 'byline', 'bio', 'avatar', 'role'])) {
                 $flush();

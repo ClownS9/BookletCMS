@@ -305,6 +305,11 @@ class InsertManager
     /** Let inserts react to something that happened. A problem is noted, never passed on. */
     public function fire(string $event, mixed ...$args): void
     {
+        // Webhooks hear these too (entries are told from their repository, so every way of saving counts).
+        if (! str_starts_with($event, 'entry.')) {
+            rescue(fn () => \App\Support\Webhooks::heard($event, $args[0] ?? null), null, true);
+        }
+
         foreach ($this->active() as $insert) {
             $handler = ((array) $insert->manifest('when', []))[$event] ?? null; // event names have dots, so not a dotted lookup
             if (! is_callable($handler)) {

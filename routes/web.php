@@ -143,6 +143,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
         return response()->download($packed['path'], $packed['file'])->deleteFileAfterSend();
     })->where(['kind' => 'theme|insert', 'key' => '[a-z][a-z0-9-]{0,59}'])->name('share.download');
     Route::get('/settings/content-api', Admin\ContentApiSettings::class)->name('settings.api');
+    Route::get('/settings/webhooks', Admin\Webhooks::class)->name('settings.webhooks');
     Route::get('/settings/plain-files/download', function () {
         abort_unless(request()->user()->isAdmin(), 403);
         try {

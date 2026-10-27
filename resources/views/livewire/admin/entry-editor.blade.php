@@ -259,6 +259,32 @@
             </div>
         @endif
 
+        @if ($this->model->dated())
+            {{-- Part of a numbered series ("Part 2 of 5", with the parts either side) --}}
+            <details class="takedown series-pick" @if ($series !== '' || $errors->has('series') || $errors->has('seriesPart')) open @endif>
+                <summary>
+                    <span>{{ __('Part of a series') }}</span>
+                    @if ($series !== '') <span class="takedown__when">{{ $series }}@if ($seriesPart) · {{ __('part :n', ['n' => $seriesPart]) }}@endif</span> @endif
+                </summary>
+                <div class="series-pick__row">
+                    <div class="field" style="flex: 1 1 180px; min-width: 0">
+                        <label for="entry-series">{{ __('The series') }}</label>
+                        <input id="entry-series" type="text" wire:model="series" list="entry-series-names" maxlength="120" placeholder="{{ __('Kuih from scratch') }}" autocomplete="off">
+                        <datalist id="entry-series-names">
+                            @foreach ($seriesNames as $name => $count) <option value="{{ $name }}">{{ trans_choice(':count post|:count posts', $count) }}</option> @endforeach
+                        </datalist>
+                        @error('series') <p class="field__error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="field" style="flex: 0 0 92px">
+                        <label for="entry-series-part">{{ __('Part') }}</label>
+                        <input id="entry-series-part" type="number" inputmode="numeric" min="1" max="999" wire:model="seriesPart" placeholder="{{ __('auto') }}">
+                        @error('seriesPart') <p class="field__error">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+                <p class="field__hint">{{ __('Posts with the same series name are linked in order: “Part 2 of 5”, with the parts either side. Without a part number, they go by date.') }}</p>
+            </details>
+        @endif
+
         {{-- Coming down by itself (an offer that ends, an event that's over) --}}
         @if ($canTakeDown && ! $isHome)
             <details class="takedown" @if ($takedown || $errors->has('takedown') || $errors->has('takedownTo')) open @endif>

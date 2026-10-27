@@ -64,6 +64,9 @@ rescue(fn () => app(\App\Inserts\InsertManager::class)->schedule(app(\Illuminate
 // Posts and pages with a date to come down: they do, on time.
 \Illuminate\Support\Facades\Schedule::call(fn () => \App\Support\Takedowns::settle())->everyMinute()->name('takedowns')->withoutOverlapping();
 
+// Webhooks: scheduled posts that went live, and calls that are due (or due again).
+\Illuminate\Support\Facades\Schedule::call(fn () => \App\Support\Webhooks::settle())->everyMinute()->name('webhooks')->withoutOverlapping();
+
 // The check-up: the scheduler leaves a mark every minute, so the book can tell it's running.
 \Illuminate\Support\Facades\Schedule::call(fn () => \Illuminate\Support\Facades\Cache::forever(\App\Support\Health::BEAT, now()->timestamp))->everyMinute()->name('scheduler-beat');
 

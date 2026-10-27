@@ -141,12 +141,14 @@ Only these folders: `views/site/`, `views/components/site/` and `views/errors/`.
 | --- | --- | --- |
 | `components/site/layout.blade.php` | The frame around every page | `$slot`, and `title`, `description`, `image`, `imageAlt`, `type`, `robots` |
 | `site/blog.blade.php` | The blog (and the home page, unless a page is chosen) | `$site`, `$featured`, `$posts`, `$paginator`, `$category`, `$categories` |
-| `site/post.blade.php` | A post | `$site`, `$entry`, `$author`, `$category`, `$tags`, `$newer`, `$older`, `$related` |
+| `site/post.blade.php` | A post | `$site`, `$entry`, `$author`, `$category`, `$tags`, `$newer`, `$older`, `$related`, `$series` |
 | `site/page.blade.php` | A page | `$site`, `$entry`, `$template` |
 | `site/archive.blade.php` | A category or tag | `$site`, `$term`, `$taxonomy`, `$paginator`, `$total` |
 | `site/search.blade.php` | Search | `$site`, `$q`, `$type`, `$results`, `$needle` |
 | `site/partials/card.blade.php` | A post in a list | `$entry`, `$site`, `$i` |
 | `errors/404.blade.php` | Page not found | |
+
+On a post, `$related` is up to three posts for “More like this”: ones picked by hand in a `related` field, then those sharing the most categories and tags. `$series` is `null`, or the post's place in a numbered series: `name`, `part`, `count`, `parts` (in order), `previous` and `next`. The `site/partials/post-head` and `post-end` pieces draw both.
 
 Pages, posts and the blog page can be built of sections on the page itself ("Edit this page", signed in). A theme with its own `site/page`, `site/post` or `site/blog` template draws those itself, so they aren't built there; the theme's layout still frames the ones that are.
 
