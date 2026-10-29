@@ -19,3 +19,11 @@ look:
     grid: true
     scan: true
     brackets: brackets
+timezone: Asia/Brunei
+language: en
+homepage: posts
+per_page: 10
+comments: true
+moderation: true
+stacy: true
+page_cache: true
