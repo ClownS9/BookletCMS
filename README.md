@@ -76,6 +76,13 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 ![A library card: what a custom role can open](docs/screenshots/library-card.png)
 
+### Readers and groups
+- **Accounts for your readers** on the public site: join, confirm their email, sign in, forgotten password, and their own page (details, password, groups, new posts by email, delete the account). Readers are kept apart from the people who write: a reader's account can never open the admin.
+- **How people join:** anyone, anyone who asks (you let them in), by invitation only, or nobody new. Invite someone by email from **People › Readers & groups**.
+- **Groups**, like Statamic's: "Members", "Kuih Club", "Staff". Readers and people from the book can be in several. Each group is open, by request, by invitation link, or added by you.
+- **Members-only posts and pages:** in the editor, *Who can read it*: everyone, signed-in readers, or some groups. Everyone else sees the title, first lines and a way in; search, feeds, the content API and the plain-file copy leave the rest out. Page-builder sections can be shown only to signed-in readers or only to people who aren't.
+- **Make it yours:** extra sign-up questions, the words on the pages, a line in the welcome email, where readers land after signing in, and the "Sign in" button in the top bar. The pages live under `/members` (change it with `BOOKLET_READERS_PATH`), and a theme can replace any of them: `site/readers/*.blade.php` and `site/locked.blade.php`.
+
 ### Stacy, the assistant
 - Ask in words: find entries, list drafts, give a daily brief, check the book, schedule or publish (always asking "Yes?" first).
 - Writing help in the editor: tighten, simplify, warm up, fix or keep writing the selected words.

@@ -10,8 +10,15 @@
 @endphp
 @if ($embedded) <div class="pb-embed"> @endif
 @foreach ($sections as $s)
+    {{-- Who sees it: for signed-in readers, or for people not signed in ("Join us"). The editor shows them all. --}}
+    @continue(! $live && ! \App\Support\Members::seesSection((string) ($s['look']['who'] ?? 'all')))
     @php
         $look = $s['look'];
+        $look['who'] ??= 'all';
+        $onlyFor = array_filter([
+            $look['show'] !== 'all' ? ($look['show'] === 'phone' ? 'Phones only' : 'Computers only') : null,
+            $look['who'] !== 'all' ? ($look['who'] === 'readers' ? 'Signed-in readers only' : 'Only people not signed in') : null,
+        ]);
         $f = new \App\PageBuilder\Fields($s['fields'], $live, '', $types[$s['type']]['fields'] ?? [], $types[$s['type']]['start'] ?? []);
         $bg = $look['background'] === 'picture' ? \App\PageBuilder\Fields::pictureFor((string) $look['picture']) : null;
         // The first hero's (heading's, banner's) is the page's own heading (h1); everything else is h2.
@@ -23,6 +30,7 @@
             'pb-bg--'.($look['background'] === 'picture' && ! $bg ? 'none' : $look['background']),
             'pb-space--'.$look['space'], 'pb-align--'.$look['align'], 'pb-width--'.$look['width'],
             'pb-show--'.$look['show'] => $look['show'] !== 'all',
+            'pb-who' => $look['who'] !== 'all',
             'pb-shade--'.$look['shade'] => $bg && $look['shade'] !== 'normal',
             'pb-frame--card' => $look['frame'] === 'card' && $look['background'] !== 'none' && ($look['background'] !== 'picture' || $bg),
             'pb-size--'.$look['size'] => $look['size'] !== 'normal',
@@ -30,7 +38,7 @@
             'pb-motion--'.$look['motion'] => $look['motion'] !== 'none' && ! $live,
         ])
         @if ($bg) style="--pb-picture: url(&quot;{{ addcslashes($bg['url'], '"\\') }}&quot;); --pb-focus: {{ $bg['focus'] }}" @endif
-        @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ __(\App\PageBuilder\PageBuilder::kindName($s['type']), [], $bookLang).(isset($s['shared']) ? ' · '.__('shared', [], $bookLang) : '') }}" @if ($look['show'] !== 'all') data-pb-show-label="{{ __($look['show'] === 'phone' ? 'Phones only' : 'Computers only', [], $bookLang) }}" @endif @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>
+        @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ __(\App\PageBuilder\PageBuilder::kindName($s['type']), [], $bookLang).(isset($s['shared']) ? ' · '.__('shared', [], $bookLang) : '') }}" @if ($onlyFor !== []) data-pb-show-label="{{ implode(' · ', array_map(fn ($w) => __($w, [], $bookLang), $onlyFor)) }}" @endif @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>
         @if ($look['anchor'] !== '') <span class="pb-anchor" id="{{ $look['anchor'] }}" aria-hidden="true"></span> @endif
         <div class="pb__inner">
             @include('builder.sections.'.$s['type'], ['f' => $f, 's' => $s, 'h1' => $h1, 'first' => $loop->first])

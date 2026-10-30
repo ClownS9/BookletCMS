@@ -119,6 +119,13 @@ class ContentApi
             $out['translation_of'] = (string) $entry->get('translation_of');
         }
 
+        // Members-only: who it's for, and its first lines (above); the rest stays on the site.
+        if (Members::locked($entry)) {
+            $rule = Members::rule($entry);
+            $out['members_only'] = ['open_to' => $rule['who'], 'groups' => $rule['groups']];
+            $full = false;
+        }
+
         if ($full) {
             $markdown = (string) $entry->get('content', '');
             $out['content'] = [

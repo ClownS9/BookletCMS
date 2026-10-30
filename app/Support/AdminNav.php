@@ -63,6 +63,7 @@ class AdminNav
             ['media', __('Media'), __('Pictures and files'), route('admin.media'), 'image', 'sky', $r->routeIs('admin.media'), null, 'main'],
             ['people', __('People'), __('Who writes here'), route('admin.people'), 'people', 'lilac', $r->routeIs('admin.people'), null, 'main'],
             $arranges ? ['subscribers', __('Subscribers'), __('New posts by email'), route('admin.subscribers'), 'comment', 'lilac', $r->routeIs('admin.subscribers'), null, 'tools'] : null,
+            $arranges ? ['readers', __('Readers & groups'), __('Accounts on your site'), route('admin.readers'), 'people', 'lilac', $r->routeIs('admin.readers'), \App\Support\ReaderAccounts::waitingCount() ?: null, 'tools'] : null,
             ['comments', __('Comments'), __('Notes from readers'), route('admin.comments'), 'comment', 'rose', $r->routeIs('admin.comments'), $waiting ?: null, 'main'],
             $arranges ? ['inbox', __('Inbox'), __('Messages and form answers'), route('admin.inbox'), 'mail', 'rose', $r->routeIs('admin.inbox'), \App\Support\Inbox::newCount() ?: null, 'tools'] : null,
             $arranges ? ['forms', __('Forms'), __('Sign-ups, RSVPs, orders'), route('admin.forms'), 'list', 'rose', $r->routeIs('admin.forms'), null, 'tools'] : null,
@@ -211,6 +212,7 @@ class AdminNav
         $add('media', 'main', __('Chapter :n', ['n' => ++$n]), __('Media'), __('Media'), route('admin.media'), 'sky');
         $add('people', 'main', __('Chapter :n', ['n' => ++$n]), __('People'), __('People'), route('admin.people'), 'lilac');
         $add('subscribers', 'main', __('Chapter :n', ['n' => $n]), __('People'), __('Subscribers'), route('admin.subscribers'), 'lilac');
+        $add('readers', 'main', __('Chapter :n', ['n' => $n]), __('People'), __('Readers & groups'), route('admin.readers'), 'lilac');
         $add('comments', 'main', __('Chapter :n', ['n' => ++$n]), __('Comments'), __('Comments'), route('admin.comments'), 'rose');
         $add('inbox', 'main', __('Chapter :n', ['n' => $n]), __('Comments'), __('Inbox'), route('admin.inbox'), 'rose');
         $add('forms', 'main', __('Chapter :n', ['n' => $n]), __('Comments'), __('Forms'), route('admin.forms'), 'rose');

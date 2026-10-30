@@ -19,7 +19,12 @@
                     <category>{{ $category->title() }}</category>
                 @endforeach
                 <description>{{ $site->excerpt($post, 300) }}</description>
-                <content:encoded><![CDATA[{!! str_replace(']]>', ']]]]><![CDATA[>', (string) $site->markdown($post->get('content')).$site->blocks($post)->toHtml()) !!}]]></content:encoded>
+                @if (\App\Support\Members::locked($post))
+                    {{-- Members-only: the first lines and a link, never the rest. --}}
+                    <content:encoded><![CDATA[{!! str_replace(']]>', ']]]]><![CDATA[>', '<p>'.e($site->excerpt($post, 300)).'</p><p><a href="'.e($site->absolute($site->url($post))).'">'.e(__('For members: read it on the site')).'</a></p>') !!}]]></content:encoded>
+                @else
+                    <content:encoded><![CDATA[{!! str_replace(']]>', ']]]]><![CDATA[>', (string) $site->markdown($post->get('content')).$site->blocks($post)->toHtml()) !!}]]></content:encoded>
+                @endif
             </item>
         @endforeach
     </channel>

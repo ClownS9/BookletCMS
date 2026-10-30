@@ -44,7 +44,7 @@ class PageCache
     /** Can this request be answered from (or stored in) the cache? */
     public static function cacheable(Request $request): bool
     {
-        if (! $request->isMethod('GET') || $request->user() || $request->hasHeader('X-Livewire') || $request->ajax() || $request->attributes->get('booklet_static')) {
+        if (! $request->isMethod('GET') || $request->user() || Readers::signedIn() || str_starts_with('/'.ltrim($request->path(), '/').'/', Readers::path().'/') || $request->hasHeader('X-Livewire') || $request->ajax() || $request->attributes->get('booklet_static')) {
             return false;
         }
         if (array_diff(array_keys($request->query()), ['page']) !== [] || preg_match('#^(admin|livewire|login|setup|preview|proof|storage|subscribe|unsubscribe|up)(/|$)#', $request->path())) {

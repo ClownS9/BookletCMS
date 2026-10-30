@@ -70,6 +70,19 @@ Route::post('/read', function (Request $request) {
     return response()->noContent();
 })->middleware('throttle:30,1')->name('site.read');
 
+// Readers: accounts on the public site (never the admin) ----------------------
+
+Route::prefix(trim((string) config('booklet.readers.path', 'members'), '/') ?: 'members')->name('readers.')->controller(\App\Http\Controllers\ReaderController::class)->group(function () {
+    Route::get('/', 'home')->name('home');
+    Route::get('/join', 'join')->name('join');
+    Route::get('/sign-in', 'signIn')->name('sign-in');
+    Route::get('/forgot', 'forgot')->name('forgot');
+    Route::get('/new-password/{token}', 'reset')->where('token', '[A-Za-z0-9]{20,100}')->name('reset');
+    Route::get('/confirm/{reader}/{hash}', 'confirm')->where(['reader' => '[0-9]+', 'hash' => '[a-f0-9]{40}'])->middleware('throttle:20,1')->name('confirm');
+    Route::post('/sign-out', 'signOut')->name('sign-out');
+    Route::get('/groups/{group}/{token}', 'groupInvite')->where(['group' => '[a-z0-9-]+', 'token' => '[A-Za-z0-9]{20,60}'])->middleware('throttle:30,1')->name('group-invite');
+});
+
 // Sign in -----------------------------------------------------------------
 
 Route::middleware('guest')->group(function () {
@@ -182,6 +195,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::post('/backups/upload', [\App\Http\Controllers\Admin\BackupController::class, 'upload'])->name('backups.upload');
     Route::get('/import', Admin\ImportWordPress::class)->name('import');
     Route::get('/subscribers', Admin\Subscribers::class)->name('subscribers');
+    Route::get('/readers', Admin\Readers::class)->name('readers');
     Route::get('/subscribers/export', \App\Http\Controllers\Admin\SubscribersExportController::class)->name('subscribers.export');
     Route::post('/import/upload', [\App\Http\Controllers\Admin\ImportController::class, 'upload'])->name('import.upload');
     Route::get('/calendar', Admin\Calendar::class)->name('calendar');

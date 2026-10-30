@@ -48,6 +48,9 @@ class Backups
         'entry_notes' => ['user_id', 'done_by'],
         'dog_ears' => ['user_id'],
         'subscribers' => [],
+        'readers' => ['invited_by'],  // accounts on the site (their passwords stay hashed)
+        'groups' => [],
+        'group_members' => [],        // a member who is one of the people: mapped like the columns above
         'post_emails' => [],
         'inserts' => [],          // which inserts are on, and their settings (their code is in inserts/)
         'insert_records' => [],   // what inserts keep: albums, events…
@@ -315,6 +318,9 @@ class Backups
                         }
                         if ($table === 'dog_ears' && ! $row['user_id']) {
                             return null; // a bookmark for someone who isn't here
+                        }
+                        if ($table === 'group_members' && ($row['member_type'] ?? '') === 'user' && ! ($row['member_id'] = $map($row['member_id']))) {
+                            return null; // someone from the book who isn't here
                         }
 
                         return array_intersect_key($row, array_flip($columns));

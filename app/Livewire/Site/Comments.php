@@ -43,6 +43,11 @@ class Comments extends Component
     public function mount(string $entryId): void
     {
         $this->entryId = $entryId;
+        // A signed-in reader doesn't type their name and email again.
+        if ($reader = \App\Support\Readers::current()) {
+            $this->name = $reader->name;
+            $this->email = $reader->email;
+        }
     }
 
     /** Each change speaks the post's language (a translation's notes in its own). */

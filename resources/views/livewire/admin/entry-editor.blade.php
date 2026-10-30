@@ -305,6 +305,40 @@
             </details>
         @endif
 
+        {{-- Who can read it on the site: everyone, signed-in readers, or some groups --}}
+        @if ($canChooseReaders)
+            <details class="takedown open-to" @if ($openTo !== 'everyone') open @endif>
+                <summary>
+                    <span>{{ __('Who can read it') }}</span>
+                    @if ($openTo !== 'everyone')
+                        <span class="takedown__when">{{ $openTo === 'readers' ? __('Signed-in readers') : (implode(', ', array_intersect_key($readerGroups, array_flip($openToGroups))) ?: __('Some groups')) }}</span>
+                    @endif
+                </summary>
+                <fieldset class="open-to__choices">
+                    <legend class="sr-only">{{ __('Who can read it') }}</legend>
+                    @foreach (\App\Support\Members::OPTIONS as $value => $label)
+                        @continue($value === 'groups' && $readerGroups === [])
+                        <label class="open-to__choice"><input type="radio" wire:model.live="openTo" value="{{ $value }}"> {{ __($label) }}</label>
+                    @endforeach
+                </fieldset>
+                @if ($openTo === 'groups')
+                    <div class="open-to__groups">
+                        @foreach ($readerGroups as $handle => $name)
+                            <label class="open-to__choice"><input type="checkbox" wire:model="openToGroups" value="{{ $handle }}"> {{ $name }}</label>
+                        @endforeach
+                    </div>
+                @endif
+                <p class="field__hint">
+                    @if ($openTo === 'everyone')
+                        {{ __('Open it to signed-in readers or to some groups, and everyone else sees its title, first lines and a way to sign in. Search, feeds and the content API leave the rest out.') }}
+                    @else
+                        {{ __('Others see its title, first lines and a way to sign in. People from the book always see all of it.') }}
+                    @endif
+                    @if (request()->user()->arranges()) <a href="{{ route('admin.readers') }}" wire:navigate>{{ $readerGroups === [] ? __('Make a group →') : __('Readers & groups →') }}</a> @endif
+                </p>
+            </details>
+        @endif
+
         {{-- Coming down by itself (an offer that ends, an event that's over) --}}
         @if ($canTakeDown && ! $isHome)
             <details class="takedown" @if ($takedown || $errors->has('takedown') || $errors->has('takedownTo')) open @endif>

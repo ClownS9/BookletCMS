@@ -11,6 +11,7 @@
                 @if (in_array(request()->user()->level(), ['admin', 'editor'], true))
                     <div class="chapter-links">
                         <a href="{{ route('admin.subscribers') }}" class="back" wire:navigate><x-admin.icon name="mail" size="16" /> {{ __('Subscribers →') }}</a>
+                        <a href="{{ route('admin.readers') }}" class="back" wire:navigate><x-admin.icon name="people" size="16" /> {{ __('Readers & groups →') }}</a>
                     </div>
                 @endif
             </div>

@@ -78,7 +78,10 @@ class SiteController extends Controller
                 || ($type === 'posts' && $e->collection()?->dated())
                 || ($type === 'pages' && ! $e->collection()?->dated()))
             // (A page built on the page: its sections' words, as readers see them.)
-            ->filter(fn (Entry $e) => Str::contains(Str::lower($e->title().' '.($this->builder()->readerText($e) ?? strip_tags((string) $e->get('content', ''))).' '.\App\Support\Blocks::textOf($e)), $needle))
+            // (Members-only, for someone who can't read it: its title and first lines, never the rest.)
+            ->filter(fn (Entry $e) => Str::contains(Str::lower($e->title().' '.(\App\Support\Members::canRead($e)
+                ? ($this->builder()->readerText($e) ?? strip_tags((string) $e->get('content', ''))).' '.\App\Support\Blocks::textOf($e)
+                : $this->site()->excerpt($e))), $needle))
             ->sortByDesc(fn (Entry $e) => Str::contains(Str::lower($e->title()), $needle))
             ->values();
 
@@ -168,6 +171,9 @@ class SiteController extends Controller
     {
         request()->attributes->set('booklet_entry', $entry->id()); // for the visit stats
         $this->languages($entry);
+        if (! \App\Support\Members::canRead($entry)) {
+            return $this->locked($entry, true);
+        }
         // A translation sits where its original sits in the list of posts.
         $original = $this->site()->isTranslation($entry)
             ? (\App\Booklet\Facades\Booklet::entries()->find((string) $entry->get('translation_of')) ?? $entry)
@@ -208,6 +214,9 @@ class SiteController extends Controller
     {
         request()->attributes->set('booklet_entry', $entry->id()); // for the visit stats
         $this->languages($entry);
+        if (! \App\Support\Members::canRead($entry)) {
+            return $this->locked($entry, false);
+        }
         // Built of sections, on the page itself.
         if ($drawn = $this->builder()->drawing($entry, request())) {
             [$build, $draft, $editable] = $drawn;
@@ -230,6 +239,20 @@ class SiteController extends Controller
             'entry' => $entry,
             'template' => (string) $entry->get('template', 'default'),
             'builder' => $this->buildButton($entry),
+        ]);
+    }
+
+    /** Members-only, for someone who can't read it: its title, first lines and a way in. */
+    protected function locked(Entry $entry, bool $dated)
+    {
+        request()->attributes->set('booklet_locked', true);
+
+        return response()->view('site.locked', [
+            'site' => $this->site(),
+            'entry' => $entry,
+            'dated' => $dated,
+            'label' => \App\Support\Members::label($entry),
+            'reader' => \App\Support\Readers::signedIn(),
         ]);
     }
 

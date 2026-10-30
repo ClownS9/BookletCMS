@@ -737,7 +737,10 @@ class PageBuilder
             return null;
         }
 
-        return Fields::plain(str_replace('## ', '', $this->asText($this->resolve($this->builder->clean($sections), false))));
+        // Sections for signed-in readers only stay out (this is what search and first lines are made of).
+        $sections = array_values(array_filter($this->resolve($this->builder->clean($sections), false), fn ($s) => ($s['look']['who'] ?? 'all') !== 'readers'));
+
+        return Fields::plain(str_replace('## ', '', $this->asText($sections)));
     }
 
     /** [[builder: about]]: a built page's published sections, in a post or another page. */

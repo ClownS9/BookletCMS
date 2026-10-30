@@ -23,5 +23,5 @@
     </span>
     <span class="card__title">{{ $entry->title() }}</span>
     <span class="card__excerpt">{{ $site->excerpt($entry, 150) }}</span>
-    <span class="card__meta">{{ $entry->date()?->translatedFormat('j F Y') }} · {{ __(':count min read', ['count' => $site->readingTime($entry)]) }}</span>
+    <span class="card__meta">@if ($members = \App\Support\Members::label($entry))<span class="card__lock"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>{{ $members }}</span> · @endif{{ $entry->date()?->translatedFormat('j F Y') }} · {{ __(':count min read', ['count' => $site->readingTime($entry)]) }}</span>
 </a>

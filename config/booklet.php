@@ -70,6 +70,12 @@ return [
     // TRUSTED_PROXIES=* trusts any; or list the proxies' addresses, separated by commas.
     'trusted_proxies' => env('TRUSTED_PROXIES'),
 
+    // Readers' accounts on the public site: their pages live under this address
+    // (/members, /members/sign-in, /members/join…). Change it if a page of yours uses it.
+    'readers' => [
+        'path' => env('BOOKLET_READERS_PATH', 'members'),
+    ],
+
     'updates' => [
         'repo' => env('BOOKLET_UPDATES_REPO', 'ClownS9/BookletCMS'),
         'check' => (bool) env('BOOKLET_UPDATES_CHECK', true),

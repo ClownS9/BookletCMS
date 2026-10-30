@@ -5856,3 +5856,52 @@ body.night .size-print small { color: var(--faint); }
 .pk-check__row--ok .pk-check__mark { background: color-mix(in srgb, var(--online) 16%, transparent); color: var(--online); }
 .pk-check__row--warn .pk-check__mark { background: color-mix(in srgb, #b7791f 18%, transparent); color: #8a5a12; }
 .pk-check__row--no .pk-check__mark { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+
+/* Who can read it (the entry editor) */
+.open-to__choices { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 2px; }
+.open-to__choice { display: flex; align-items: center; gap: 10px; min-height: 36px; font-size: 14.5px; cursor: pointer; }
+.open-to__choice input { width: 17px; height: 17px; margin: 0; accent-color: var(--ink); flex: none; }
+.open-to__groups { margin: 6px 0 0 27px; display: flex; flex-direction: column; gap: 0; }
+.open-to .field__hint { margin: 8px 0 0; }
+
+/* Readers & groups */
+.reader-invite { display: flex; flex-direction: column; gap: 12px; }
+.reader-invite .section-label { margin: 0; }
+.reader-invite__groups { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; }
+.reader-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+.reader-tools .search { margin: 0; }
+.reader-tools__group { flex: 0 1 180px; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); font: inherit; font-size: 14px; color: var(--ink); }
+.reader-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.reader-list__item { border-bottom: 1px solid var(--rule); }
+.reader-list__row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; min-height: 56px; padding: 10px 4px; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.reader-list__row:hover { background: var(--hover); }
+.reader-list__name { font-size: 15.5px; font-weight: 500; overflow-wrap: anywhere; }
+.reader-list__email { grid-column: 1; font-size: 13px; color: var(--faint); overflow-wrap: anywhere; }
+.reader-state { grid-column: 2; grid-row: 1 / span 2; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--paper-3); border: 1px solid var(--rule); white-space: nowrap; }
+.reader-state--active { background: color-mix(in srgb, var(--online) 14%, var(--paper)); border-color: transparent; }
+.reader-state--waiting { background: color-mix(in srgb, var(--sun) 40%, var(--paper)); border-color: transparent; }
+.reader-state--blocked { background: color-mix(in srgb, var(--danger) 14%, var(--paper)); border-color: transparent; color: var(--danger); }
+.reader-list__card { display: flex; flex-direction: column; gap: 12px; padding: 4px 4px 16px; }
+.reader-list__meta { margin: 0; font-size: 13px; color: var(--faint); }
+.reader-list__groups { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; }
+.reader-list__do { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.reader-list__remove { margin-left: auto; color: var(--faint); font-size: 13px; }
+.reader-list__remove:hover { color: var(--danger); }
+.reader-answers { margin: 0; display: grid; gap: 6px; }
+.reader-answers div { display: grid; grid-template-columns: minmax(110px, 40%) 1fr; gap: 10px; font-size: 13.5px; }
+.reader-answers dt { color: var(--faint); }
+.reader-answers dd { margin: 0; overflow-wrap: anywhere; }
+.lib-card__about { margin-top: 2px; font-size: 13px; color: var(--muted); }
+.reader-group-form, .reader-joining { display: flex; flex-direction: column; gap: 16px; }
+.open-to__choice--two { align-items: flex-start; padding: 4px 0; }
+.open-to__choice--two input { margin-top: 3px; }
+.open-to__choice--two .muted { display: block; font-size: 13px; }
+.reader-found { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.reader-found li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px dashed var(--rule); border-radius: 8px; }
+.reader-found li > span { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.reader-questions { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 10px; counter-reset: q; }
+.reader-questions li { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper-3); }
+.reader-questions__row { display: flex; gap: 10px; flex-wrap: wrap; }
+.reader-questions__row .field { margin: 0; }
+.reader-questions__do { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reader-joining > .takedown .field + .field { margin-top: 12px; }

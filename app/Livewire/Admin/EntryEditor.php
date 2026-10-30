@@ -102,6 +102,12 @@ class EntryEditor extends Component
 
     public string $takedownTo = '';
 
+    /** Who can read it on the site: everyone, signed-in readers, or readers in some groups (see App\Support\Members). */
+    public string $openTo = 'everyone';
+
+    /** @var list<string> the groups, when it's for some groups */
+    public array $openToGroups = [];
+
     public function mount(string $collection, ?string $entry = null): void
     {
         $model = Booklet::collections()->find($collection);
@@ -869,6 +875,9 @@ class EntryEditor extends Component
     protected function readSeries(Entry $entry): void
     {
         $this->author = (string) ($entry->get('author') ?? '');
+        $rule = \App\Support\Members::rule($entry);
+        $this->openTo = $rule['who'];
+        $this->openToGroups = $rule['groups'];
         $this->series = (string) \App\Support\Series::name($entry);
         $this->seriesPart = ($n = \App\Support\Series::partNumber($entry)) ? (string) $n : null;
     }
@@ -1143,6 +1152,15 @@ class EntryEditor extends Component
             $data[\App\Support\Series::PART] = $name !== '' && is_numeric($this->seriesPart) && (int) $this->seriesPart > 0 ? (int) $this->seriesPart : null;
         }
         if ($this->canPublish()) {
+            // Who can read it: only an editor or admin decides (it's like publishing it to fewer people).
+            $groups = array_values(array_intersect(array_map('strval', $this->openToGroups), array_keys(\App\Models\Group::choices())));
+            $who = isset(\App\Support\Members::OPTIONS[$this->openTo]) ? $this->openTo : 'everyone';
+            if ($who === 'groups' && $groups === []) {
+                $who = 'readers';
+            }
+            $data[\App\Support\Members::WHO] = $who === 'everyone' ? null : $who;
+            $data[\App\Support\Members::GROUPS] = $who === 'groups' ? $groups : null;
+
             // Coming down by itself: only while it's out (or going out); a draft keeps nothing of it.
             $down = $this->status !== 'draft' && $this->takedown ? Carbon::parse($this->takedown, config('app.timezone')) : null;
             $data['takedown_at'] = $down?->format('Y-m-d H:i:s');
@@ -1526,6 +1544,8 @@ class EntryEditor extends Component
             'takenDown' => $this->entryId && $this->status === 'draft'
                 ? rescue(fn () => ($at = Booklet::entries()->find($this->entryId)?->get('taken_down_at')) ? Carbon::parse($at) : null, null, false) : null,
             'canTakeDown' => $this->canPublish() && $this->status !== 'draft',
+            'canChooseReaders' => $this->canPublish(),
+            'readerGroups' => \App\Models\Group::choices(),
             'seriesNames' => $this->model->dated() ? \App\Support\Series::all() : [],
             'termChoices' => $this->termChoices(),
             'addresses' => Links::addresses(),

@@ -576,9 +576,10 @@ return [
         'line' => ['label' => 'A line', 'options' => ['none' => 'None', 'above' => 'Above', 'below' => 'Below']],
         'motion' => ['label' => 'As it scrolls into view', 'options' => ['none' => 'Stays still', 'fade' => 'Fades in', 'rise' => 'Rises in']],
         'show' => ['label' => 'Shows on', 'options' => ['all' => 'Every screen', 'computer' => 'Computers only', 'phone' => 'Phones only']],
+        'who' => ['label' => 'Who sees it', 'options' => ['all' => 'Everyone', 'readers' => 'Signed-in readers', 'guests' => 'People not signed in']],
         'anchor' => ['label' => 'Its name for links', 'text' => true, 'hint' => 'Link straight to it from a menu or a button: /about#prices. Letters, numbers and dashes.'],
     ],
-    'look' => ['background' => 'none', 'picture' => '', 'shade' => 'normal', 'frame' => 'band', 'align' => 'left', 'size' => 'normal', 'space' => 'normal', 'width' => 'normal', 'line' => 'none', 'motion' => 'none', 'show' => 'all', 'anchor' => ''],
+    'look' => ['background' => 'none', 'picture' => '', 'shade' => 'normal', 'frame' => 'band', 'align' => 'left', 'size' => 'normal', 'space' => 'normal', 'width' => 'normal', 'line' => 'none', 'motion' => 'none', 'show' => 'all', 'who' => 'all', 'anchor' => ''],
 
     // Pages to start from.
     'starters' => [
