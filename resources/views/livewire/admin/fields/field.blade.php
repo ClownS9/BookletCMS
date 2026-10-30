@@ -49,7 +49,7 @@
                 <select id="{{ $id }}" wire:model{{ $live }}="{{ $model }}">
                     @unless ($field['required']) <option value="">—</option> @endunless
                     @foreach ($field['options'] as $value => $label)
-                        <option value="{{ is_int($value) && array_is_list($field['options']) ? $label : $value }}">{{ $label }}</option>
+                        <option value="{{ is_int($value) && array_is_list($field['options']) ? $label : $value }}">{{ __($label) }}</option>
                     @endforeach
                 </select>
                 @break

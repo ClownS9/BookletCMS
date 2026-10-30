@@ -156,6 +156,40 @@ class PasskeysTest extends TestCase
         $this->assertSame([], array_values(array_diff(array_unique($m[1]), array_keys($ms))));
     }
 
+    public function test_the_account_page_checks_whether_this_device_is_ready_and_names_the_address_trouble(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.account'))->assertOk()
+            ->assertSee('Is this device ready for passkeys?')
+            ->assertSee('bookletPasskeyCheck', false)
+            ->assertSee('passkeys need a name', false);
+
+        // What a browser says for 127.0.0.1 (or an address that isn't the site's) points to localhost.
+        $this->assertStringContainsString('localhost', Passkeys::failure('SecurityError'));
+        $this->assertStringContainsString('localhost', Passkeys::failure('numbers'));
+        $this->assertStringContainsString('https', Passkeys::failure('insecure'));
+    }
+
+    public function test_behind_a_trusted_proxy_the_https_address_is_the_one_passkeys_see(): void
+    {
+        $origin = fn () => $this->actingAs($this->admin)
+            ->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+            ->withHeaders(['X-Forwarded-Proto' => 'https', 'X-Forwarded-Host' => 'kopikuih.com', 'X-Forwarded-Port' => '443'])
+            ->get(route('admin.account'))->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('https:\/\/kopikuih.com', $origin(), 'not trusted unless asked');
+
+        putenv('TRUSTED_PROXIES=*');
+        try {
+            $this->refreshApplication();
+            $this->artisan('migrate');
+            $this->admin = User::factory()->create(['role' => 'admin']);
+            $this->assertStringContainsString('https:\/\/kopikuih.com', $origin());
+        } finally {
+            putenv('TRUSTED_PROXIES');
+            \Illuminate\Http\Middleware\TrustProxies::flushState();
+        }
+    }
+
     // —— a pretend authenticator ——
 
     /** @return array{id: string, key: \OpenSSLAsymmetricKey, cose: string, rsa: bool} */

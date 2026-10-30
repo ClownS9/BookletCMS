@@ -43,6 +43,19 @@ class Pictures
         return \App\Support\Disk::of('public');
     }
 
+    /**
+     * "eager" for the first pictures on a page (likely on screen at once, so
+     * they shouldn't wait), "lazy" for the rest. Counted per request.
+     */
+    public static function loading(int $first = 2): string
+    {
+        $kept = app(Remember::BINDING);
+        $shown = (int) ($kept['pictures.shown'] ?? 0);
+        $kept['pictures.shown'] = $shown + 1;
+
+        return $shown < $first ? 'eager' : 'lazy';
+    }
+
     /** Can this file on this container get sized copies? */
     public static function resizable(string $path, string $container = 'media'): bool
     {

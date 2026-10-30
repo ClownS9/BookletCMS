@@ -3,7 +3,11 @@
     post, from [[builder: …]]), and maybe $h1 = false (a post: its head has
     the h1). Each section's own view is in sections/.
 --}}
-@php $headed = isset($h1) && $h1 === false; @endphp
+@php
+    $headed = isset($h1) && $h1 === false;
+    // While building, the editor's own words are in the book's language (the page stays in the site's).
+    $bookLang = $live ? \App\Support\BookLanguage::for(request()) : null;
+@endphp
 @if ($embedded) <div class="pb-embed"> @endif
 @foreach ($sections as $s)
     @php
@@ -26,7 +30,7 @@
             'pb-motion--'.$look['motion'] => $look['motion'] !== 'none' && ! $live,
         ])
         @if ($bg) style="--pb-picture: url(&quot;{{ addcslashes($bg['url'], '"\\') }}&quot;); --pb-focus: {{ $bg['focus'] }}" @endif
-        @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ ($types[$s['type']]['name'] ?? $s['type']).(isset($s['shared']) ? ' · shared' : '') }}" @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>
+        @if ($live) data-pb-section="{{ $s['id'] }}" data-pb-name="{{ __(\App\PageBuilder\PageBuilder::kindName($s['type']), [], $bookLang).(isset($s['shared']) ? ' · '.__('shared', [], $bookLang) : '') }}" @if ($look['show'] !== 'all') data-pb-show-label="{{ __($look['show'] === 'phone' ? 'Phones only' : 'Computers only', [], $bookLang) }}" @endif @if (! empty($types[$s['type']]['required'])) data-pb-required @elseif (! empty($types[$s['type']]['once'])) data-pb-once @endif @endif>
         @if ($look['anchor'] !== '') <span class="pb-anchor" id="{{ $look['anchor'] }}" aria-hidden="true"></span> @endif
         <div class="pb__inner">
             @include('builder.sections.'.$s['type'], ['f' => $f, 's' => $s, 'h1' => $h1, 'first' => $loop->first])

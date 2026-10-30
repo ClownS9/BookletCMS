@@ -65,6 +65,11 @@ return [
 
     // Where new versions of Booklet come from (GitHub releases with a booklet-x.y.zip
     // attached, made by `php artisan booklet:package`), and whether to look daily.
+    // Behind a proxy or load balancer that handles https (Cloudflare, a host's front server),
+    // trust what it says about the address, or passkeys and secure cookies see plain http.
+    // TRUSTED_PROXIES=* trusts any; or list the proxies' addresses, separated by commas.
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
     'updates' => [
         'repo' => env('BOOKLET_UPDATES_REPO', 'ClownS9/BookletCMS'),
         'check' => (bool) env('BOOKLET_UPDATES_CHECK', true),

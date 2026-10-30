@@ -194,7 +194,7 @@ class CoverDesigner extends Component
         if ($meta['code'] && $this->needsPassword()) {
             $limit = 'theme-password:'.request()->user()?->id;
             if (RateLimiter::tooManyAttempts($limit, 5)) {
-                $this->addError('password', 'Too many tries. Wait a minute, then try again.');
+                $this->addError('password', __('Too many tries. Wait a minute, then try again.'));
 
                 return;
             }
@@ -225,17 +225,17 @@ class CoverDesigner extends Component
             if ($this->dirty) {
                 $this->look = Look::clean($this->look);
                 $this->changed();
-                $this->stamp($done['name'].' is updated to '.$done['version'].'. Your changes in the preview are kept.');
+                $this->stamp(__(':name is updated to :version. Your changes in the preview are kept.', ['name' => $done['name'], 'version' => $done['version']]));
             } else {
                 $this->look = Look::current();
                 $this->dispatch('look-preview');
-                $this->stamp($done['name'].' is updated to '.$done['version'].(Look::current()['theme'] === $done['key'] ? '. The site wears it already.' : '.'));
+                $this->stamp(Look::current()['theme'] === $done['key'] ? __(':name is updated to :version. The site wears it already.', ['name' => $done['name'], 'version' => $done['version']]) : __(':name is updated to :version.', ['name' => $done['name'], 'version' => $done['version']]));
             }
 
             return;
         }
         $this->wear($done['key']);
-        $this->stamp($done['name'].' is on the shelf, and in the preview. Press Use this cover to put it on the site.');
+        $this->stamp(__(':name is on the shelf, and in the preview. Press Use this cover to put it on the site.', ['name' => $done['name']]));
     }
 
     /** Not now: back to finding one (where they came from), with the preview a click away. */
@@ -279,7 +279,7 @@ class CoverDesigner extends Component
             $this->password = '';
             $this->resetErrorBag();
         } catch (\RuntimeException $e) {
-            $this->stamp('It couldn’t be fetched: '.\Illuminate\Support\Str::limit($e->getMessage(), 160));
+            $this->stamp(__('It couldn’t be fetched: :error', ['error' => \Illuminate\Support\Str::limit($e->getMessage(), 160)]));
         }
     }
 

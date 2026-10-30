@@ -86,7 +86,7 @@ class Taxonomies extends Component
         $slug = Str::slug($this->newCategory);
 
         if ($slug === '' || Booklet::terms()->findBySlug('categories', $slug)) {
-            $this->addError('newCategory', 'There’s already a category called that.');
+            $this->addError('newCategory', __('There’s already a category called that.'));
 
             return;
         }
@@ -107,12 +107,12 @@ class Taxonomies extends Component
         $slug = Str::slug($title);
 
         if ($slug === '') {
-            $this->addError('newTag', 'Use some letters or numbers.');
+            $this->addError('newTag', __('Use some letters or numbers.'));
 
             return;
         }
         if (Booklet::terms()->findBySlug('tags', $slug)) {
-            $this->addError('newTag', 'There’s already a tag called that.');
+            $this->addError('newTag', __('There’s already a tag called that.'));
 
             return;
         }
@@ -166,14 +166,14 @@ class Taxonomies extends Component
         $slug = Str::slug($title);
 
         if ($slug === '') {
-            $this->addError('rename', 'Use some letters or numbers.');
+            $this->addError('rename', __('Use some letters or numbers.'));
 
             return;
         }
 
         if ($slug !== $term->slug()) {
             if (Booklet::terms()->findBySlug($this->taxonomy, $slug)) {
-                $this->addError('rename', 'That name is taken. Use “Merge into” to combine them.');
+                $this->addError('rename', __('That name is taken. Use “Merge into” to combine them.'));
 
                 return;
             }
@@ -200,7 +200,7 @@ class Taxonomies extends Component
         $target = $this->mergeInto !== '' ? Booklet::terms()->findBySlug($this->taxonomy, $this->mergeInto) : null;
 
         if (! $target || $target->slug() === $term->slug()) {
-            $this->addError('mergeInto', 'Choose where to merge it.');
+            $this->addError('mergeInto', __('Choose where to merge it.'));
 
             return;
         }
@@ -211,7 +211,7 @@ class Taxonomies extends Component
         ActivityLog::record('merged', 'settings', 'term', $this->taxonomy.'/'.$target->slug(), $term->title().' → '.$target->title());
         $this->selected = $target->slug();
         $this->mergeInto = '';
-        $this->stamp("Merged into {$target->title()} on {$count} ".Str::plural('entry', $count).'.');
+        $this->stamp(trans_choice('Merged into :title on :count entry.|Merged into :title on :count entries.', $count, ['title' => $target->title()]));
     }
 
     public function removeTerm(): void
@@ -224,7 +224,7 @@ class Taxonomies extends Component
 
         ActivityLog::record('removed', 'settings', 'term', $this->taxonomy.'/'.$term->slug(), $term->title());
         $this->selected = null;
-        $this->stamp("Removed from {$count} ".Str::plural('entry', $count).'.');
+        $this->stamp(trans_choice('Removed from :count entry.|Removed from :count entries.', $count));
     }
 
     public function render()

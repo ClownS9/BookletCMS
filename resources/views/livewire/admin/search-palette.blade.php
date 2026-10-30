@@ -47,7 +47,7 @@
                 <span class="search-modal__status">
                     @foreach (['draft' => __('Drafts'), 'scheduled' => __('Scheduled'), 'published' => __('Live')] as $value => $label)
                         <button type="button" @class(['search-chip search-chip--quiet', 'is-on' => $status === $value])
-                                x-on:click="toggleStatus('{{ $value }}')">{{ $label }}</button>
+                                x-on:click="toggleStatus('{{ $value }}')">{{ __($label) }}</button>
                     @endforeach
                 </span>
             </div>

@@ -273,6 +273,7 @@ By default only `content/`, `resources/blueprints`, `resources/fieldsets` and `r
 
 ### Signing in
 
+- **Passkeys:** Face ID, Touch ID, Windows Hello, a phone or a security key instead of a password (and instead of the code). Your account › Signing in has an *Is this device ready for passkeys?* check that says what's missing.
 - **Two-step sign-in** with any authenticator app (six-digit codes that change every 30 seconds), plus single-use recovery codes. A code can't be used twice.
 - **Slowed-down guessing:** five wrong passwords or codes in a row and that email (from that address) has to wait. Password reset requests are limited too.
 - **"Was this you?" emails** when a password, email address or two-step setting changes.
@@ -320,6 +321,16 @@ A **cover pack** can only change how the site looks, so it's safe from anyone. B
 A **theme with templates** is code, like an insert: it asks for the admin's password, its templates must be for the public site only (never the admin), and each is checked for mistakes before it's added. Its scripts only run on the public site. If one of its templates breaks, readers get Booklet's own page, and safe mode (`BOOKLET_SAFE_MODE=true`) wears every theme as a cover pack. The copy an update replaces is kept, so it can be undone.
 
 **Only add themes with templates from people you trust.**
+
+#### Trying passkeys on your own computer
+
+Browsers only make passkeys on an address that is secure and has a name:
+
+- **Quickest:** `php artisan serve`, then open **http://localhost:8000**. `localhost` counts as secure. `127.0.0.1` doesn't work: it's numbers, not a name.
+- **A local name** such as `booklet.test`: give it https. With Laravel Herd, `herd secure booklet`; with Valet, `valet secure booklet`; otherwise make a certificate with [mkcert](https://github.com/FiloSottile/mkcert). Then set `APP_URL=https://booklet.test`.
+- Avoid a real domain name (like `booklet.com`) pointed at your own computer over plain http: it isn't secure, so the browser says no.
+- **Touch ID on a Mac:** a fingerprint added in System Settings › Touch ID & Password. Safari and Chrome both use it; the passkey is kept in your iCloud Keychain (Safari) or Chrome's password manager.
+- Behind a proxy that handles https (Cloudflare, a load balancer), add `TRUSTED_PROXIES=*` to `.env` (or the proxy's addresses), or the server sees plain http and turns the passkey away.
 
 ### Before going live
 

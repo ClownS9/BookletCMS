@@ -47,7 +47,7 @@
             <div class="keys-card__groups">
                 @foreach ($groups as $title => $rows)
                     <section>
-                        <h3 class="eyebrow">{{ $title }}</h3>
+                        <h3 class="eyebrow">{{ __($title) }}</h3>
                         <dl>
                             @foreach ($rows as [$keys, $what])
                                 <div>
@@ -60,7 +60,7 @@
                                             @endif
                                         @endforeach
                                     </dt>
-                                    <dd>{{ $what }}</dd>
+                                    <dd>{{ __($what) }}</dd>
                                 </div>
                             @endforeach
                         </dl>

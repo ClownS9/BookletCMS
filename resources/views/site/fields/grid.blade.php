@@ -19,7 +19,7 @@
                                 @switch($column['type'])
                                     @case('picture')
                                         @if ($pic = \App\Support\Blocks::picture($row[$h][0] ?? null))
-                                            <img src="{{ $pic['url'] }}" alt="{{ $pic['alt'] }}" loading="lazy" decoding="async" style="object-position: {{ $pic['focus'] }}">
+                                            <img src="{{ $pic['url'] }}" alt="{{ $pic['alt'] }}" loading="lazy" decoding="async" style="object-position: {{ $pic['focus'] }}" @if ($pic['srcset'] ?? '') srcset="{{ $pic['srcset'] }}" sizes="64px" @endif>
                                         @endif
                                         @break
                                     @case('toggle')

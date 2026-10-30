@@ -291,7 +291,7 @@ class SearchIndex
 
         $waiting = rescue(fn () => Comment::query()->where('status', 'waiting')->count(), 0, false);
         if ($waiting > 0) {
-            $actions[] = ['label' => 'Read waiting comments', 'meta' => $waiting.' '.Str::plural('note', $waiting).' to approve', 'href' => route('admin.comments'), 'icon' => 'comment', 'tone' => 'var(--rose)'];
+            $actions[] = ['label' => 'Read waiting comments', 'meta' => trans_choice(':count note to approve|:count notes to approve', $waiting), 'href' => route('admin.comments'), 'icon' => 'comment', 'tone' => 'var(--rose)'];
         }
 
         $actions[] = ['label' => 'Ask Stacy', 'meta' => 'Talk or type to your assistant', 'href' => route('admin.stacy'), 'icon' => 'stacy', 'tone' => 'var(--ink)'];

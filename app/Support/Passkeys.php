@@ -185,7 +185,9 @@ class Passkeys
                 ? __('Your device didn’t make the passkey. It was cancelled, or the device couldn’t check it was you: on a computer, make sure Windows Hello or Touch ID is set up, or choose to use a phone instead.')
                 : __('No passkey was used. Either it was cancelled, or this device has no passkey for this book yet: sign in with your password, then add one in Your account › Signing in.'),
             'InvalidStateError' => $making ? __('This device already keeps a passkey for you here.') : __('Something went wrong with the passkey. Try again.'),
-            'SecurityError', 'insecure' => __('Passkeys only work on a secure (https) address.'),
+            'insecure' => __('Passkeys only work on a secure (https) address.'),
+            // Also what browsers say for an address that's numbers (127.0.0.1) or doesn't match the site.
+            'SecurityError', 'numbers' => __('The browser refused this address for passkeys. They need https and a name, not numbers: on your own computer, open http://localhost instead of 127.0.0.1.'),
             'NotSupportedError', 'unsupported' => __('This browser can’t use passkeys. Try a recent Safari, Chrome, Edge or Firefox.'),
             default => __('Something went wrong with the passkey. Try again.'),
         };

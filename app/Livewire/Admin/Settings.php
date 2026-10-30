@@ -131,7 +131,7 @@ class Settings extends Component
         $extension = \App\Support\SafeUpload::extension($this->logoUpload, ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif']);
         if (! in_array($extension, ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif'], true)
             || ($extension === 'svg' && ! \App\Support\SafeUpload::cleanSvgFile($this->logoUpload->getRealPath()))) {
-            $this->addError('logoUpload', 'That file doesn’t look like a picture. Try an SVG or PNG.');
+            $this->addError('logoUpload', __('That file doesn’t look like a picture. Try an SVG or PNG.'));
             $this->logoUpload = null;
 
             return;

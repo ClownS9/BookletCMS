@@ -290,7 +290,8 @@ a.menu__mega-heading:hover { color: var(--accent); }
     font-size: 76px;
     line-height: 0.85;
     padding: 6px 10px 0 0;
-    color: var(--accent);
+    /* The accent, deepened enough to read clearly on the page (a pale accent alone is too faint) */
+    color: color-mix(in srgb, var(--accent) 70%, var(--ink));
 }
 
 .author-card { padding: 22px; border: 1px solid var(--rule); border-radius: 12px; background: var(--white); }
@@ -379,6 +380,8 @@ a.menu__mega-heading:hover { color: var(--accent); }
 .index__row:hover .index__title { color: var(--faint); }
 
 .big-search { display: flex; align-items: center; gap: 12px; margin-top: 10px; border-bottom: 2px solid var(--ink); }
+/* The box itself draws no ring: its line thickens in the accent while you type. */
+.big-search:focus-within { border-bottom-color: var(--accent); box-shadow: 0 2px 0 var(--accent); }
 .big-search input { flex: 1 1 auto; min-width: 0; min-height: 64px; border: 0; background: transparent; outline: none; font-family: var(--serif); font-size: 36px; color: var(--ink); }
 .big-search button { width: 48px; height: 48px; border: 0; background: none; cursor: pointer; color: var(--faint); }
 .search-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; font-size: 14px; color: var(--muted); }

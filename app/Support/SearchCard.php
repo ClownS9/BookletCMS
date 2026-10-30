@@ -46,30 +46,28 @@ class SearchCard
 
         $hints = [];
         if ($title === '') {
-            $hints[] = ['level' => 'warn', 'text' => 'No title yet, so search shows only the site’s name.'];
+            $hints[] = ['level' => 'warn', 'text' => __('No title yet, so search shows only the site’s name.')];
         } elseif (mb_strlen($tag) > self::TITLE_MAX) {
-            $hints[] = ['level' => 'warn', 'text' => 'Google shows about '.self::TITLE_MAX.' letters of a title, and this one is '.mb_strlen($tag).' (with the site’s name), so the end gets cut off. Write a shorter search title.'];
+            $hints[] = ['level' => 'warn', 'text' => __('Google shows about :max letters of a title, and this one is :length (with the site’s name), so the end gets cut off. Write a shorter search title.', ['max' => self::TITLE_MAX, 'length' => mb_strlen($tag)])];
         }
         if ($ownDescription === '') {
-            $hints[] = ['level' => 'note', 'text' => 'No search description of its own, so search and shares use the first lines'.($entry->get('excerpt') ? ' of the standfirst' : '').'. Write one (about 150 letters) to choose what they say.'];
+            $hints[] = ['level' => 'note', 'text' => $entry->get('excerpt') ? __('No search description of its own, so search and shares use the first lines of the standfirst. Write one (about 150 letters) to choose what they say.') : __('No search description of its own, so search and shares use the first lines. Write one (about 150 letters) to choose what they say.')];
         } elseif (mb_strlen($ownDescription) > self::DESCRIPTION_MAX) {
-            $hints[] = ['level' => 'warn', 'text' => 'The search description is '.mb_strlen($ownDescription).' letters; Google cuts it at about '.self::DESCRIPTION_MAX.'.'];
+            $hints[] = ['level' => 'warn', 'text' => __('The search description is :length letters; Google cuts it at about :max.', ['length' => mb_strlen($ownDescription), 'max' => self::DESCRIPTION_MAX])];
         } elseif (mb_strlen($ownDescription) < self::DESCRIPTION_MIN) {
-            $hints[] = ['level' => 'note', 'text' => 'The search description is short. Google often swaps a short one for a line from the text.'];
+            $hints[] = ['level' => 'note', 'text' => __('The search description is short. Google often swaps a short one for a line from the text.')];
         }
         if ($title !== '' && ($twin = self::sameTitle($entry, $title))) {
-            $hints[] = ['level' => 'warn', 'text' => '“'.Str::limit((string) $twin->title(), 60).'” has the same title in search. Search engines may treat the two as one page, so give each its own.', 'href' => route('admin.entries.edit', [$twin->collectionHandle(), $twin->id()])];
+            $hints[] = ['level' => 'warn', 'text' => __('“:title” has the same title in search. Search engines may treat the two as one page, so give each its own.', ['title' => Str::limit((string) $twin->title(), 60)]), 'href' => route('admin.entries.edit', [$twin->collectionHandle(), $twin->id()])];
         }
         $bare = self::picturesWithoutDescriptions($entry);
         if ($bare > 0) {
-            $hints[] = ['level' => 'warn', 'text' => $bare === 1
-                ? 'A picture has no description (alt text). Screen readers can’t say what’s in it, and search can’t either. Add one in Media.'
-                : $bare.' pictures have no description (alt text). Screen readers can’t say what’s in them, and search can’t either. Add them in Media.'];
+            $hints[] = ['level' => 'warn', 'text' => trans_choice('A picture has no description (alt text). Screen readers can’t say what’s in it, and search can’t either. Add one in Media.|:count pictures have no description (alt text). Screen readers can’t say what’s in them, and search can’t either. Add them in Media.', $bare)];
         }
         if (! $picture) {
-            $hints[] = ['level' => 'note', 'text' => 'No picture for shares, so they show as plain text. Add a cover picture.'];
+            $hints[] = ['level' => 'note', 'text' => __('No picture for shares, so they show as plain text. Add a cover picture.')];
         } elseif ($drawn) {
-            $hints[] = ['level' => 'note', 'text' => 'No cover picture, so shares get a card Booklet draws with the title. A photo usually gets more clicks.'];
+            $hints[] = ['level' => 'note', 'text' => __('No cover picture, so shares get a card Booklet draws with the title. A photo usually gets more clicks.')];
         }
 
         return [

@@ -8,7 +8,7 @@
     <div class="lamp__cord" data-lamp-cord>
         <svg class="lamp__string" aria-hidden="true"><path data-lamp-string d="" /></svg>
         <button type="button" class="lamp__bead" data-lamp-bead role="switch" aria-checked="true"
-                aria-label="Desk lamp" title="Pull for the lamp">
+                aria-label="{{ __('Desk lamp') }}" title="{{ __('Pull for the lamp') }}">
             <span class="lamp__cap" aria-hidden="true"></span>
         </button>
     </div>

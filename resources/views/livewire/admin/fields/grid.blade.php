@@ -7,7 +7,7 @@
 <section class="rows-field" aria-labelledby="rows-{{ $handle }}" x-data="{ from: null, over: null }">
     <div class="cutouts__head">
         <h2 id="rows-{{ $handle }}" class="field__label">{{ $field['display'] }}@if ($field['required']) <span aria-hidden="true" class="muted">*</span>@endif</h2>
-        @if ($rows !== []) <span class="field__hint">{{ count($rows) }} {{ str('row')->plural(count($rows)) }}</span> @endif
+        @if ($rows !== []) <span class="field__hint">{{ trans_choice(':count row|:count rows', count($rows)) }}</span> @endif
     </div>
     @if ($field['instructions']) <p class="field__hint">{{ $field['instructions'] }}</p> @endif
 
@@ -37,7 +37,7 @@
                                         @break
                                     @case('picture')
                                         @php $p = $row[$c][0] ?? null; $pic = \App\Support\Blocks::picture(is_string($p) ? $p : null); @endphp
-                                        <button type="button" id="{{ $cid }}" class="rows__pic" wire:click="openRowPicker(@js($handle), {{ $i }}, @js($c))" aria-label="{{ $pic ? 'Change' : 'Choose' }} {{ $column['display'] }}">
+                                        <button type="button" id="{{ $cid }}" class="rows__pic" wire:click="openRowPicker(@js($handle), {{ $i }}, @js($c))" aria-label="{{ $pic ? __('Change') : __('Choose') }} {{ $column['display'] }}">
                                             @if ($pic) <img src="{{ $pic['url'] }}" alt="" style="object-position: {{ $pic['focus'] }}"> @else <x-admin.icon name="image" size="16" /> @endif
                                         </button>
                                         @break

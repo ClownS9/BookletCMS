@@ -56,7 +56,7 @@ class VersionControl extends Component
         $now = ! Git::settings()[$setting];
 
         if ($setting === 'on' && $now && ! Git::isRepo()) {
-            $this->addError('git', 'Start a history first (the button above), then switch it on.');
+            $this->addError('git', __('Start a history first (the button above), then switch it on.'));
 
             return;
         }
@@ -124,12 +124,12 @@ class VersionControl extends Component
         $useToken = $this->signIn === 'token' && str_starts_with($url, 'https://');
         $token = trim($this->token);
         if ($useToken && $token === '' && ! Git::hasToken()) {
-            $this->addError('token', 'Paste the token from GitHub here (it starts with github_pat_ or ghp_).');
+            $this->addError('token', __('Paste the token from GitHub here (it starts with github_pat_ or ghp_).'));
 
             return;
         }
         if ($useToken && $token !== '' && (strlen($token) < 20 || preg_match('/\s/', $token))) {
-            $this->addError('token', 'That doesn’t look like a whole token. Copy it again from GitHub.');
+            $this->addError('token', __('That doesn’t look like a whole token. Copy it again from GitHub.'));
 
             return;
         }
@@ -181,7 +181,7 @@ class VersionControl extends Component
         abort_unless(request()->user()->isAdmin(), 403);
         $token = trim($this->token);
         if (strlen($token) < 20 || preg_match('/\s/', $token)) {
-            $this->addError('token', 'Paste the whole token from GitHub.');
+            $this->addError('token', __('Paste the whole token from GitHub.'));
 
             return;
         }

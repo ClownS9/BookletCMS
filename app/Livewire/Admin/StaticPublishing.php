@@ -57,7 +57,7 @@ class StaticPublishing extends Component
         ]);
         if ($this->where === 'github' && ! $this->connected()) {
             $this->where = 'zip';
-            $this->addError('github', 'Connect version control to GitHub first.');
+            $this->addError('github', __('Connect version control to GitHub first.'));
         }
 
         StaticSite::saveSettings(['address' => $this->address, 'domain' => $this->domain, 'github' => $this->where === 'github', 'auto' => $this->auto]);
@@ -80,7 +80,7 @@ class StaticPublishing extends Component
 
         $php = (new PhpExecutableFinder)->find(false);
         if (! $php) {
-            $this->addError('publish', 'Booklet couldn’t find PHP to run the publishing on this server. Run php artisan booklet:publish-static there instead.');
+            $this->addError('publish', __('Booklet couldn’t find PHP to run the publishing on this server. Run php artisan booklet:publish-static there instead.'));
 
             return;
         }
@@ -95,7 +95,7 @@ class StaticPublishing extends Component
         }
         ActivityLog::record('published the site as plain files', 'settings', 'settings', 'static_site', 'Plain files');
         $last = StaticSite::last();
-        $this->stamp('Made '.($last['pages'] ?? 0).' pages.'.($this->where === 'github' ? ' Sent to GitHub Pages.' : ' Download the .zip on the right.'));
+        $this->stamp(trans_choice('Made :count page.|Made :count pages.', $last['pages'] ?? 0).' '.($this->where === 'github' ? __('Sent to GitHub Pages.') : __('Download the .zip on the right.')));
     }
 
     public function render()

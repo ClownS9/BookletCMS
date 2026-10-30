@@ -78,7 +78,7 @@ class ProofCopies extends Component
         $this->days = 7;
         $this->notes = true;
         $this->dispatch('proof-made', url: $proof->url());
-        $this->stamp('Proof copy made. Copy the link and send it'.($proof->label ? ' to '.$proof->label : '').'.');
+        $this->stamp($proof->label ? __('Proof copy made. Copy the link and send it to :name.', ['name' => $proof->label]) : __('Proof copy made. Copy the link and send it.'));
     }
 
     public function stop(int $id): void

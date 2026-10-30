@@ -145,7 +145,7 @@ class EmailSettings extends Component
         $this->validate();
 
         if ($this->enabled && $this->password === '' && MailSettings::record()?->passwordLost()) {
-            $this->addError('password', 'Type the password again: the saved one can’t be read since the site’s APP_KEY changed.');
+            $this->addError('password', __('Type the password again: the saved one can’t be read since the site’s APP_KEY changed.'));
 
             return;
         }

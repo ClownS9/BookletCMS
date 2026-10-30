@@ -68,7 +68,11 @@
     @if ($site->logoUrl()) <link rel="icon" href="{{ $site->logoUrl() }}"> @endif
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="{{ \App\Support\Look::fontsUrl($look) }}">
+    {{-- The fonts don't hold the page up: words show at once in a close system font, then switch
+         (a phone on a slow line reads sooner; the fonts' own file is fetched alongside). --}}
+    <link rel="preload" as="style" href="{{ \App\Support\Look::fontsUrl($look) }}">
+    <link rel="stylesheet" href="{{ \App\Support\Look::fontsUrl($look) }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ \App\Support\Look::fontsUrl($look) }}"></noscript>
     @if (! $theme || $theme->usesBookletCss())
         <link rel="stylesheet" href="{{ asset('booklet/site.css') }}?v={{ filemtime(public_path('booklet/site.css')) }}">
     @endif

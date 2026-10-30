@@ -51,7 +51,7 @@
             {{-- The email you sign in with only changes with your password --}}
             <div x-show="now !== was" x-cloak>
                 <x-admin.password id="email-password" model="emailPassword" label="{{ __('Your password, to change your sign-in email') }}" autocomplete="current-password"
-                                  hint="We’ll also send a note to your old address, in case it wasn’t you." />
+                                  hint="{{ __('We’ll also send a note to your old address, in case it wasn’t you.') }}" />
             </div>
             @error('emailPassword')
                 <span x-init="now = '__changed__'"></span>
@@ -212,7 +212,7 @@
                     <label for="stacy-natural-voice">{{ __('Voice') }}</label>
                     <select id="stacy-natural-voice" wire:model="stacyNaturalVoice">
                         @foreach ($naturalVoices as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
+                            <option value="{{ $value }}">{{ __($label) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -285,7 +285,7 @@
                             @elseif ($s['goal'] > 1)
                                 {{ __(':done of :all', ['done' => number_format($s['have']), 'all' => number_format($s['goal'])]) }}
                             @else
-                                {{ $s['line'] }}
+                                {{ __($s['line']) }}
                             @endif
                         </span>
                         @if (! $s['earned'] && $s['goal'] > 1)

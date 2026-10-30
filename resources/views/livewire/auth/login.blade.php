@@ -51,8 +51,8 @@
             <h2>{{ $usingRecovery ? __('Use a recovery code') : __('Enter your code') }}</h2>
             <p style="color: var(--muted); font-size: 15px">
                 {{ $usingRecovery
-                    ? 'One of the codes you saved when you turned on two-step sign-in. Each works once.'
-                    : 'Open your authenticator app and type the 6-digit code for this book.' }}
+                    ? __('One of the codes you saved when you turned on two-step sign-in. Each works once.')
+                    : __('Open your authenticator app and type the 6-digit code for this book.') }}
             </p>
 
             <div class="field">

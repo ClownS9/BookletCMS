@@ -145,21 +145,21 @@ class MailSettings
     {
         $record = self::record();
         if ($record?->isReady()) {
-            return ['state' => 'on', 'text' => 'Sending through '.$record->host.' as '.$record->from_address.'.'];
+            return ['state' => 'on', 'text' => __('Sending through :host as :address.', ['host' => $record->host, 'address' => $record->from_address])];
         }
 
         $lost = $record?->enabled && $record->passwordLost()
-            ? 'The saved email password can’t be read since the site’s APP_KEY changed. Type it again in Settings › Email. Until then: '
+            ? __('The saved email password can’t be read since the site’s APP_KEY changed. Type it again in Settings › Email. Until then:').' '
             : '';
 
         $env = self::$envMailer ?? (string) config('mail.default');
         if (in_array($env, ['log', 'array', ''], true)) {
-            return ['state' => 'off', 'text' => $lost.($lost ? 'not sending' : 'Not sending').'. Emails are only written to the log file, so nobody receives them.'];
+            return ['state' => 'off', 'text' => $lost.($lost ? __('not sending.') : __('Not sending.')).' '.__('Emails are only written to the log file, so nobody receives them.')];
         }
 
         $host = $env === 'smtp' ? (string) config('mail.mailers.smtp.host') : '';
 
-        return ['state' => 'env', 'text' => $lost.($lost ? 'using' : 'Using').' the server’s own settings (.env'.($host ? ', '.$host : ', '.$env).').'];
+        return ['state' => 'env', 'text' => $lost.($lost ? __('using the server’s own settings (:which).', ['which' => '.env, '.($host ?: $env)]) : __('Using the server’s own settings (:which).', ['which' => '.env, '.($host ?: $env)]))];
     }
 
     /**

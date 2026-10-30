@@ -220,7 +220,7 @@ class Fields
         return new HtmlString('<img class="'.e($class).'" src="'.e($pic['url']).'" alt="'.e($pic['alt']).'"'
             .($pic['srcset'] !== '' ? ' srcset="'.e($pic['srcset']).'" sizes="'.e($sizes).'"' : '')
             .' style="object-position: '.e($pic['focus']).'"'
-            .($eager ? ' fetchpriority="high"' : ' loading="lazy"').' decoding="async"'
+            .($eager ? ' fetchpriority="high"' : ' loading="'.($this->live ? 'lazy' : \App\Support\Pictures::loading()).'"').' decoding="async"'
             .($this->live ? ' data-pb-pick="'.e($this->prefix.$key).'"' : '').'>');
     }
 

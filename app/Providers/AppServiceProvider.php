@@ -27,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($proxies = trim((string) config('booklet.trusted_proxies'))) {
+            \Illuminate\Http\Middleware\TrustProxies::at($proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
         $this->app->make(\App\Inserts\InsertManager::class)->boot();
 
         // Public pages wear the chosen theme (Settings › The cover); last in the web group, after the session.

@@ -21,29 +21,65 @@ class Builder
 
     public function types(): array
     {
-        return $this->kit['sections'];
+        return $this->said('sections');
     }
 
     public function type(string $type): ?array
     {
-        return $this->kit['sections'][$type] ?? null;
+        return $this->said('sections')[$type] ?? null;
     }
 
     public function looks(): array
     {
-        return $this->kit['looks'];
+        return $this->said('looks');
     }
 
     public function starters(): array
     {
-        return $this->kit['starters'];
+        return $this->said('starters');
+    }
+
+    /** Parts of the kit already put into a language, by part and language. */
+    protected array $said = [];
+
+    /**
+     * A part of the kit with its names, notes, labels and choices in the
+     * language being spoken (the book's, in the drawer). What a section
+     * starts with is left alone: it's the site's words, not the book's.
+     */
+    protected function said(string $part): array
+    {
+        $locale = app()->getLocale();
+        if ($locale === 'en') {
+            return $this->kit[$part];
+        }
+
+        return $this->said[$part.'|'.$locale] ??= $part === 'sections'
+            // Each kind's starting words and looks are left out: they're the site's, not the book's.
+            ? array_map(fn (array $kind) => array_merge(self::sayAll(array_diff_key($kind, ['start' => 1, 'style' => 1])), array_intersect_key($kind, ['start' => 1, 'style' => 1])), $this->kit[$part])
+            : self::sayAll($this->kit[$part]);
+    }
+
+    public static function sayAll(array $part): array
+    {
+        foreach ($part as $key => $value) {
+            if (is_array($value)) {
+                $part[$key] = $key === 'options'
+                    ? array_map(fn ($o) => is_string($o) ? __($o) : $o, $value)
+                    : self::sayAll($value);
+            } elseif (is_string($value) && in_array($key, ['name', 'about', 'group', 'label', 'hint', 'placeholder', 'one'], true)) {
+                $part[$key] = __($value);
+            }
+        }
+
+        return $part;
     }
 
     // Making ------------------------------------------------------------------------------
 
     public function make(string $type): array
     {
-        $kind = $this->type($type) ?? throw new InvalidArgumentException('There’s no section like that.');
+        $kind = $this->kit['sections'][$type] ?? throw new InvalidArgumentException('There’s no section like that.');
 
         return [
             'id' => strtolower(Str::random(8)),

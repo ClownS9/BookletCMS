@@ -27,32 +27,32 @@
 <div class="d-statusblock">
 <form class="d-form d-status" data-form="status" novalidate>
     <fieldset class="d-field">
-        <legend class="d-label">Status</legend>
+        <legend class="d-label">{{ __('Status') }}</legend>
         @foreach ($choices as $value => [$name, $about])
             <label class="d-radio">
                 <input type="radio" name="status" value="{{ $value }}" @checked($picked === $value)>
-                <span><b>{{ $name }}</b><small>{{ $about }}</small></span>
+                <span><b>{{ $name }}</b><small>{{ __($about) }}</small></span>
             </label>
         @endforeach
         <label class="d-field d-status__when">
-            <span>Day and time</span>
+            <span>{{ __('Day and time') }}</span>
             <input type="datetime-local" name="at" value="{{ $at }}">
             <small>The site’s time: it’s {{ $now->format('g:ia') }} there now.</small>
             @if (! empty($errors['at'])) <em class="d-error">{{ $errors['at'] }}</em> @endif
         </label>
     </fieldset>
-    <button type="submit" class="d-btn">Save status</button>
+    <button type="submit" class="d-btn">{{ __('Save status') }}</button>
 </form>
 
 @if ($scheduled)
     <div class="d-scheduled">
-        <p class="d-note"><b>{{ $live ? 'Changes go live' : 'Goes live' }} {{ $scheduled['when'] }}.</b>
+        <p class="d-note"><b>{{ $live ? __('Changes go live') : __('Goes live') }} {{ $scheduled['when'] }}.</b>
             @if ($scheduled['stale']) You’ve changed it since: those changes aren’t in it yet. @endif
         </p>
         @if ($scheduled['stale'])
-            <button type="button" class="d-link" data-do="reschedule">Include my latest changes</button>
+            <button type="button" class="d-link" data-do="reschedule">{{ __('Include my latest changes') }}</button>
         @endif
-        <button type="button" class="d-link" data-do="unschedule">Don’t schedule it</button>
+        <button type="button" class="d-link" data-do="unschedule">{{ __('Don’t schedule it') }}</button>
     </div>
 @endif
 </div>

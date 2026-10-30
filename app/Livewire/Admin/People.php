@@ -84,7 +84,7 @@ class People extends Component
         $user = $this->chosen;
 
         if ($user->is(request()->user()) && $this->role !== 'admin' && User::where('role', 'admin')->count() === 1) {
-            $this->addError('role', 'You’re the only admin. Make someone else an admin first.');
+            $this->addError('role', __('You’re the only admin. Make someone else an admin first.'));
 
             return;
         }
@@ -261,7 +261,7 @@ class People extends Component
         ActivityLog::record('tore up the library card', 'people', 'role', $role->key, $role->name, ['moved' => $moved]);
         $role->delete();
         $this->card = null;
-        $this->stamp($moved ? "Card torn up. {$moved} ".Str::plural('person', $moved).' went back to being '.($role->base === 'editor' ? 'an editor' : 'a writer').'.' : 'Card torn up.');
+        $this->stamp($moved ? __('Card torn up.').' '.trans_choice($role->base === 'editor' ? ':count person went back to being an editor.|:count people went back to being editors.' : ':count person went back to being a writer.|:count people went back to being writers.', $moved) : __('Card torn up.'));
     }
 
     /** See the whole book as someone with this role would (only for you, until you stop). */

@@ -34,7 +34,7 @@
                 <span class="sticker sticker--sun" style="--tilt: -4deg">{{ __('New') }}</span>
                 <span style="min-width: 0">
                     <a href="{{ route('admin.settings.updates') }}" wire:navigate class="update-notice__title">{{ __('Booklet :version is out', ['version' => $update['version']]) }}</a>
-                    @if ($update['line'] !== '') <small>{{ $update['line'] }}</small> @endif
+                    @if ($update['line'] !== '') <small>{{ __($update['line']) }}</small> @endif
                 </span>
                 <span class="update-notice__do">
                     <a href="{{ route('admin.settings.updates') }}" wire:navigate class="btn btn--sm">{{ __('See what changed') }}</a>
@@ -121,7 +121,7 @@
                     <span class="insert-chip insert-chip--small" aria-hidden="true"></span>
                     {{ $card['title'].($card['count'] !== null ? ' · '.number_format($card['count']) : '') }}
                 </h2>
-                @if ($card['text']) <p class="insert-card__text">{{ $card['text'] }}</p> @endif
+                @if ($card['text']) <p class="insert-card__text">{{ __($card['text']) }}</p> @endif
                 @if ($card['items'] !== [])
                     <ul class="review-list">
                         @foreach ($card['items'] as $item)
@@ -133,7 +133,7 @@
                                 @endif
                                     <span class="dot" style="--dot: var(--tone)" aria-hidden="true"></span>
                                     <span style="min-width: 0">
-                                        <span class="review-list__title">{{ $item['label'] }}</span>
+                                        <span class="review-list__title">{{ __($item['label']) }}</span>
                                         @if ($item['meta'] !== '') <span class="review-list__meta">{{ $item['meta'] }}</span> @endif
                                     </span>
                                 @if ($item['href']) </a> @else </span> @endif
@@ -201,9 +201,9 @@
                 @foreach ($nudges as $nudge)
                     <li wire:key="nudge-{{ md5($nudge['key']) }}">
                         <span class="nudges__mark" aria-hidden="true"><x-admin.icon name="stacy" size="14" /></span>
-                        <span class="nudges__text">{{ $nudge['text'] }}</span>
+                        <span class="nudges__text">{{ __($nudge['text']) }}</span>
                         <span class="nudges__do">
-                            <a href="{{ $nudge['href'] }}" class="btn btn--sm" wire:navigate>{{ $nudge['label'] }}</a>
+                            <a href="{{ $nudge['href'] }}" class="btn btn--sm" wire:navigate>{{ __($nudge['label']) }}</a>
                             <button type="button" class="link-button nudges__later" wire:click="notNow(@js($nudge['key']))">{{ __('Not now') }}</button>
                         </span>
                     </li>
@@ -344,7 +344,7 @@
                 </div>
                 <p class="eyebrow">{{ __('New sticker') }} @if ($alsoEarned) · {{ __('and :count more', ['count' => $alsoEarned]) }} @endif</p>
                 <h2 id="sticker-pop-title" class="serif sticker-pop__title">{{ $celebrate['title'] }}</h2>
-                <p class="sticker-pop__line">{{ $celebrate['line'] }}</p>
+                <p class="sticker-pop__line">{{ __($celebrate['line']) }}</p>
                 <p class="sticker-pop__when mono">{{ $celebrate['scope'] === 'book' ? __('For the whole book') : __('Yours') }} · {{ $celebrate['at'] }}</p>
                 <div class="sticker-pop__do">
                     <button type="button" class="btn btn--ink" x-on:click="close()">{{ __('Stick it in the book') }}</button>

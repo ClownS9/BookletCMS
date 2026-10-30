@@ -9,15 +9,15 @@
             @foreach ($history as $v)
                 <li @class(['d-history__item', 'is-current' => $v['current']])>
                     <span class="d-history__when">{{ $v['when'] }}</span>
-                    <span class="d-history__who">{{ $v['who'] === 'scheduled' ? 'Went live as scheduled' : 'by '.$v['who'] }}@if ($v['current']) · <b>on the site now</b>@endif</span>
+                    <span class="d-history__who">{{ $v['who'] === 'scheduled' ? __('Went live as scheduled') : 'by '.$v['who'] }}@if ($v['current']) · <b>{{ __('on the site now') }}</b>@endif</span>
                     <span class="d-history__do">
-                        <a class="d-link" href="{{ $v['preview'] }}" target="_blank" rel="noopener">Look at it</a>
+                        <a class="d-link" href="{{ $v['preview'] }}" target="_blank" rel="noopener">{{ __('Look at it') }}</a>
                         <button type="button" class="d-link" data-do="restore" data-payload="{{ $v['id'] }}"
-                                data-confirm="Put the version from {{ $v['when'] }} back in the draft? Your changes since can come back with Undo.">Put this back</button>
+                                data-confirm="Put the version from {{ $v['when'] }} back in the draft? Your changes since can come back with Undo.">{{ __('Put this back') }}</button>
                     </span>
                 </li>
             @endforeach
         </ol>
-        <p class="d-note">The {{ \App\Models\PageBuildVersion::KEEP }} most recent are kept.</p>
+        <p class="d-note">{{ __('The :value most recent are kept.', ['value' => \App\Models\PageBuildVersion::KEEP]) }}</p>
     </details>
 @endif

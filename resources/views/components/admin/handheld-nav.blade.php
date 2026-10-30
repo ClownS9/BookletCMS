@@ -5,7 +5,7 @@
     $current = \App\Support\AdminNav::current();
     $tabs = collect($chapters)->whereIn('key', ['contents', 'posts', 'pages', 'media'])->values();
     $moreActive = ! $tabs->contains('active', true) && ! request()->routeIs('admin.stacy');
-    $groups = ['main' => 'Chapters', 'tools' => 'Tools', 'you' => 'You & the site'];
+    $groups = ['main' => __('Chapters'), 'tools' => __('Tools'), 'you' => __('You & the site')];
     $user = request()->user();
 @endphp
 
@@ -64,15 +64,15 @@
             </a>
 
             @foreach ($groups as $group => $heading)
-                <p class="toc-drawer__group">{{ $heading }}</p>
+                <p class="toc-drawer__group">{{ __($heading) }}</p>
                 <ul class="toc-drawer__list">
                     @foreach (collect($chapters)->where('group', $group) as $i => $chapter)
                         <li>
                             <a href="{{ $chapter['href'] }}" wire:navigate @if ($chapter['active']) aria-current="page" @endif style="--tone: var(--{{ $chapter['tone'] }})">
                                 <span class="toc-drawer__sticker" style="--tilt: {{ $loop->odd ? '-5deg' : '4deg' }}"><x-admin.icon :name="$chapter['icon']" size="16" /></span>
                                 <span class="toc-drawer__label">
-                                    <span>{{ $chapter['label'] }}</span>
-                                    <small>{{ $chapter['hint'] }}</small>
+                                    <span>{{ __($chapter['label']) }}</span>
+                                    <small>{{ __($chapter['hint']) }}</small>
                                 </span>
                                 @if ($chapter['badge'])
                                     <span class="toc-drawer__badge">{{ $chapter['badge'] }}</span>
@@ -96,7 +96,7 @@
         @foreach ($tabs as $tab)
             <a href="{{ $tab['href'] }}" wire:navigate class="tabbar__tab" style="--tone: var(--{{ $tab['tone'] }})" @if ($tab['active']) aria-current="page" @endif>
                 <span class="tabbar__icon"><x-admin.icon :name="$tab['icon']" size="20" /></span>
-                <span>{{ $tab['label'] }}</span>
+                <span>{{ __($tab['label']) }}</span>
             </a>
         @endforeach
         <button type="button" class="tabbar__tab" style="--tone: var(--sand)" x-on:click="open = true" @if ($moreActive) aria-current="page" @endif>

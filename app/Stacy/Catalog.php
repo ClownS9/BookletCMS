@@ -103,7 +103,9 @@ class Catalog
 
     public static function get(string $service): array
     {
-        return self::SERVICES[$service] ?? throw new InvalidArgumentException("Unknown AI service [{$service}].");
+        $one = self::SERVICES[$service] ?? throw new InvalidArgumentException("Unknown AI service [{$service}].");
+
+        return ['name' => __($one['name'])] + $one;
     }
 
     /**
@@ -142,6 +144,6 @@ class Catalog
 
     public static function names(): array
     {
-        return array_map(fn ($s) => $s['name'], self::SERVICES);
+        return array_map(fn ($s) => __($s['name']), self::SERVICES);
     }
 }

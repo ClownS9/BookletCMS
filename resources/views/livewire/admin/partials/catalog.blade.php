@@ -7,17 +7,17 @@
     $found = $this->findResults($kind);
     $topic = \App\Support\Sharing::TOPICS[$kind];
 @endphp
-<section class="catalog" aria-labelledby="catalog-title-{{ $kind }}">
+<section class="catalog" aria-labelledby="catalog-title-{{ __($kind) }}">
     <div class="catalog__head">
-        <h3 id="catalog-title-{{ $kind }}" class="catalog__title">Find {{ $kind === 'theme' ? 'themes' : 'inserts' }} on GitHub</h3>
-        <a href="https://github.com/topics/{{ $topic }}" target="_blank" rel="noopener" class="field__hint" style="margin: 0">All on GitHub <span aria-hidden="true">↗</span></a>
+        <h3 id="catalog-title-{{ __($kind) }}" class="catalog__title">{{ __('Find :value on GitHub', ['value' => $kind === 'theme' ? 'themes' : 'inserts']) }}</h3>
+        <a href="https://github.com/topics/{{ $topic }}" target="_blank" rel="noopener" class="field__hint" style="margin: 0">{{ __('All on GitHub') }} <span aria-hidden="true">↗</span></a>
     </div>
     <div class="catalog__tools">
-        <label for="catalog-find-{{ $kind }}" class="sr-only">Search</label>
-        <input id="catalog-find-{{ $kind }}" type="search" class="input" wire:model.live.debounce.500ms="find" placeholder="Search: {{ $kind === 'theme' ? 'dark, magazine…' : 'events, shop…' }}" autocomplete="off">
-        <label for="catalog-sort-{{ $kind }}" class="sr-only">Order</label>
-        <select id="catalog-sort-{{ $kind }}" class="input catalog__sort" wire:model.live="findSort">
-            @foreach (\App\Support\Catalog::SORTS as $value => $label) <option value="{{ $value }}">{{ $label }}</option> @endforeach
+        <label for="catalog-find-{{ __($kind) }}" class="sr-only">{{ __('Search') }}</label>
+        <input id="catalog-find-{{ __($kind) }}" type="search" class="input" wire:model.live.debounce.500ms="find" placeholder="Search: {{ $kind === 'theme' ? 'dark, magazine…' : 'events, shop…' }}" autocomplete="off">
+        <label for="catalog-sort-{{ __($kind) }}" class="sr-only">{{ __('Order') }}</label>
+        <select id="catalog-sort-{{ __($kind) }}" class="input catalog__sort" wire:model.live="findSort">
+            @foreach (\App\Support\Catalog::SORTS as $value => $label) <option value="{{ $value }}">{{ __($label) }}</option> @endforeach
         </select>
     </div>
 
@@ -26,10 +26,10 @@
             <p class="vc-note vc-note--warn" style="margin: 0">{{ $found['error'] }}</p>
         @elseif ($found['items'] === [])
             <p class="empty-note" style="margin: 0">
-                {{ $this->find !== '' ? 'Nothing found for “'.$this->find.'”.' : 'None yet.' }}
-                {{ $kind === 'theme' ? 'Themes' : 'Inserts' }} show up here when their GitHub repository is public and has the topic <code>{{ $topic }}</code>
-                (GitHub can take a few minutes to notice a new one).
-                <button type="button" class="link-button" wire:click="findAgain" wire:loading.attr="disabled" wire:target="findAgain">Look again</button>
+                {{ $this->find !== '' ? 'Nothing found for “'.$this->find.'”.' : __('None yet.') }}
+                {{ $kind === 'theme' ? __('Themes') : __('Inserts') }} show up here when their GitHub repository is public and has the topic <code>{{ $topic }}</code>
+                {{ __('(GitHub can take a few minutes to notice a new one).') }}
+                <button type="button" class="link-button" wire:click="findAgain" wire:loading.attr="disabled" wire:target="findAgain">{{ __('Look again') }}</button>
             </p>
         @else
             <ul class="catalog__list">
@@ -50,35 +50,35 @@
                                 ★ {{ number_format($item['stars']) }}
                                 @if ($item['updated']) · updated {{ \Illuminate\Support\Carbon::parse($item['updated'])->diffForHumans() }} @endif
                             </span>
-                            @if ($item['about']) <span class="catalog-item__about">{{ $item['about'] }}</span> @endif
+                            @if ($item['about']) <span class="catalog-item__about">{{ __($item['about']) }}</span> @endif
                             <span class="catalog-item__tags">
-                                @if ($here && $here['newer']) <span class="catalog-tag catalog-tag--new">Newer than yours ({{ $here['version'] }})</span>
-                                @elseif ($here) <span class="catalog-tag">On your shelf</span> @endif
-                                @if (! $fits) <span class="catalog-tag catalog-tag--warn">Needs Booklet {{ $item['needs'] }}</span> @endif
-                                @if ($kind === 'insert') <span class="catalog-tag" title="Adding code asks for your password (unless you gave it in the last few hours).">Code: needs your password</span>
-                                @elseif ($item['scripts']) <span class="catalog-tag" title="Adding code asks for your password (unless you gave it in the last few hours).">Has scripts: needs your password</span> @endif
-                                @if (! $item['readable']) <span class="catalog-tag catalog-tag--warn">No {{ $kind === 'theme' ? 'theme.json' : 'insert.php' }} found</span> @endif
+                                @if ($here && $here['newer']) <span class="catalog-tag catalog-tag--new">{{ __('Newer than yours (:version)', ['version' => $here['version']]) }}</span>
+                                @elseif ($here) <span class="catalog-tag">{{ __('On your shelf') }}</span> @endif
+                                @if (! $fits) <span class="catalog-tag catalog-tag--warn">{{ __('Needs Booklet :needs', ['needs' => $item['needs']]) }}</span> @endif
+                                @if ($kind === 'insert') <span class="catalog-tag" title="{{ __('Adding code asks for your password (unless you gave it in the last few hours).') }}">{{ __('Code: needs your password') }}</span>
+                                @elseif ($item['scripts']) <span class="catalog-tag" title="{{ __('Adding code asks for your password (unless you gave it in the last few hours).') }}">{{ __('Has scripts: needs your password') }}</span> @endif
+                                @if (! $item['readable']) <span class="catalog-tag catalog-tag--warn">{{ __('No :value found', ['value' => $kind === 'theme' ? 'theme.json' : 'insert.php']) }}</span> @endif
                             </span>
                         </span>
                         <span class="catalog-item__do">
                             <button type="button" class="btn btn--sm" wire:click="lookAt('{{ $item['repo'] }}')" wire:loading.attr="disabled" wire:target="lookAt('{{ $item['repo'] }}')" @disabled(! $fits || ! $item['readable'])>
-                                <span wire:loading.remove wire:target="lookAt('{{ $item['repo'] }}')">{{ $here && $here['newer'] ? 'Look at the update' : 'Look inside' }}</span>
-                                <span wire:loading wire:target="lookAt('{{ $item['repo'] }}')">Fetching…</span>
+                                <span wire:loading.remove wire:target="lookAt('{{ $item['repo'] }}')">{{ $here && $here['newer'] ? __('Look at the update') : __('Look inside') }}</span>
+                                <span wire:loading wire:target="lookAt('{{ $item['repo'] }}')">{{ __('Fetching…') }}</span>
                             </button>
-                            <a href="{{ $item['url'] }}" target="_blank" rel="noopener" class="catalog-item__github">GitHub <span aria-hidden="true">↗</span></a>
+                            <a href="{{ $item['url'] }}" target="_blank" rel="noopener" class="catalog-item__github">{{ __('GitHub') }} <span aria-hidden="true">↗</span></a>
                         </span>
                     </li>
                 @endforeach
             </ul>
             <p class="catalog__when">
                 Found {{ \Illuminate\Support\Carbon::parse($found['at'])->diffForHumans() }}.
-                <button type="button" class="link-button" wire:click="findAgain" wire:loading.attr="disabled" wire:target="findAgain">Look again</button>
+                <button type="button" class="link-button" wire:click="findAgain" wire:loading.attr="disabled" wire:target="findAgain">{{ __('Look again') }}</button>
             </p>
             @if ($found['page'] > 1 || $found['more'])
                 <div class="catalog__pager">
-                    <button type="button" class="btn btn--quiet btn--sm" wire:click="findPageTo({{ $found['page'] - 1 }})" @disabled($found['page'] <= 1)>← Back</button>
-                    <span class="field__hint" style="margin: 0">Page {{ $found['page'] }}</span>
-                    <button type="button" class="btn btn--quiet btn--sm" wire:click="findPageTo({{ $found['page'] + 1 }})" @disabled(! $found['more'])>More →</button>
+                    <button type="button" class="btn btn--quiet btn--sm" wire:click="findPageTo({{ $found['page'] - 1 }})" @disabled($found['page'] <= 1)>{{ __('← Back') }}</button>
+                    <span class="field__hint" style="margin: 0">{{ __('Page :page', ['page' => $found['page']]) }}</span>
+                    <button type="button" class="btn btn--quiet btn--sm" wire:click="findPageTo({{ $found['page'] + 1 }})" @disabled(! $found['more'])>{{ __('More →') }}</button>
                 </div>
             @endif
         @endif

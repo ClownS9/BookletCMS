@@ -50,17 +50,17 @@ class Redirects extends Component
         $to = preg_match('#^https?://#i', trim($this->to)) ? trim($this->to) : Forwarding::normalise($this->to);
 
         if ($from === '/') {
-            $this->addError('from', 'The home page can’t forward somewhere else.');
+            $this->addError('from', __('The home page can’t forward somewhere else.'));
 
             return;
         }
         if ($from === $to) {
-            $this->addError('to', 'That’s the same address. It would go round in circles.');
+            $this->addError('to', __('That’s the same address. It would go round in circles.'));
 
             return;
         }
         if (Redirect::where('from_path', $to)->where('to_path', $from)->exists()) {
-            $this->addError('to', 'That address already forwards here, so the two would go round in circles.');
+            $this->addError('to', __('That address already forwards here, so the two would go round in circles.'));
 
             return;
         }

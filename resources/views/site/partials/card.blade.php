@@ -10,9 +10,9 @@
     <span class="card__picture">
         @if ($cover)
             @if ($cut && $cut['cropped'])
-                <img src="{{ $cut['url'] }}" alt="{{ $cut['alt'] }}" loading="lazy" decoding="async" @if ($cut['srcset']) srcset="{{ $cut['srcset'] }}" sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px" @endif width="{{ $cut['width'] }}" height="{{ $cut['height'] }}">
+                <img src="{{ $cut['url'] }}" alt="{{ $cut['alt'] }}" loading="{{ \App\Support\Pictures::loading() }}" decoding="async" @if ($cut['srcset']) srcset="{{ $cut['srcset'] }}" sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px" @endif width="{{ $cut['width'] }}" height="{{ $cut['height'] }}">
             @else
-                <img src="{{ $cover }}" alt="{{ $site->imageAlt($entry) }}" loading="lazy" decoding="async" @if ($srcset = $site->imageSrcset($entry)) srcset="{{ $srcset }}" sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px" @endif style="object-position: {{ $site->imageFocus($entry) }}">
+                <img src="{{ $cover }}" alt="{{ $site->imageAlt($entry) }}" loading="{{ \App\Support\Pictures::loading() }}" decoding="async" @if ($srcset = $site->imageSrcset($entry)) srcset="{{ $srcset }}" sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px" @endif style="object-position: {{ $site->imageFocus($entry) }}">
             @endif
         @else
             <span class="card__blank" aria-hidden="true"></span>

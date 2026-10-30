@@ -29,7 +29,8 @@ class BookLanguage
     public static function isBook(Request $request): bool
     {
         $path = trim($request->path(), '/');
-        if (preg_match('#^(admin|login|logout|setup|forgot-password|reset-password|two-factor|account)(/|$)#', $path)) {
+        // The page builder's drawer and its answers are the book's too (its preview is a reader's page).
+        if (preg_match('#^(admin|login|logout|setup|forgot-password|reset-password|two-factor|account|builder/(edit|start|here))(/|$)#', $path)) {
             return true;
         }
         // A Livewire update: whichever page it came from.

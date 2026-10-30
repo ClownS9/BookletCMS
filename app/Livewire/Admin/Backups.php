@@ -86,7 +86,7 @@ class Backups extends Component
         abort_unless(request()->user()->isAdmin(), 403);
 
         if (mb_strtolower(trim($this->confirmWord)) !== 'restore') {
-            $this->addError('confirmWord', 'Type the word restore to go ahead.');
+            $this->addError('confirmWord', __('Type the word restore to go ahead.'));
 
             return;
         }
@@ -99,7 +99,7 @@ class Backups extends Component
             return;
         }
 
-        $this->stamp('Restored. The book as it was is saved too, as “'.$done['safety'].'”.', afterRedirect: true);
+        $this->stamp(__('Restored. The book as it was is saved too, as “:name”.', ['name' => $done['safety']]), afterRedirect: true);
         $this->redirectRoute('admin.contents');
     }
 

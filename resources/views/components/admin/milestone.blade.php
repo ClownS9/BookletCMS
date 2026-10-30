@@ -12,9 +12,9 @@
         'milestone--waiting' => ! $s['earned'],
     ]) }}
       style="--tilt: {{ $tilt }}deg"
-      role="img" aria-label="{{ $label }}" title="{{ $label }}">
+      role="img" aria-label="{{ __($label) }}" title="{{ __($label) }}">
     <span class="milestone__big">{{ $s['big'] }}</span>
     @if ($size !== 'sm')
-        <span class="milestone__small">{{ $s['scope'] === 'book' ? 'the book' : 'yours' }}</span>
+        <span class="milestone__small">{{ $s['scope'] === 'book' ? __('the book') : __('yours') }}</span>
     @endif
 </span>

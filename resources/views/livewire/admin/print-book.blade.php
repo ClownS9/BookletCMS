@@ -2,18 +2,18 @@
     {{-- Left page: what goes in, and how it's cut --}}
     <section class="page page--left page--stack" style="flex-basis: 420px">
         <div>
-            <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> Posts</a>
+            <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
             <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">Print as a book</h1>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">Your writing, typeset for paper: a title page, contents, each post starting on its own page, running heads and page numbers. Print it, or save it as a PDF for a print shop.</p>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Print as a book') }}</h1>
+            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Your writing, typeset for paper: a title page, contents, each post starting on its own page, running heads and page numbers. Print it, or save it as a PDF for a print shop.') }}</p>
         </div>
 
         <section class="print-opts">
-            <h2 class="eyebrow section-label">What goes in</h2>
+            <h2 class="eyebrow section-label">{{ __('What goes in') }}</h2>
 
             <div class="print-opts__row">
                 <div class="field">
-                    <label for="pb-collection">Chapter</label>
+                    <label for="pb-collection">{{ __('Chapter') }}</label>
                     <select id="pb-collection" wire:model.live="collection">
                         @foreach ($collections as $c)
                             <option value="{{ $c->handle() }}">{{ $c->title() }}</option>
@@ -21,9 +21,9 @@
                     </select>
                 </div>
                 <div class="field">
-                    <label for="pb-author">Written by</label>
+                    <label for="pb-author">{{ __('Written by') }}</label>
                     <select id="pb-author" wire:model.live="author">
-                        <option value="">Everyone</option>
+                        <option value="">{{ __('Everyone') }}</option>
                         @foreach ($people as $p)
                             <option value="{{ $p->id }}">{{ $p->byline ?: $p->name }}</option>
                         @endforeach
@@ -34,11 +34,11 @@
             @if ($dated)
                 <div class="print-opts__row">
                     <div class="field">
-                        <label for="pb-from">From</label>
+                        <label for="pb-from">{{ __('From') }}</label>
                         <input id="pb-from" type="date" wire:model.live="from">
                     </div>
                     <div class="field">
-                        <label for="pb-to">To</label>
+                        <label for="pb-to">{{ __('To') }}</label>
                         <input id="pb-to" type="date" wire:model.live="to">
                     </div>
                 </div>
@@ -47,9 +47,9 @@
             <div class="print-opts__row">
                 @if ($tags->isNotEmpty())
                     <div class="field">
-                        <label for="pb-tag">Tagged</label>
+                        <label for="pb-tag">{{ __('Tagged') }}</label>
                         <select id="pb-tag" wire:model.live="tag">
-                            <option value="">Any tag</option>
+                            <option value="">{{ __('Any tag') }}</option>
                             @foreach ($tags as $t)
                                 <option value="{{ $t->slug() }}">{{ $t->title() }}</option>
                             @endforeach
@@ -58,29 +58,29 @@
                 @endif
                 @if ($editions)
                     <div class="field">
-                        <label for="pb-lang">Language</label>
+                        <label for="pb-lang">{{ __('Language') }}</label>
                         <select id="pb-lang" wire:model.live="lang">
-                            <option value="">As written</option>
+                            <option value="">{{ __('As written') }}</option>
                             @foreach ($editions as $code => $name)
-                                <option value="{{ $code }}">{{ $name }} edition</option>
+                                <option value="{{ $code }}">{{ __(':name edition', ['name' => $name]) }}</option>
                             @endforeach
                         </select>
                     </div>
                 @endif
                 <div class="field">
-                    <label for="pb-order">Order</label>
+                    <label for="pb-order">{{ __('Order') }}</label>
                     <select id="pb-order" wire:model.live="order">
-                        <option value="oldest">{{ $dated ? 'Oldest first' : 'As on the site' }}</option>
-                        <option value="newest">{{ $dated ? 'Newest first' : 'Reversed' }}</option>
+                        <option value="oldest">{{ $dated ? __('Oldest first') : __('As on the site') }}</option>
+                        <option value="newest">{{ $dated ? __('Newest first') : __('Reversed') }}</option>
                     </select>
                 </div>
             </div>
         </section>
 
         <section class="print-opts">
-            <h2 class="eyebrow section-label">The pages</h2>
+            <h2 class="eyebrow section-label">{{ __('The pages') }}</h2>
             <div class="field">
-                <label for="pb-size">Page size</label>
+                <label for="pb-size">{{ __('Page size') }}</label>
                 <select id="pb-size" wire:model.live="size">
                     @foreach (\App\Support\PrintBook::SIZES as $key => [$name])
                         <option value="{{ $key }}">{{ $name }}</option>
@@ -88,9 +88,9 @@
                 </select>
             </div>
             <div class="print-opts__checks">
-                <label class="check"><input type="checkbox" wire:model.live="toc"> A table of contents</label>
-                <label class="check"><input type="checkbox" wire:model.live="covers"> Cover pictures</label>
-                <label class="check"><input type="checkbox" wire:model.live="recto"> Start each one on a right-hand page</label>
+                <label class="check"><input type="checkbox" wire:model.live="toc"> {{ __('A table of contents') }}</label>
+                <label class="check"><input type="checkbox" wire:model.live="covers"> {{ __('Cover pictures') }}</label>
+                <label class="check"><input type="checkbox" wire:model.live="recto"> {{ __('Start each one on a right-hand page') }}</label>
             </div>
         </section>
 
@@ -111,29 +111,28 @@
             </div>
         </div>
             <div class="print-title__fields">
-                <h2 class="eyebrow section-label">The title page</h2>
+                <h2 class="eyebrow section-label">{{ __('The title page') }}</h2>
             <div class="field">
-                <label for="pb-title">Title</label>
+                <label for="pb-title">{{ __('Title') }}</label>
                 <input id="pb-title" type="text" wire:model.live.debounce.400ms="title" maxlength="120">
             </div>
             <div class="field">
-                <label for="pb-subtitle">Subtitle</label>
-                <input id="pb-subtitle" type="text" wire:model.live.debounce.400ms="subtitle" maxlength="200" placeholder="Optional">
+                <label for="pb-subtitle">{{ __('Subtitle') }}</label>
+                <input id="pb-subtitle" type="text" wire:model.live.debounce.400ms="subtitle" maxlength="200" placeholder="{{ __('Optional') }}">
             </div>
             <div class="field">
-                <label for="pb-byline">By</label>
+                <label for="pb-byline">{{ __('By') }}</label>
                 <input id="pb-byline" type="text" wire:model.live.debounce.400ms="byline" maxlength="160" placeholder="{{ \App\Support\PrintBook::authorsOf($entries) ?: 'Your name' }}">
-                <p class="field__hint">Leave it empty to use the names of whoever wrote these.</p>
+                <p class="field__hint">{{ __('Leave it empty to use the names of whoever wrote these.') }}</p>
             </div>
                     </div>
         </div>
 
         <div>
-            <p class="eyebrow">About</p>
+            <p class="eyebrow">{{ __('About') }}</p>
             <p class="print-sum">
-                <strong>{{ number_format($entries->count()) }}</strong> {{ str('entry')->plural($entries->count()) }}
-                · <strong>{{ number_format($words) }}</strong> words
-                · about <strong>{{ number_format($pages) }}</strong> pages
+                {!! trans_choice('<strong>:count</strong> entry|<strong>:count</strong> entries', $entries->count(), ['count' => number_format($entries->count())]) !!}
+                · <strong>{{ number_format($words) }}</strong> {{ __('words · about') }} <strong>{{ number_format($pages) }}</strong> {{ __('pages') }}
             </p>
             @if ($total > $entries->count())
                 <p class="field__hint" style="margin-top: 6px">{{ number_format($total - $entries->count()) }} more match, but one book holds {{ \App\Support\PrintBook::LIMIT }}. Narrow the dates to make a second volume.</p>
@@ -141,7 +140,7 @@
         </div>
 
         @if ($entries->isEmpty())
-            <p class="empty-note">Nothing published matches these choices yet.</p>
+            <p class="empty-note">{{ __('Nothing published matches these choices yet.') }}</p>
         @else
             <ol class="print-list">
                 @foreach ($entries->take(6) as $e)
@@ -161,11 +160,11 @@
             <a href="{{ $href }}" target="_blank" rel="noopener" wire:click="remember"
                @class(['btn', 'btn--ink', 'btn--lg', 'is-disabled' => $entries->isEmpty()])
                @if ($entries->isEmpty()) aria-disabled="true" tabindex="-1" @endif>
-                <x-admin.icon name="printer" size="18" /> Lay out the book
+                <x-admin.icon name="printer" size="18" /> {{ __('Lay out the book') }}
             </a>
-            <button type="button" class="link-button" wire:click="startOver">Start over</button>
+            <button type="button" class="link-button" wire:click="startOver">{{ __('Start over') }}</button>
         </div>
-        <p class="field__hint">It opens in a new tab and sets the type there (a few seconds for a long book). Then choose <strong>Print</strong>, or <strong>Save as PDF</strong> as the printer. Works best in Chrome, Edge or Safari.</p>
+        <p class="field__hint">{{ __('It opens in a new tab and sets the type there (a few seconds for a long book). Then choose') }} <strong>{{ __('Print') }}</strong>{{ __(', or') }} <strong>{{ __('Save as PDF') }}</strong> {{ __('as the printer. Works best in Chrome, Edge or Safari.') }}</p>
 
         <x-admin.folio side="right" />
     </section>

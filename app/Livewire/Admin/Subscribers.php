@@ -100,7 +100,7 @@ class Subscribers extends Component
         }
         @set_time_limit(300);
         $n = Newsletter::send($entry);
-        $this->stamp($n ? 'Sent to '.number_format($n).' '.str('reader')->plural($n).'.' : 'Already sent, or nobody to send it to yet.');
+        $this->stamp($n ? trans_choice('Sent to :count reader.|Sent to :count readers.', $n, ['count' => number_format($n)]) : __('Already sent, or nobody to send it to yet.'));
     }
 
     /** "Don't email this one." */

@@ -493,7 +493,7 @@ class Collections extends Component
         $count = Booklet::entries()->whereCollection($this->editing)->count();
 
         if ($count > 0) {
-            $this->addError('delete', "{$this->title} still has {$count} ".Str::plural('entry', $count).'. Move or delete them first.');
+            $this->addError('delete', trans_choice(':title still has :count entry. Move or delete it first.|:title still has :count entries. Move or delete them first.', $count, ['title' => $this->title]));
 
             return;
         }

@@ -48,11 +48,11 @@ class MenuHealth
                 $entry = Booklet::entries()->find((string) $row['entry']);
                 $key = 'entry:'.$row['entry'];
                 if (! $entry) {
-                    $say[] = ['level' => 'warn', 'text' => 'Points at a page that’s been deleted, so it isn’t on the site. Remove it, or put the page back from the bin.'];
+                    $say[] = ['level' => 'warn', 'text' => __('Points at a page that’s been deleted, so it isn’t on the site. Remove it, or put the page back from the bin.')];
                 } elseif ($entry->status() === 'scheduled') {
-                    $say[] = ['level' => 'note', 'text' => 'Scheduled'.($entry->date() ? ' for '.$entry->date()->timezone(config('app.timezone'))->format('j M, g:ia') : '').': it shows up in the menu then.'];
+                    $say[] = ['level' => 'note', 'text' => $entry->date() ? __('Scheduled for :when: it shows up in the menu then.', ['when' => $entry->date()->timezone(config('app.timezone'))->translatedFormat('j M, g:ia')]) : __('Scheduled: it shows up in the menu then.')];
                 } elseif ($entry->status() !== 'published') {
-                    $say[] = ['level' => 'warn', 'text' => 'A draft, so it’s left out of the menu until it’s published.'];
+                    $say[] = ['level' => 'warn', 'text' => __('A draft, so it’s left out of the menu until it’s published.')];
                 }
                 if ($entry && ! empty($row['follow']) && self::publishedChildren($entry) === 0) {
                     $say[] = ['level' => 'note', 'text' => 'Brings its sub-pages along, but none are published yet.'];
@@ -61,7 +61,7 @@ class MenuHealth
                 $url = (string) ($row['url'] ?? '');
                 $key = 'url:'.rtrim(strtolower($url), '/');
                 if (str_starts_with($url, '/') && ! self::existsHere($url, $site)) {
-                    $say[] = ['level' => 'warn', 'text' => 'Nothing on this site at '.Str::limit(strtok($url, '?#') ?: $url, 60).' yet, so readers get “page not found”.'];
+                    $say[] = ['level' => 'warn', 'text' => __('Nothing on this site at :address yet, so readers get “page not found”.', ['address' => Str::limit(strtok($url, '?#') ?: $url, 60)])];
                 } elseif (str_starts_with(strtolower($url), 'http://')) {
                     $say[] = ['level' => 'note', 'text' => 'Not a secure (https) link. Most sites have an https address now.'];
                 }
@@ -79,7 +79,7 @@ class MenuHealth
             }
             $direct = collect(array_slice($rows, $i + 1, $children))->where('depth', $depth + 1)->count();
             if ($direct > self::DROP_ITEMS) {
-                $say[] = ['level' => 'note', 'text' => $direct.' items drop down from it: a long list to scroll on a phone. Grouping some under others helps.'];
+                $say[] = ['level' => 'note', 'text' => __(':count items drop down from it: a long list to scroll on a phone. Grouping some under others helps.', ['count' => $direct])];
             }
 
             if ($say !== []) {
@@ -91,7 +91,7 @@ class MenuHealth
         if ($handle === 'header' || str_starts_with($handle, 'header')) {
             $letters = array_sum(array_map(fn ($r) => mb_strlen(self::label($r)), $top));
             if (count($top) > self::BAR_ITEMS || $letters > self::BAR_LETTERS) {
-                $menu[] = ['level' => 'warn', 'text' => count($top).' items across the top ('.$letters.' letters): on smaller screens the bar wraps onto two lines. Tucking a few under others keeps it to one.'];
+                $menu[] = ['level' => 'warn', 'text' => __(':count items across the top (:letters letters): on smaller screens the bar wraps onto two lines. Tucking a few under others keeps it to one.', ['count' => count($top), 'letters' => $letters])];
             }
         }
         if ($rows === []) {

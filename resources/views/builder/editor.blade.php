@@ -5,7 +5,11 @@
     "blog"), $built, $start (open the editor straight away) and $draft (not
     on the site yet).
 --}}
-@php $built ??= true; @endphp
+@php
+    $built ??= true;
+    // The editor speaks the book's language (the page around it, the site's).
+    $bookLang = \App\Support\BookLanguage::for(request());
+@endphp
 <div id="pb-editor" hidden
      data-edit="{{ route('builder.edit', $target) }}"
      data-act="{{ route('builder.act', $target) }}"
@@ -16,7 +20,8 @@
      data-query="{{ $query ?? '' }}"
      data-token="{{ csrf_token() }}"
      data-css="{{ asset('booklet/builder-edit.css') }}?v={{ filemtime(public_path('booklet/builder-edit.css')) }}"
-     data-label="{{ ! $built ? 'Build this page' : ($target === 'blog' ? 'Arrange this page' : 'Edit this page') }}"
+     data-label="{{ __(! $built ? 'Build this page' : ($target === 'blog' ? 'Arrange this page' : 'Edit this page'), [], $bookLang) }}"
+     data-words="{{ json_encode(\App\Support\ScriptWords::for('builder-edit.js', $bookLang), JSON_UNESCAPED_UNICODE) }}"
      data-title="{{ $title ?? '' }}"
      data-draft="{{ ($draft ?? false) ? 1 : 0 }}"
      data-start="{{ ($start ?? false) ? 1 : 0 }}"

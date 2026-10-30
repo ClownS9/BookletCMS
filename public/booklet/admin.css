@@ -5843,3 +5843,16 @@ body.night .size-print small { color: var(--faint); }
 .update-notice__title:hover { text-decoration: underline; }
 .update-notice small { display: block; margin-top: 2px; font-size: 13px; line-height: 1.45; color: var(--muted); }
 .update-notice__do { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 4px; }
+/* A gentle note under the writing: a heading that skips a step */
+.body-hint { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--sun); border-radius: 0 8px 8px 0; background: color-mix(in srgb, var(--sun) 14%, transparent); font-size: 13.5px; line-height: 1.5; color: var(--muted); max-width: 640px; }
+
+/* Passkeys: is this device ready? */
+.pk-check { border: 1px solid var(--rule); border-radius: 12px; padding: 10px 14px; background: var(--paper); }
+.pk-check summary { cursor: pointer; font-size: 14px; font-weight: 500; min-height: 28px; display: flex; align-items: center; }
+.pk-check__list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.pk-check__row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.pk-check__row strong { color: var(--ink); font-weight: 600; }
+.pk-check__mark { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; margin-top: 1px; }
+.pk-check__row--ok .pk-check__mark { background: color-mix(in srgb, var(--online) 16%, transparent); color: var(--online); }
+.pk-check__row--warn .pk-check__mark { background: color-mix(in srgb, #b7791f 18%, transparent); color: #8a5a12; }
+.pk-check__row--no .pk-check__mark { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }

@@ -64,9 +64,9 @@ class DogEar extends Component
         <button type="button" @class(['dog-ear', 'is-folded' => $folded])
                 x-data x-on:click="$wire.toggle(document.title)"
                 aria-pressed="{{ $folded ? 'true' : 'false' }}"
-                title="{{ $folded ? 'Unfold this page (remove bookmark)' : 'Fold this corner to bookmark the page' }}">
+                title="{{ $folded ? __('Unfold this page (remove bookmark)') : __('Fold this corner to bookmark the page') }}">
             <span class="dog-ear__fold" aria-hidden="true"></span>
-            <span class="sr-only">{{ $folded ? 'Remove bookmark' : 'Bookmark this page' }}</span>
+            <span class="sr-only">{{ $folded ? __('Remove bookmark') : __('Bookmark this page') }}</span>
         </button>
         BLADE;
     }

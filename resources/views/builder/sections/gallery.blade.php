@@ -7,7 +7,7 @@
             @if ($pic)
                 <li>
                     <figure>
-                        <img src="{{ $pic['url'] }}" alt="{{ $pic['alt'] }}" loading="lazy" decoding="async" style="object-position: {{ $pic['focus'] }}"
+                        <img src="{{ $pic['url'] }}" alt="{{ $pic['alt'] }}" loading="{{ $f->live ? 'lazy' : \App\Support\Pictures::loading() }}" decoding="async" style="object-position: {{ $pic['focus'] }}"
                              @if ($pic['srcset'] !== '') srcset="{{ $pic['srcset'] }}" sizes="(max-width: 760px) 50vw, 380px" @endif
                              @if ($f->live) data-pb-pick="pictures" @endif>
                         @if ($f->get('captions') && $pic['alt'] !== '') <figcaption>{{ $pic['alt'] }}</figcaption> @endif

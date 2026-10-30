@@ -184,7 +184,7 @@ class Menus extends Component
         ActivityLog::record('threw away the seasonal menu', 'settings', 'navigation', $this->menu, $season['title']);
         \App\Support\PageCache::flush();
         $this->switchTo($season['for']);
-        $this->stamp('Thrown away. “'.$season['title'].'” won’t show again.');
+        $this->stamp(__('Thrown away. “:title” won’t show again.', ['title' => $season['title']]));
     }
 
     // Adding -----------------------------------------------------------------
@@ -385,10 +385,10 @@ class Menus extends Component
         $season = MenuStore::season($this->menu);
         $warnings = MenuHealth::warnings($this->rows, $this->forHandle());
         $this->stamp(match ($season ? MenuStore::seasonState($season) : 'main') {
-            'coming' => 'Saved. It takes over on '.\Illuminate\Support\Carbon::parse($season['from'])->format('j F').'.',
-            'over' => 'Saved. Its dates are past, so the site doesn’t show it.',
-            default => 'Menu saved. The site shows it now.',
-        }.($warnings ? ' ('.$warnings.' '.\Illuminate\Support\Str::plural('thing', $warnings).' to look at, marked in the list.)' : ''));
+            'coming' => __('Saved. It takes over on :date.', ['date' => \Illuminate\Support\Carbon::parse($season['from'])->translatedFormat('j F')]),
+            'over' => __('Saved. Its dates are past, so the site doesn’t show it.'),
+            default => __('Menu saved. The site shows it now.'),
+        }.($warnings ? ' '.trans_choice('(:count thing to look at, marked in the list.)|(:count things to look at, marked in the list.)', $warnings) : ''));
         $this->dispatch('menu-preview', foot: $this->forHandle() !== 'header');
     }
 

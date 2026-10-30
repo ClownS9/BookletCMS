@@ -2,7 +2,7 @@
     {{-- Left page: what this insert is, and anything it shows there --}}
     <section class="page page--left page--stack" style="flex-basis: 380px">
         <div>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · an insert</p>
+            <p class="eyebrow chapter-mark">{{ __(':value · an insert', ['value' => \App\Support\AdminNav::chapterLabel()]) }}</p>
             <h1 class="display display--page" style="margin-top: 8px">{{ $page['title'] }}</h1>
             @if ($insert->about() !== '')
                 <p class="lede" style="margin-top: 12px; font-size: 15px">{{ $insert->about() }}</p>
@@ -15,7 +15,7 @@
 
         @if ($insert->slipHelp() !== [])
             <p class="field__hint" style="margin-top: auto">In a post or page:
-                @foreach ($insert->slipHelp() as $line) <code>{{ $line }}</code>@if (! $loop->last), @endif @endforeach
+                @foreach ($insert->slipHelp() as $line) <code>{{ __($line) }}</code>@if (! $loop->last), @endif @endforeach
             </p>
         @endif
         <x-admin.folio side="left" />

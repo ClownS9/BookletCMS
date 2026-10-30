@@ -108,7 +108,7 @@
                                 @foreach ($pictureSizes as $handle => $size)
                                     <span class="size-print" style="--tilt: {{ ['-2deg', '1.5deg', '-1deg', '2deg', '-1.5deg', '1deg'][$loop->index % 6] }}; --w: {{ $size['width'] }}; --h: {{ $size['height'] }}">
                                         <img src="{{ $urls[$chosen->path()] }}" alt="" :style="`object-position: ${x}% ${y}%`">
-                                        <small>{{ $size['label'] }} · {{ \App\Support\Crops::ratio($size['width'], $size['height']) }}</small>
+                                        <small>{{ __($size['label']) }} · {{ \App\Support\Crops::ratio($size['width'], $size['height']) }}</small>
                                     </span>
                                 @endforeach
                             </div>
@@ -128,7 +128,7 @@
                                     <button type="button" class="size-link" x-data="{ copied: false }"
                                             x-on:click="navigator.clipboard.writeText(@js($cropUrl)); copied = true; setTimeout(() => copied = false, 1500)"
                                             title="{{ $size['width'] }}×{{ $size['height'] }}, cut around the focal point">
-                                        <span x-show="! copied">{{ $size['label'] }}</span><span x-show="copied" x-cloak>{{ __('Copied') }}</span>
+                                        <span x-show="! copied">{{ __($size['label']) }}</span><span x-show="copied" x-cloak>{{ __('Copied') }}</span>
                                     </button>
                                 @endforeach
                             </div>

@@ -43,9 +43,45 @@
             </form>
         @else
             <button type="button" class="btn" style="align-self: flex-start" wire:click="startPasskey">{{ __('Add a passkey') }}</button>
-            <p class="field__hint" x-show="!available" x-cloak style="margin: 0">{{ __('This browser can’t make passkeys here. They need a recent browser and a secure (https) address.') }}</p>
+            <p class="field__hint" x-show="!available" x-cloak style="margin: 0">{{ __('This browser can’t make passkeys here. They need a recent browser and a secure (https) address: see below for what’s missing.') }}</p>
         @endif
         @error('passkey') <p class="field__error" role="alert">{{ $message }}</p> @enderror
+
+        @php
+            $pkWords = [
+                'secure' => __('Secure address'),
+                'secureOk' => __(':address is secure.'),
+                'secureNo' => __(':address isn’t secure, so the browser won’t make passkeys here. Use https, or open the book at http://localhost while trying it on your own computer.'),
+                'named' => __('An address with a name'),
+                'namedOk' => __(':host is a name, as passkeys need.'),
+                'namedNo' => __(':host is numbers, and passkeys need a name. Open :suggest instead.'),
+                'browser' => __('This browser'),
+                'browserOk' => __('It can use passkeys.'),
+                'browserNo' => __('It can’t use passkeys. Try a recent Safari, Chrome, Edge or Firefox.'),
+                'device' => __('A check on this device'),
+                'deviceOk' => __('This device can check it’s you itself: Touch ID, Face ID or Windows Hello.'),
+                'deviceNo' => __('No Touch ID, Face ID or Windows Hello found. On a Mac: System Settings › Touch ID & Password, add a fingerprint. You can still use your phone or a security key.'),
+                'server' => __('The server sees the same address'),
+                'serverOk' => __('Yes, :address.'),
+                'serverNo' => __('The browser is at :browser, but the server thinks it is at :server, so it would refuse the passkey. Behind a proxy that handles https? Add TRUSTED_PROXIES=* to .env.'),
+            ];
+        @endphp
+        {{-- Is this device ready? Opens by itself when something is wrong. --}}
+        <details class="pk-check" x-data="bookletPasskeyCheck(@js(request()->getSchemeAndHttpHost()))" x-on:toggle="if ($el.open) run()"
+                 @if ($errors->has('passkey')) open @endif>
+            <summary>{{ __('Is this device ready for passkeys?') }}</summary>
+            <ul class="pk-check__list" aria-live="polite">
+                <template x-for="row in rows" :key="row.key">
+                    <li :class="'pk-check__row pk-check__row--' + row.state">
+                        <span class="pk-check__mark" aria-hidden="true" x-text="row.state === 'ok' ? '✓' : (row.state === 'no' ? '✕' : '!')"></span>
+                        <span><strong x-text="row.title"></strong> <span x-text="row.text"></span></span>
+                    </li>
+                </template>
+            </ul>
+            <p class="field__hint" x-show="rows.length && rows.every((r) => r.state === 'ok')" x-cloak style="margin: 8px 0 0">{{ __('All set. Press Add a passkey, and your device asks for your face, finger or PIN.') }}</p>
+            <script type="application/json" data-pk-words>{!! json_encode($pkWords, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) !!}</script>
+        </details>
+
         @if ($passkeys->isNotEmpty() && $on)
             <p class="field__hint" style="margin: 0">{{ __('A passkey checks it’s you on the device itself, so it skips the code from your app too.') }}</p>
         @endif

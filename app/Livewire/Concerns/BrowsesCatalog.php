@@ -40,7 +40,7 @@ trait BrowsesCatalog
     {
         $limit = 'catalog-again:'.request()->user()->id;
         if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($limit, 1)) {
-            $this->stamp('Just looked. Try again in '.\Illuminate\Support\Facades\RateLimiter::availableIn($limit).' seconds.');
+            $this->stamp(__('Just looked. Try again in :seconds seconds.', ['seconds' => \Illuminate\Support\Facades\RateLimiter::availableIn($limit)]));
 
             return;
         }

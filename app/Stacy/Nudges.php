@@ -43,7 +43,7 @@ class Nudges
             if ($fail) {
                 $nudges[] = [
                     'key' => 'health-'.md5(implode('|', $fail)),
-                    'text' => 'The server check-up found '.(count($fail) === 1 ? 'something' : count($fail).' things').' to fix: '.Str::lower(implode(', ', array_slice($fail, 0, 3))).'.',
+                    'text' => trans_choice('The server check-up found something to fix: :what.|The server check-up found :count things to fix: :what.', count($fail), ['what' => Str::lower(implode(', ', array_map(fn ($f) => __($f), array_slice($fail, 0, 3))))]),
                     'label' => 'See how',
                     'href' => route('admin.settings.health'),
                 ];
@@ -60,8 +60,10 @@ class Nudges
         if ($quiet) {
             $nudges[] = [
                 'key' => 'quiet-'.$quiet->id(),
-                'text' => '“'.Str::limit($quiet->title() ?: 'Untitled', 50).'” hasn’t been touched in '
-                    .Carbon::parse($quiet->lastModified())->diffForHumans(['parts' => 1, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]).'. Finish it, or let it go?',
+                'text' => __('“:title” hasn’t been touched in :time. Finish it, or let it go?', [
+                    'title' => Str::limit($quiet->title() ?: __('Untitled'), 50),
+                    'time' => Carbon::parse($quiet->lastModified())->diffForHumans(['parts' => 1, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE]),
+                ]),
                 'label' => 'Open the draft',
                 'href' => route('admin.entries.edit', [$quiet->collectionHandle(), $quiet->id()]),
             ];
@@ -73,7 +75,7 @@ class Nudges
         if ($noAlt) {
             $nudges[] = [
                 'key' => 'alt',
-                'text' => $noAlt === 1 ? 'One picture has no description yet.' : $noAlt.' pictures have no description yet. I can write them for you.',
+                'text' => trans_choice('One picture has no description yet.|:count pictures have no description yet. I can write them for you.', $noAlt),
                 'label' => 'Media',
                 'href' => route('admin.media'),
             ];

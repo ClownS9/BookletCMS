@@ -140,6 +140,6 @@ class Rows
                 default => (string) $row[$h],
             })->filter()->implode(' '))->implode('; ');
 
-        return count($rows).' '.Str::plural('row', count($rows)).': '.$lines.(count($rows) > 4 ? '; …' : '');
+        return trans_choice(':count row|:count rows', count($rows)).': '.$lines.(count($rows) > 4 ? '; …' : '');
     }
 }

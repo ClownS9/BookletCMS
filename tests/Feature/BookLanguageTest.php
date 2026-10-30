@@ -68,6 +68,48 @@ class BookLanguageTest extends TestCase
         $this->assertFalse(BookLanguage::isBook(\Illuminate\Http\Request::create('/livewire/update', 'POST', server: ['HTTP_REFERER' => url('/contact')])));
     }
 
+    public function test_settings_the_appendices_and_the_page_builder_speak_malay(): void
+    {
+        $this->admin->update(['preferences' => ['locale' => 'ms']]);
+        $me = $this->admin->fresh();
+
+        $this->actingAs($me)->get(route('admin.settings'))->assertOk()->assertSee('Asas tentang laman anda.')->assertDontSee('The basics about your site.');
+        $this->actingAs($me)->get(route('admin.settings.health'))->assertOk()->assertSee('Setiap semakan')->assertSee('Pelayan')
+            ->assertSee('semakan, dibuat sebentar tadi.')->assertDontSee('checks, made just now')->assertDontSee('thing to fix');
+        $this->actingAs($me)->get(route('admin.backups'))->assertOk()->assertSee('Buat sandaran sekarang');
+        $this->actingAs($me)->get(route('admin.activity'))->assertOk()->assertDontSee('Every change, newest first');
+        $this->actingAs($me)->get(route('admin.settings.version-control'))->assertOk()->assertSee('Kandungan anda disimpan dalam pangkalan data');
+
+        // Counts say their number the Malay way, not “3 things”.
+        app()->setLocale('ms');
+        $this->assertSame('3 perkara untuk dibaiki', trans_choice(':count thing to fix|:count things to fix', 3));
+        $this->assertSame('Bersambung (SQLite).', __('Connected (:name).', ['name' => 'SQLite']));
+        app()->setLocale('en');
+        $this->assertSame('1 thing to fix', trans_choice(':count thing to fix|:count things to fix', 1));
+
+        // The page builder: its drawer and bar answer in the book's language; the page itself stays the site's.
+        $edit = $this->actingAs($me)->getJson(route('builder.edit', 'blog'))->assertOk();
+        $this->assertSame('Mengikut Kulit Buku', $edit->json('bar.words'));
+        $this->assertStringContainsString('Semua bahagian', (string) $edit->json('drawer'));
+        $this->assertStringNotContainsString('All sections', (string) $edit->json('drawer'));
+
+        // The kit's names and choices, in the drawer's language; what a section starts with is left alone.
+        app()->setLocale('ms');
+        $builder = app(\App\PageBuilder\Builder::class);
+        $this->assertSame('Blog', $builder->types()['blog-posts']['group']);
+        $this->assertSame('Kiriman', $builder->types()['blog-posts']['name']);
+        $this->assertSame('Telefon sahaja', $builder->looks()['show']['options']['phone']);
+        $this->assertSame('About this blog', $builder->types()['blog-posts']['start']['about_title'], 'starting words are the site’s');
+        app()->setLocale('en');
+        $this->assertSame('Phones only', $builder->looks()['show']['options']['phone']);
+
+        // The editor's script gets its words, in Malay, with the page.
+        $words = \App\Support\ScriptWords::for('builder-edit.js', 'ms');
+        $this->assertSame('Buat asal', $words['Undo']);
+        $this->assertSame('Laci', $words['Drawer']);
+        $this->assertSame([], \App\Support\ScriptWords::for('builder-edit.js', 'en'));
+    }
+
     public function test_every_word_on_the_translated_pages_has_its_malay(): void
     {
         $ms = json_decode((string) file_get_contents(lang_path('ms.json')), true);

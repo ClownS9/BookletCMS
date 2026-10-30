@@ -147,21 +147,29 @@ class PageBuilder
         return $page->isBlog() ? $page->published !== null : (bool) $page->entry()?->published();
     }
 
+    /** A kind of section's name, in English (the kit's own words, to put into a language). */
+    public static function kindName(string $type): string
+    {
+        $kit = app(Builder::class)->kit;
+
+        return (string) ($kit['sections'][$type]['name'] ?? $type);
+    }
+
     /** Where it stands: [draft|changed|live|scheduled, words]. */
     public function status(PageBuild $page): array
     {
         $live = $this->onSite($page);
         if ($page->scheduled_at) {
-            return ['scheduled', ($live ? 'Changes scheduled for ' : 'Scheduled for ').$this->when($page->scheduled_at)];
+            return ['scheduled', __($live ? 'Changes scheduled for :when' : 'Scheduled for :when', ['when' => $this->when($page->scheduled_at)])];
         }
         if (! $live) {
-            return ['draft', $page->isBlog() ? 'Following The cover' : 'Not on the site'];
+            return ['draft', __($page->isBlog() ? 'Following The cover' : 'Not on the site')];
         }
         if ($page->published === null || $this->sectionsOf($page) != $this->sectionsOf($page, false)) {
-            return ['changed', 'Changes not published'];
+            return ['changed', __('Changes not published')];
         }
 
-        return ['live', $page->isBlog() ? 'As readers see it' : 'On the site'];
+        return ['live', __($page->isBlog() ? 'As readers see it' : 'On the site')];
     }
 
     public function isHome(?Entry $entry): bool

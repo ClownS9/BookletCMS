@@ -277,8 +277,8 @@ class Media extends Component
 
         unset($this->assets);
         $this->stamp($added || $removed
-            ? "Found {$added} new ".Str::plural('file', $added).", removed {$removed} missing."
-            : 'Everything is already in the album.', afterRedirect: true);
+            ? trans_choice('Found :count new file, removed :removed missing.|Found :count new files, removed :removed missing.', $added, ['removed' => $removed])
+            : __('Everything is already in the album.'), afterRedirect: true);
         $this->redirectRoute('admin.media', ['in' => $this->container], navigate: true);
     }
 

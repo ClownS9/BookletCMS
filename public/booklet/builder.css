@@ -28,7 +28,8 @@
 
 /* Backgrounds */
 .pb-bg--soft { background: var(--paper-2, #EFE9DC); }
-.pb-bg--accent { background: var(--accent, #F4876A); --pb-ink: var(--ink, #1E1C18); --pb-soft-ink: var(--ink, #1E1C18); --pb-line: color-mix(in srgb, var(--ink, #1E1C18) 25%, transparent); }
+/* The accent is a bright colour in day and night reading alike, so the words on it stay dark in both. */
+.pb-bg--accent { background: var(--accent, #F4876A); --pb-ink: #1E1C18; --pb-soft-ink: #1E1C18; --pb-line: rgba(30, 28, 24, .25); color: #1E1C18; }
 .pb-bg--ink { background: var(--ink, #1E1C18); --pb-ink: var(--paper, #FBF8F1); --pb-soft-ink: color-mix(in srgb, var(--paper, #FBF8F1) 78%, transparent); --pb-line: color-mix(in srgb, var(--paper, #FBF8F1) 22%, transparent); --pb-card: color-mix(in srgb, var(--paper, #FBF8F1) 8%, var(--ink, #1E1C18)); }
 .pb-bg--picture { background: #1E1C18 var(--pb-picture) center / cover no-repeat; background-position: var(--pb-focus, center); --pb-ink: #fff; --pb-soft-ink: rgba(255, 255, 255, .86); --pb-line: rgba(255, 255, 255, .3); --pb-card: rgba(20, 18, 16, .55); }
 /* Sticker colours, soft enough to read on (light and dark) */
@@ -279,8 +280,8 @@ h1.pb-eyebrow { font-family: inherit; }
 /* Announcement */
 .pb-notice { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 17px; line-height: 1.45; }
 .pb-align--center .pb-notice { justify-content: center; }
-.pb-notice__sticker { display: inline-block; padding: 3px 10px; border-radius: 6px; background: var(--accent, #F4876A); color: var(--ink, #1E1C18); font: 700 12px/1.4 var(--sans, system-ui, sans-serif); letter-spacing: .06em; text-transform: uppercase; transform: rotate(-2deg); }
-.pb-bg--accent .pb-notice__sticker { background: var(--ink, #1E1C18); color: var(--paper, #FBF8F1); }
+.pb-notice__sticker { display: inline-block; padding: 3px 10px; border-radius: 6px; background: var(--accent, #F4876A); color: #1E1C18; font: 700 12px/1.4 var(--sans, system-ui, sans-serif); letter-spacing: .06em; text-transform: uppercase; transform: rotate(-2deg); }
+.pb-bg--accent .pb-notice__sticker { background: #1E1C18; color: #FBF8F1; }
 .pb-notice__words { font-weight: 500; color: var(--pb-ink); }
 .pb-notice__link { font-weight: 600; color: var(--pb-ink); text-underline-offset: 3px; }
 .pb-notice__link::after { content: " →"; }
@@ -372,8 +373,8 @@ h1.pb-eyebrow { font-family: inherit; }
 @media (max-width: 760px) { .pb-page:not(.pb-live) .pb-show--computer, .pb-embed .pb-show--computer { display: none; } }
 @media (min-width: 761px) { .pb-page:not(.pb-live) .pb-show--phone, .pb-embed .pb-show--phone { display: none; } }
 .pb-live .pb-show--computer::after, .pb-live .pb-show--phone::after { position: absolute; top: 10px; right: 10px; z-index: 2; padding: 3px 9px; border-radius: 999px; background: #1E1C18; color: #FBF8F1; font: 600 11px/1.4 var(--sans, system-ui, sans-serif); letter-spacing: .02em; opacity: .8; pointer-events: none; }
-.pb-live .pb-show--computer::after { content: "Computers only"; }
-.pb-live .pb-show--phone::after { content: "Phones only"; }
+.pb-live .pb-show--computer::after { content: attr(data-pb-show-label); }
+.pb-live .pb-show--phone::after { content: attr(data-pb-show-label); }
 .pb-live .pb-show--computer, .pb-live .pb-show--phone { outline: 1px dashed color-mix(in srgb, #5B7BE0 50%, transparent); outline-offset: -1px; }
 .pb-live [data-pb-section].is-dragging { opacity: .45; }
 html.pb-dragging, html.pb-dragging * { cursor: grabbing !important; user-select: none !important; }

@@ -15,7 +15,7 @@
         </div>
 
         <div style="padding-top: 20px; border-top: 1px solid var(--rule)">
-            <h2 class="eyebrow section-label">{{ $chosen['label'] }}@if ($chosen['today']) · {{ __('today') }} @endif</h2>
+            <h2 class="eyebrow section-label">{{ __($chosen['label']) }}@if ($chosen['today']) · {{ __('today') }} @endif</h2>
             @forelse ($chosen['entries'] as $item)
                 <a href="{{ $item['href'] }}" class="row" style="padding: 10px; gap: 10px" wire:navigate>
                     <span class="dot" style="--dot: {{ $tones[$item['status']] }}; --tilt: 0deg"></span>
@@ -67,7 +67,7 @@
                         x-on:dragover.prevent="over = true" x-on:dragleave="over = false"
                         x-on:drop.prevent="over = false; const id = $event.dataTransfer.getData('text/booklet-entry'); if (id) $wire.planDraft(id, '{{ $d['date'] }}')"
                         aria-pressed="{{ $chosen['date'] === $d['date'] ? 'true' : 'false' }}"
-                        aria-label="{{ $d['label'] }}{{ count($d['entries']) ? ', '.trans_choice(':count item|:count items', count($d['entries'])) : '' }}"
+                        aria-label="{{ __($d['label']) }}{{ count($d['entries']) ? ', '.trans_choice(':count item|:count items', count($d['entries'])) : '' }}"
                         @class(['day', 'day--outside' => ! $d['inMonth']])>
                     <span @class(['day__n', 'day__n--today' => $d['today']])>{{ $d['n'] }}</span>
                     @foreach (array_slice($d['entries'], 0, 3) as $k => $item)

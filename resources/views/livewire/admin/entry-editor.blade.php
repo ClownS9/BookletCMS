@@ -134,6 +134,13 @@
             <label for="field-content" class="sr-only">{{ $bodyField['display'] }}</label>
             <textarea id="field-content" class="body-input" wire:model.blur="values.content" placeholder="{{ __('Start writing…') }}"></textarea>
             @error('values.content') <p class="field__error">{{ $message }}</p> @enderror
+            @if ($jump = \App\Support\Headings::skip((string) ($values['content'] ?? '')))
+                <p class="body-hint" role="note">
+                    {{ $jump['after'] === 1
+                        ? __('“:heading” is a :marks heading right under the title. Start with ## and go one step at a time: people using screen readers find their way by headings.', ['heading' => $jump['text'], 'marks' => str_repeat('#', $jump['level'])])
+                        : __('“:heading” jumps from :from to :marks. Go one step at a time: people using screen readers find their way by headings.', ['heading' => $jump['text'], 'from' => str_repeat('#', $jump['after']), 'marks' => str_repeat('#', $jump['level'])]) }}
+                </p>
+            @endif
         @endif
 
         @if ($otherMain->isNotEmpty())
@@ -222,7 +229,7 @@
                         @if ($reviewInfo['at']) <span class="review-card__when">· {{ $reviewInfo['at']->diffForHumans() }}</span> @endif
                     </p>
                     @if ($reviewInfo['note'] !== '')
-                        <blockquote class="review-card__note">{{ $reviewInfo['note'] }}</blockquote>
+                        <blockquote class="review-card__note">{{ __($reviewInfo['note']) }}</blockquote>
                     @endif
                 @endif
 

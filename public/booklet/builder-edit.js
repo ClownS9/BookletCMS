@@ -11,6 +11,23 @@
  */
 (() => {
     const host = document.getElementById('pb-editor');
+    // The editor's own words, in the book's language (sent with the page; English stays as it is).
+    let words = {};
+    try { words = JSON.parse((host && host.dataset.words) || '{}'); } catch (e) { words = {}; }
+    const t = (s) => words[s] || s;
+    const say = (s, values) => Object.keys(values || {}).reduce((out, k) => out.split(':' + k).join(values[k]), t(s));
+    // Everything drawn from a template: its words, labels and hints.
+    const translate = (root) => {
+        if (!Object.keys(words).length) return;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            const text = n.nodeValue.trim();
+            if (text && words[text]) n.nodeValue = n.nodeValue.replace(text, words[text]);
+        }
+        root.querySelectorAll('[aria-label], [title], [placeholder]').forEach((el) => {
+            ['aria-label', 'title', 'placeholder'].forEach((a) => { const v = el.getAttribute(a); if (v && words[v]) el.setAttribute(a, words[v]); });
+        });
+    };
 
     // A page or post that isn't built yet: "Build this page" starts building it (from its own words).
     if (host && host.dataset.begin && !host.dataset.ready) {
@@ -25,11 +42,11 @@
         const button = shadow.querySelector('.start');
         shadow.querySelector('.start__words').textContent = host.dataset.label;
         button.addEventListener('click', () => {
-            const name = host.dataset.title ? '“' + host.dataset.title + '”' : 'this page';
-            if (!confirm('Build ' + name + ' of sections, here on the page? Its words and pictures become sections to start from. Readers see it as it is until you publish.')) return;
+            const name = host.dataset.title ? '“' + host.dataset.title + '”' : t('this page');
+            if (!confirm(say('Build :name of sections, here on the page? Its words and pictures become sections to start from. Readers see it as it is until you publish.', { name }))) return;
             button.disabled = true;
             fetch(host.dataset.begin, { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': host.dataset.token, 'X-Requested-With': 'XMLHttpRequest' } })
-                .then((r) => { if (!r.ok) throw new Error(r.status === 419 ? 'Your sign-in ran out. Reload the page and try again.' : 'That didn’t work. Reload the page and try again.'); return r.json(); })
+                .then((r) => { if (!r.ok) throw new Error(t(r.status === 419 ? 'Your sign-in ran out. Reload the page and try again.' : 'That didn’t work. Reload the page and try again.')); return r.json(); })
                 .then((data) => { window.location.href = data.go; })
                 .catch((e) => { button.disabled = false; const t = shadow.querySelector('.toast'); t.textContent = e.message; t.hidden = false; });
         });
@@ -90,9 +107,10 @@
             <div class="phone__frame"><iframe title="The draft, as a phone shows it"></iframe></div>
             <button type="button" class="phone__close">Back to editing</button>
         </div>`;
+    translate(ui);
 
     const $ = (s) => ui.querySelector(s);
-    $('.start__words').textContent = cfg.label || 'Edit this page';
+    $('.start__words').textContent = cfg.label || t('Edit this page');
     if (cfg.help) $('[data-bar-help]').href = cfg.help; else $('[data-bar-help]').remove();
     const start = $('.start'), tools = $('.tools'), addHere = $('.add-here'), drawer = $('.drawer'), inner = $('.drawer__inner');
     const bar = $('.bar'), toastEl = $('.toast'), phone = $('.phone');
@@ -112,11 +130,11 @@
             body ? { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': cfg.token } : {}),
         body: body ? JSON.stringify(body) : undefined,
     }).then(async (r) => {
-        if (r.status === 419) throw new Error('Your sign-in ran out. Reload the page to carry on (your changes so far are kept).');
-        if (r.status === 401 || r.status === 403) throw new Error('You’re signed out. Sign in again to carry on.');
+        if (r.status === 419) throw new Error(t('Your sign-in ran out. Reload the page to carry on (your changes so far are kept).'));
+        if (r.status === 401 || r.status === 403) throw new Error(t('You’re signed out. Sign in again to carry on.'));
         let data = null;
         try { data = await r.json(); } catch (e) {}
-        if (!data) throw new Error('That didn’t work. Try again in a moment.');
+        if (!data) throw new Error(t('That didn’t work. Try again in a moment.'));
         return data;
     });
 
@@ -142,7 +160,7 @@
         }
         if (data.rev !== undefined) rev = data.rev;
         if (data.copy) copyLink(data.copy, data.stamp);
-        else if (data.stamp) toast(data.stamp, !!data.stale, data.open ? { href: data.open, words: 'Go to it' } : null);
+        else if (data.stamp) toast(data.stamp, !!data.stale, data.open ? { href: data.open, words: t('Go to it') } : null);
         else if (data.errors && Object.keys(data.errors).length) toast(Object.values(data.errors)[0], true);
         markSelected(opts.scroll);
     };
@@ -339,7 +357,7 @@
             if (!s.rangeCount) return;
             const a = linkAt();
             if (a) { const r = document.createRange(); r.selectNodeContents(a); s.removeAllRanges(); s.addRange(r); }
-            if (s.getRangeAt(0).collapsed) { toast('Choose some words first, then make them a link.'); return; }
+            if (s.getRangeAt(0).collapsed) { toast(t('Choose some words first, then make them a link.')); return; }
             savedRange = s.getRangeAt(0).cloneRange();
             linking = true;
             fmt.classList.add('is-linking');
@@ -362,7 +380,7 @@
         if (url !== '' && !/^(#|\/|\?|[a-z][a-z0-9+.-]*:)/i.test(url)) url = url.includes('@') && !url.includes('/') ? 'mailto:' + url : 'https://' + url;
         closeLink();
         if (url === '') { document.execCommand('unlink'); return; }
-        if (/^(javascript|data|vbscript):/i.test(url)) { toast('That isn’t an address a link can go to.', true); return; }
+        if (/^(javascript|data|vbscript):/i.test(url)) { toast(t('That isn’t an address a link can go to.'), true); return; }
         document.execCommand('createLink', false, url);
         rich && rich.dispatchEvent(new Event('input'));
     });
@@ -629,14 +647,14 @@
         bar.querySelector('[data-bar="redo"]').disabled = !b.redoable;
         const pub = bar.querySelector('[data-bar="publish"]');
         pub.disabled = b.status === 'live';
-        pub.textContent = { draft: 'Publish', changed: 'Publish changes', scheduled: 'Publish now' }[b.status] || 'Published';
+        pub.textContent = t({ draft: 'Publish', changed: 'Publish changes', scheduled: 'Publish now' }[b.status] || 'Published');
         drawOthers(b.others || []);
     };
     // Someone else building this page right now.
     const drawOthers = (names) => {
         const el = bar.querySelector('.bar__others');
         el.hidden = names.length === 0;
-        el.textContent = names.length === 1 ? names[0] + ' is editing this page too' : names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' are editing this page too' : '';
+        el.textContent = names.length === 1 ? say(':name is editing this page too', { name: names[0] }) : names.length > 1 ? say(':names and :last are editing this page too', { names: names.slice(0, -1).join(', '), last: names[names.length - 1] }) : '';
     };
 
     // Still here, every 20 seconds: who else is, and whether the page changed (brought up to date if so).
@@ -647,7 +665,7 @@
             drawOthers(data.others || []);
             if (rev !== null && data.rev !== rev && busy === 0 && !typingNow() && !drag) {
                 const q = new URLSearchParams({ query: cfg.query || '', section: state.section || '', tab: state.tab });
-                request('GET', cfg.edit + '?' + q.toString()).then((fresh) => { apply(fresh); toast('This page changed elsewhere, so it’s brought up to date.'); });
+                request('GET', cfg.edit + '?' + q.toString()).then((fresh) => { apply(fresh); toast(t('This page changed elsewhere, so it’s brought up to date.')); });
             }
         }).catch(() => {});
     };
@@ -684,7 +702,7 @@
 
     // Copying a link (a proof copy's): to the clipboard, or shown to copy by hand.
     const copyLink = (url, words) => {
-        const done = () => toast((words ? words + ' ' : '') + 'The link is copied.');
+        const done = () => toast((words ? words + ' ' : '') + t('The link is copied.'));
         if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, () => toast(url));
         else toast((words ? words + ' ' : '') + url);
     };

@@ -113,7 +113,7 @@ class ContentApiSettings extends Component
         }
         $key->forceFill(['revoked_at' => now()])->save();
         ActivityLog::record('switched off a content API key', 'settings', 'settings', 'content_api', 'Content API', ['for' => $key->name]);
-        $this->stamp('“'.$key->name.'” switched off. Anything using it stops getting answers now.');
+        $this->stamp(__('“:name” switched off. Anything using it stops getting answers now.', ['name' => $key->name]));
     }
 
     public function render()

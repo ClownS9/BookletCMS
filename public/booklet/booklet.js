@@ -1619,7 +1619,8 @@ window.bookletPasskeys = (() => {
     };
     const ids = (list) => (list || []).map((c) => ({ ...c, id: bytes(c.id) }));
     const available = () => !!(window.isSecureContext && window.PublicKeyCredential && navigator.credentials);
-    const reason = () => (!window.isSecureContext ? 'insecure' : (!window.PublicKeyCredential ? 'unsupported' : null));
+    const numbers = () => /^\d{1,3}(\.\d{1,3}){3}$/.test(location.hostname) || location.hostname.startsWith('[');
+    const reason = () => (!window.isSecureContext ? 'insecure' : (!window.PublicKeyCredential ? 'unsupported' : (numbers() ? 'numbers' : null)));
 
     async function make(o) {
         const made = await navigator.credentials.create({ publicKey: {
@@ -1684,6 +1685,42 @@ window.bookletPasskey = (what) => ({
             this.busy = false;
             if (!done) this.prepare(); // ready for another try
         }
+    },
+});
+
+/*
+ * "Is this device ready for passkeys?": the things a browser needs before it
+ * will make one, checked here rather than guessed at from a failed attempt.
+ *   x-data="bookletPasskeyCheck(serverOrigin)" on a <details>, words in a
+ *   <script type="application/json" data-pk-words> inside it.
+ */
+window.bookletPasskeyCheck = (server) => ({
+    rows: [],
+    async run() {
+        let w = {};
+        try { w = JSON.parse(this.$el.querySelector('[data-pk-words]').textContent); } catch (e) { /* the English below */ }
+        const say = (key, values = {}) => String(w[key] || key).replace(/:([a-z]+)/g, (m, k) => (k in values ? values[k] : m));
+        const host = location.hostname;
+        const numbers = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':') || host.startsWith('[');
+        const rows = [
+            { key: 'secure', title: say('secure'), state: window.isSecureContext ? 'ok' : 'no', text: say(window.isSecureContext ? 'secureOk' : 'secureNo', { address: location.origin }) },
+            { key: 'named', title: say('named'), state: numbers ? 'no' : 'ok', text: say(numbers ? 'namedNo' : 'namedOk', { host, suggest: location.protocol + '//localhost' + (location.port ? ':' + location.port : '') + location.pathname }) },
+        ];
+        const browser = !!(window.PublicKeyCredential && navigator.credentials);
+        rows.push({ key: 'browser', title: say('browser'), state: browser ? 'ok' : 'no', text: say(browser ? 'browserOk' : 'browserNo') });
+        if (browser && window.isSecureContext) {
+            let device = false;
+            try { device = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch (e) { device = false; }
+            rows.push({ key: 'device', title: say('device'), state: device ? 'ok' : 'warn', text: say(device ? 'deviceOk' : 'deviceNo') });
+        }
+        const same = !server || server === location.origin;
+        rows.push({ key: 'server', title: say('server'), state: same ? 'ok' : 'no', text: say(same ? 'serverOk' : 'serverNo', { address: location.origin, browser: location.origin, server }) });
+        this.rows = rows;
+    },
+    init() {
+        // Open (and checked) straight away when this browser can't make passkeys here.
+        if (!window.bookletPasskeys.available()) this.$el.open = true;
+        if (this.$el.open) this.run();
     },
 });
 

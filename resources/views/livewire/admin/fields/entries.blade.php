@@ -35,7 +35,7 @@
         <p class="field__hint">{{ trans_choice(':count linked entry has been torn out; it’s dropped when you save.|:count linked entries have been torn out; they’re dropped when you save.', $missing) }}</p>
     @endif
     @unless ($full)
-        <button type="button" class="btn btn--dashed btn--sm spines__add" wire:click="openShelf(@js($target))">+ {{ $label }}</button>
+        <button type="button" class="btn btn--dashed btn--sm spines__add" wire:click="openShelf(@js($target))">+ {{ __($label) }}</button>
     @else
         <p class="field__hint">{{ __('That’s all :max it holds. Unlink one to choose another.', ['max' => $max]) }}</p>
     @endunless

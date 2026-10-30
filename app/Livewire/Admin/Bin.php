@@ -48,7 +48,7 @@ class Bin extends Component
             return;
         }
 
-        $this->stamp('“'.\Illuminate\Support\Str::limit($back['label'], 40).'” is back.');
+        $this->stamp(__('“:title” is back.', ['title' => \Illuminate\Support\Str::limit($back['label'], 40)]));
     }
 
     public function forget(int $id): void

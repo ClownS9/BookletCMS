@@ -138,7 +138,7 @@ class Inserts extends Component
             $this->password = '';
             $this->resetErrorBag();
         } catch (\RuntimeException $e) {
-            $this->stamp('The update couldn’t be fetched: '.\Illuminate\Support\Str::limit($e->getMessage(), 160));
+            $this->stamp(__('The update couldn’t be fetched: :error', ['error' => \Illuminate\Support\Str::limit($e->getMessage(), 160)]));
         }
     }
 
@@ -178,7 +178,7 @@ class Inserts extends Component
         if ($this->needsPassword()) {
             $limit = 'insert-password:'.request()->user()?->id;
             if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($limit, 5)) {
-                $this->addError('password', 'Too many tries. Wait a minute, then try again.');
+                $this->addError('password', __('Too many tries. Wait a minute, then try again.'));
 
                 return;
             }
@@ -264,7 +264,7 @@ class Inserts extends Component
         } catch (Throwable $e) {
             report($e);
             $this->manager()->noteError($insert->key, $e);
-            $this->stamp('It couldn’t be switched on: '.\Illuminate\Support\Str::limit($e->getMessage(), 140), afterRedirect: true);
+            $this->stamp(__('It couldn’t be switched on: :error', ['error' => \Illuminate\Support\Str::limit($e->getMessage(), 140)]), afterRedirect: true);
         }
 
         $this->manager()->forget();
@@ -283,7 +283,7 @@ class Inserts extends Component
                 $this->stamp('Tucked back in. If it breaks again, it comes out again.', afterRedirect: true);
             } catch (Throwable $e) {
                 $this->manager()->noteError($insert->key, $e);
-                $this->stamp('Still not working: '.\Illuminate\Support\Str::limit($e->getMessage(), 140), afterRedirect: true);
+                $this->stamp(__('Still not working: :error', ['error' => \Illuminate\Support\Str::limit($e->getMessage(), 140)]), afterRedirect: true);
             }
             $this->redirectRoute('admin.settings.inserts', ['insert' => $insert->key], navigate: false);
         }

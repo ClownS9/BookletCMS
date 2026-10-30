@@ -90,7 +90,7 @@ class StacySettings extends Component
         ], ['apiKey' => 'API key', 'baseUrl' => 'address', 'defaultModel' => 'model']);
 
         if ($this->enabled && $info['needs_key'] && $this->apiKey === '' && ! $record->api_key) {
-            $this->addError('apiKey', 'This service needs an API key.');
+            $this->addError('apiKey', __('This service needs an API key.'));
 
             return;
         }
@@ -208,7 +208,7 @@ class StacySettings extends Component
         abort_unless(request()->user()->isAdmin(), 403);
 
         if ($this->defaultModel === '') {
-            $this->addError('defaultModel', 'Choose a model to test.');
+            $this->addError('defaultModel', __('Choose a model to test.'));
 
             return;
         }

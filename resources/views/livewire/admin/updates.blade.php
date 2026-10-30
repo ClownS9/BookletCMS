@@ -74,7 +74,7 @@
                         @php $i = $loop->index; @endphp
                         <li @class(['is-done' => $i <= $at, 'is-current' => ($preparing || $ready) && $i === $at + 1])>
                             <span class="setup__n" aria-hidden="true">{{ $i <= $at ? '✓' : $i + 1 }}</span>
-                            <span>{{ $label }}</span>
+                            <span>{{ __($label) }}</span>
                         </li>
                     @endforeach
                 </ol>
