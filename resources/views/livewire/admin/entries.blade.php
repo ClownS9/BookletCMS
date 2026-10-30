@@ -29,10 +29,16 @@
         @endif
         <x-admin.insert-links :chapter="$model->title()" />
 
-        <div class="search" style="margin-top: 16px">
-            <x-admin.icon name="search" size="16" />
-            <label for="entry-search" class="sr-only">{{ __('Search :what', ['what' => $model->title()]) }}</label>
-            <input id="entry-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ __('Search this chapter') }}">
+        <div class="entry-find">
+            <div class="search">
+                <x-admin.icon name="search" size="16" />
+                <label for="entry-search" class="sr-only">{{ __('Search :what', ['what' => $model->title()]) }}</label>
+                <input id="entry-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ $within === 'everything' ? __('Search titles, the writing, tags and writers') : __('Search this chapter') }}">
+            </div>
+            @include('livewire.admin.partials.entry-filters-toggle')
+        </div>
+        <div class="entry-find__filters">
+            @include('livewire.admin.partials.entry-filters')
         </div>
 
         <div class="filters has-handheld-twin" role="group" aria-label="{{ __('Filter by status') }}" style="margin: 16px 0 12px">
@@ -45,8 +51,9 @@
 
         @if ($rows === [])
             <p class="empty-note">
-                @if ($search !== '' || $status !== 'all')
+                @if ($search !== '' || $status !== 'all' || $filtersOn > 0)
                     {{ __('Nothing matches on this page. Try another filter.') }}
+                    @if ($filtersOn > 0 || $search !== '') <button type="button" class="link-button" wire:click="clearFilters">{{ __('Clear all') }}</button> @endif
                 @else
                     {{ __('Nothing in :what yet.', ['what' => $model->title()]) }} <a href="{{ route('admin.entries.create', $model->handle()) }}" wire:navigate>{{ __('Write the first one →') }}</a>
                 @endif

@@ -103,10 +103,22 @@ class TableFiltersTest extends TestCase
         $table->assertSet('when', '')->assertSet('edited', '')->assertSet('within', 'titles')->assertSet('in', []);
     }
 
-    public function test_the_book_layout_is_untouched(): void
+    public function test_the_book_layout_has_the_same_filters(): void
     {
         YourBook::save($this->admin, ['layout' => 'book']);
-        Livewire::withQueryParams(['by' => 'me'])->actingAs($this->admin->fresh())->test(Entries::class, ['collection' => 'posts'])
-            ->assertSet('by', '')->assertDontSee('dash-filters', false);
+        $list = Livewire::withQueryParams(['by' => (string) $this->hana->id])->actingAs($this->admin->fresh())->test(Entries::class, ['collection' => 'posts'])
+            ->assertSet('filtersOpen', true)
+            ->assertSee('dash-filters', false)
+            ->assertSee('dash-chip', false);
+        $this->assertSame(['Kuih lapis', 'Market day'], $this->titles($list));
+
+        $this->assertSame(['Kuih lapis'], $this->titles($list->set('search', 'coconut')->set('within', 'everything')));
+        $list->call('clearFilters')->assertSet('by', '');
+    }
+
+    public function test_pages_filter_too(): void
+    {
+        $list = Livewire::actingAs($this->admin)->test(Entries::class, ['collection' => 'pages'])->set('edited', 'stale');
+        $this->assertSame([], $this->titles($list)); // the starter pages were just made
     }
 }

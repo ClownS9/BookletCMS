@@ -60,10 +60,7 @@
                             <label for="entry-search" class="sr-only">{{ __('Search :what', ['what' => __($model->title())]) }}</label>
                             <input id="entry-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ $within === 'everything' ? __('Search titles, the writing, tags and writers') : __('Search this chapter') }}">
                         </div>
-                        <button type="button" class="btn btn--sm dash-filter-toggle" wire:click="$toggle('filtersOpen')" aria-expanded="{{ $filtersOpen ? 'true' : 'false' }}" aria-controls="entry-filters">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-                            {{ __('Filters') }}@if ($filtersOn > 0) <b class="dash-filter-toggle__n">{{ $filtersOn }}</b>@endif
-                        </button>
+                        @include('livewire.admin.partials.entry-filters-toggle')
                         @if ($structured)
                             <span class="dash-tools__links">{{ __('Nested the way they appear on the site.') }}</span>
                         @else
@@ -72,57 +69,7 @@
                             </span>
                         @endif
                     </div>
-                    @if ($filtersOpen)
-                        <div class="dash-filters" id="entry-filters" role="group" aria-label="{{ __('Filters') }}" wire:key="filters">
-                            <label class="dash-filter">
-                                <span>{{ __('Written by') }}</span>
-                                <select class="input" wire:model.live="by">
-                                    @foreach ($filterChoices['by'] as $value => $label)<option value="{{ $value }}" @selected((string) $value === $by)>{{ $label }}</option>@endforeach
-                                </select>
-                            </label>
-                            @foreach ($filterChoices['in'] as $handle => $field)
-                                <label class="dash-filter" wire:key="filter-in-{{ $handle }}">
-                                    <span>{{ $field['label'] }}</span>
-                                    <select class="input" wire:model.live="in.{{ $handle }}">
-                                        @foreach ($field['options'] as $value => $label)<option value="{{ $value }}" @selected((string) $value === ($in[$handle] ?? ''))>{{ $label }}</option>@endforeach
-                                    </select>
-                                </label>
-                            @endforeach
-                            @if ($filterChoices['when'] !== [])
-                                <label class="dash-filter">
-                                    <span>{{ __('Date') }}</span>
-                                    <select class="input" wire:model.live="when">
-                                        @foreach ($filterChoices['when'] as $value => $label)<option value="{{ $value }}" @selected((string) $value === $when)>{{ $label }}</option>@endforeach
-                                    </select>
-                                </label>
-                            @endif
-                            <label class="dash-filter">
-                                <span>{{ __('Last edited') }}</span>
-                                <select class="input" wire:model.live="edited">
-                                    @foreach ($filterChoices['edited'] as $value => $label)<option value="{{ $value }}" @selected((string) $value === $edited)>{{ $label }}</option>@endforeach
-                                </select>
-                            </label>
-                            <fieldset class="dash-filter dash-filter--within">
-                                <legend>{{ __('Search in') }}</legend>
-                                <div class="dash-seg">
-                                    <label><input type="radio" value="titles" wire:model.live="within"><span>{{ __('Titles') }}</span></label>
-                                    <label><input type="radio" value="everything" wire:model.live="within"><span>{{ __('Everything') }}</span></label>
-                                </div>
-                            </fieldset>
-                        </div>
-                    @endif
-                    @if ($activeFilters !== [] || $search !== '')
-                        <div class="dash-chips" role="status">
-                            <span class="dash-chips__count">{{ trans_choice('Showing :shown of :total|Showing :shown of :total', $total, ['shown' => number_format($shown), 'total' => number_format($total)]) }}</span>
-                            @if ($search !== '')
-                                <button type="button" class="dash-chip" wire:click="$set('search', '')" aria-label="{{ __('Stop searching for “:words”', ['words' => $search]) }}"><span>{{ __('Search') }}:</span> “{{ \Illuminate\Support\Str::limit($search, 40) }}” <i aria-hidden="true">×</i></button>
-                            @endif
-                            @foreach ($activeFilters as $f)
-                                <button type="button" class="dash-chip" wire:click="dropFilter('{{ $f['key'] }}')" wire:key="chip-{{ $f['key'] }}" aria-label="{{ __('Remove filter :name: :value', ['name' => $f['label'], 'value' => $f['value']]) }}"><span>{{ $f['label'] }}:</span> {{ $f['value'] }} <i aria-hidden="true">×</i></button>
-                            @endforeach
-                            <button type="button" class="link-button dash-chips__clear" wire:click="clearFilters">{{ __('Clear all') }}</button>
-                        </div>
-                    @endif
+                    @include('livewire.admin.partials.entry-filters')
                 @else
                     <div class="dash-tools dash-bulk" role="region" aria-label="{{ __('Do to the chosen ones') }}" wire:key="ticks">
                         <strong>{{ trans_choice(':count chosen|:count chosen', count($ticked)) }}</strong>
