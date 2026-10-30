@@ -84,7 +84,9 @@ class AdminNav
             $user?->isAdmin() ? ['webhooks', __('Webhooks'), __('Tell other services what happened'), route('admin.settings.webhooks'), 'redirect', 'sand', $r->routeIs('admin.settings.webhooks'), null, 'you'] : null,
             $user?->isAdmin() ? ['updates', __('Updates'), __('New versions of Booklet'), route('admin.settings.updates'), 'history', 'sand', $r->routeIs('admin.settings.updates'), \App\Support\Updates::available() ? '1' : null, 'you'] : null,
             $user?->isAdmin() ? ['import', __('Move in from WordPress'), __('Bring an old site across'), route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,
-            ['account', __('Your account'), __('Profile & password'), route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account', 'admin.account.*'), null, 'you'],
+            ['account', __('Your account'), __('Profile & password'), route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account'), null, 'you'],
+            ['yours', __('Make it yours'), __('Layout, theme, fonts, text size'), route('admin.account.yours'), 'book', 'lilac', $r->routeIs('admin.account.yours'), null, 'you'],
+            ['your-menu', __('Your menu'), __('Move, hide and rename what’s here'), route('admin.account.menu'), 'list', 'lilac', $r->routeIs('admin.account.menu'), null, 'you'],
         ];
 
         return array_values(array_map(fn ($i) => [

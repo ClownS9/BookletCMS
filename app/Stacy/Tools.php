@@ -46,6 +46,8 @@ class Tools
         'email_settings' => ['Email settings', 'admin.settings.email', []],
         'health' => ['Check-up', 'admin.settings.health', []],
         'account' => ['Your account', 'admin.account', []],
+        'make_it_yours' => ['Make it yours', 'admin.account.yours', []],
+        'your_menu' => ['Your menu', 'admin.account.menu', []],
         'stacy_settings' => ['Stacy’s brain', 'admin.settings.stacy', []],
         'stacy_behaviour' => ['How Stacy behaves', 'admin.settings.stacy.behaviour', []],
         'search' => ['Search everything', null, []], // the search window, not a page
@@ -74,6 +76,8 @@ class Tools
         'health' => ['check-up', 'checkup', 'health check', 'site health', 'server check', 'doctor', 'is everything working', 'cron', 'scheduler'],
         'email_settings' => ['email', 'smtp', 'mail settings', 'mail server', 'email settings', 'outgoing mail', 'gmail', 'emails not arriving'],
         'account' => ['my account', 'profile', 'my profile', 'password'],
+        'make_it_yours' => ['make it yours', 'my theme', 'admin theme', 'dark mode', 'night mode', 'dashboard layout', 'admin layout', 'admin fonts', 'my fonts', 'text size', 'bigger text', 'how booklet looks'],
+        'your_menu' => ['your menu', 'my menu', 'admin menu', 'sidebar', 'customise the menu', 'customize the menu', 'hide a sticker', 'rename a chapter'],
         'stacy_settings' => ['stacy’s brain', 'stacys brain', 'ai settings', 'ai service', 'api key'],
         'stacy_behaviour' => ['stacy settings', 'stacy\'s settings', 'stacy’s settings', 'how stacy behaves', 'stacy behaviour', 'stacy behavior', 'your settings', 'answer length', 'daily limit'],
         'search' => ['search everything'],

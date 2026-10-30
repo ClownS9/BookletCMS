@@ -237,6 +237,8 @@ class SearchIndex
                 ['label' => __('Subscribers'), 'meta' => __('Readers who get new posts by email'), 'href' => route('admin.subscribers'), 'tone' => 'var(--lilac)', 'icon' => 'comment'],
                 ['label' => __('Redirects'), 'meta' => __('Old addresses that forward to new ones'), 'href' => route('admin.redirects'), 'tone' => 'var(--mint)', 'icon' => 'redirect'],
                 ['label' => __('Print as a book'), 'meta' => __('Your posts typeset for paper, or a PDF'), 'href' => route('admin.print'), 'tone' => 'var(--sun)', 'icon' => 'printer'],
+                ['label' => __('Make it yours'), 'meta' => __('Book or Dashboard, theme, fonts, text size, night reading'), 'href' => route('admin.account.yours'), 'tone' => 'var(--lilac)', 'icon' => 'book'],
+                ['label' => __('Your menu'), 'meta' => __('Move, hide, rename and recolour the chapters and tools'), 'href' => route('admin.account.menu'), 'tone' => 'var(--lilac)', 'icon' => 'list'],
             ])
             ->when(request()->user()?->isAdmin(), fn ($c) => $c->push(
                 ['label' => __('Email'), 'meta' => __('The mail server the book sends through (SMTP)'), 'href' => route('admin.settings.email'), 'tone' => 'var(--sand)', 'icon' => 'mail'],

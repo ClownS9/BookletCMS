@@ -117,6 +117,21 @@ class MakeItYoursTest extends TestCase
             ->assertSee('Make it yours')->assertSee('Dashboard')->assertSee('Linen')->assertSee('Easy reading')->assertSee('With my device')->assertSee('Pages turn');
     }
 
+    public function test_make_it_yours_and_your_menu_can_be_found_from_the_book_layout(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.account'))->assertOk()
+            ->assertSee('class="yours-links"', false)
+            ->assertSee(route('admin.account.yours'), false)
+            ->assertSee(route('admin.account.menu'), false);
+
+        // The gear's note and the phone's Index list them on every page.
+        $page = $this->actingAs($this->admin)->get(route('admin.contents'))->assertOk()->getContent();
+        $this->assertGreaterThanOrEqual(2, substr_count($page, 'href="'.route('admin.account.yours').'"'));
+        $this->assertGreaterThanOrEqual(2, substr_count($page, 'href="'.route('admin.account.menu').'"'));
+
+        $this->assertContains('make_it_yours', array_keys(\App\Stacy\Tools::PLACES));
+    }
+
     // Your menu ----------------------------------------------------------------
 
     public function test_moving_a_tool_onto_the_stickers_and_hiding_another(): void

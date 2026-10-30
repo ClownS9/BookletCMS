@@ -6,6 +6,20 @@
             <h1 class="display display--page" style="margin-top: 8px">{{ __('Your account') }}</h1>
         </div>
 
+        {{-- Make it yours and Your menu: how Booklet looks and what's on the menu, for you --}}
+        <nav class="yours-links" aria-label="{{ __('Make it yours') }}">
+            <a href="{{ route('admin.account.yours') }}" wire:navigate>
+                <span class="yours-links__mark" aria-hidden="true"><x-admin.icon name="book" size="18" /></span>
+                <span><strong>{{ __('Make it yours') }}</strong><small>{{ __('Layout, theme, fonts, text size') }}</small></span>
+                <span aria-hidden="true">→</span>
+            </a>
+            <a href="{{ route('admin.account.menu') }}" wire:navigate>
+                <span class="yours-links__mark yours-links__mark--menu" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span><strong>{{ __('Your menu') }}</strong><small>{{ __('Move, hide and rename what’s here') }}</small></span>
+                <span aria-hidden="true">→</span>
+            </a>
+        </nav>
+
         <div class="bookplate" style="gap: 20px; padding: 18px; flex-wrap: wrap">
             @if ($avatarUpload)
                 <span class="avatar" style="--size: 96px"><img src="{{ $avatarUpload->temporaryUrl() }}" alt=""></span>
