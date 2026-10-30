@@ -209,11 +209,11 @@
                                             @endif
                                         </td>
                                         <td style="width: 1%">
-                                            <div class="dash-more" x-data="{ open: false }" x-on:keydown.escape="open = false" x-on:click.outside="open = false">
-                                                <button type="button" class="icon-btn" x-on:click="open = ! open" :aria-expanded="open.toString()" aria-expanded="false" aria-label="{{ __('More for “:name”', ['name' => $name]) }}">
+                                            <div class="dash-more" x-data="bookletRowMenu()" x-on:keydown.escape="close()" x-on:click.outside="close()">
+                                                <button type="button" class="icon-btn" x-ref="button" x-on:click="toggle()" :aria-expanded="open.toString()" aria-expanded="false" aria-label="{{ __('More for “:name”', ['name' => $name]) }}">
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
                                                 </button>
-                                                <div class="dash-more__menu" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+                                                <div class="dash-more__menu" x-ref="menu" x-show="open" x-cloak :style="place" x-transition.opacity.duration.120ms>
                                                     @if ($mine)
                                                         <a href="{{ route('admin.entries.edit', [$model->handle(), $entry->id()]) }}" wire:navigate>{{ __('Edit') }}</a>
                                                     @endif

@@ -1830,3 +1830,42 @@ window.bookletTerms = ({ input, model, value = '', choices = [], max = 0, words 
     document.addEventListener('livewire:navigated', follow);
     dark?.addEventListener?.('change', follow);
 })();
+
+/*
+ * A row's own menu (the "⋯" in the Dashboard's tables). It floats above the
+ * page, so the card around the table never cuts it off, and opens upwards
+ * when the row is near the bottom of the window. Scrolling or resizing
+ * closes it, so it never drifts away from its row.
+ */
+window.bookletRowMenu = () => ({
+    open: false,
+    place: '',
+    toggle() { this.open ? this.close() : this.show(); },
+    show() {
+        this.open = true;
+        this.place = 'visibility: hidden';
+        this.$nextTick(() => {
+            const b = this.$refs.button.getBoundingClientRect();
+            const m = this.$refs.menu;
+            const w = m.offsetWidth, h = m.offsetHeight, gap = 4, edge = 8;
+            const below = window.innerHeight - b.bottom - edge;
+            const top = below >= h + gap || b.top < h + gap + edge ? b.bottom + gap : b.top - h - gap;
+            const left = Math.max(edge, Math.min(b.right - w, window.innerWidth - w - edge));
+            this.place = `position: fixed; top: ${Math.round(top)}px; left: ${Math.round(left)}px; right: auto`;
+            requestAnimationFrame(() => {
+                const first = m.querySelector('a, button');
+                if (first && this.open) first.focus({ preventScroll: true });
+            });
+        });
+        this._away = () => this.close();
+        window.addEventListener('scroll', this._away, true);
+        window.addEventListener('resize', this._away);
+    },
+    close() {
+        if (!this.open) return;
+        this.open = false;
+        window.removeEventListener('scroll', this._away, true);
+        window.removeEventListener('resize', this._away);
+    },
+    destroy() { this.close(); },
+});

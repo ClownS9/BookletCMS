@@ -7198,3 +7198,6 @@ body.layout-dashboard .lamp { display: none !important; }
 /* Both columns start level: stray lines outside the cards go after them */
 body.layout-dashboard .book__pages .page:has(> .desk-card) > :not(.desk-card, .page-head, div:has(> .page-head:first-child)),
 body.layout-dashboard .book__pages .page:has(> .desk-card) > div:has(> .page-head:first-child) > :not(.page-head) { order: 9; }
+/* The row menu floats above the page (placed by bookletRowMenu); nothing on the desk may trap it */
+body.layout-dashboard .book__pages { perspective: none; }
+.dash-more__menu { z-index: 60; }
