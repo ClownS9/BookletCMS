@@ -14,7 +14,7 @@ class YourBook
 {
     public const LAYOUTS = [
         'book' => ['Book', 'Two pages, the stickers along the top, the desk around it.'],
-        'dashboard' => ['Dashboard', 'A sidebar and plain pages. No cover, no page turning.'],
+        'dashboard' => ['Dashboard', 'A plain CMS desk: sidebar, panels and tables. No cover, no page turning.'],
     ];
 
     public const THEMES = [

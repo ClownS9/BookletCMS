@@ -50,6 +50,12 @@ class Entries extends Component
 
     public const PER_PAGE = 50;
 
+    /** The table's order in the Dashboard layout: title, date or edited, "-" first for newest or Z–A. */
+    #[Url(except: '')]
+    public string $sort = '';
+
+    public const SORTS = ['title', '-title', 'date', '-date', 'edited', '-edited'];
+
     /** On first opening with ?entry=…, turn to the page it's on. */
     protected bool $findChosen = false;
 
@@ -74,6 +80,17 @@ class Entries extends Component
 
     public function updatedSearch(): void
     {
+        $this->page = 1;
+    }
+
+    /** Sort the table by a column; again to turn the order round. */
+    public function sortBy(string $column): void
+    {
+        abort_unless(in_array($column, ['title', 'date', 'edited'], true), 422);
+        // Titles start A–Z; dates and edits start with the newest.
+        $first = $column === 'title' ? 'title' : '-'.$column;
+        $turned = $first === $column ? '-'.$column : $column;
+        $this->sort = $this->sort === $first ? $turned : $first;
         $this->page = 1;
     }
 
@@ -212,6 +229,13 @@ class Entries extends Component
             ? 'Moved to the bin.'
             : trans_choice(':count moved to the bin. They wait there for 30 days.|:count moved to the bin. They wait there for 30 days.', count($binned)),
             undo: count($binned) === 1 ? $binned[0]->id : null);
+    }
+
+    /** The bin, from one row's own menu. */
+    public function binOne(string $id): void
+    {
+        $this->ticked = [$id];
+        $this->binTicked();
     }
 
     protected function finishMany(int $done, string $said, string $nothing): void
@@ -363,6 +387,19 @@ class Entries extends Component
             ->values();
 
         $structured = $collection->structured();
+        // The Dashboard layout shows the chapter as a table, which can be sorted.
+        $desk = \App\Support\YourBook::of(request()->user())['layout'] === 'dashboard';
+        if (! in_array($this->sort, self::SORTS, true)) {
+            $this->sort = '';
+        }
+        if ($this->sort !== '' && ! $structured) {
+            $by = ltrim($this->sort, '-');
+            $entries = $entries->sortBy(fn (Entry $e) => match ($by) {
+                'title' => Str::lower((string) $e->title()),
+                'date' => (string) ($e->date()?->getTimestamp() ?? 0),
+                default => (string) ($e->lastModified() ?? ''),
+            }, SORT_NATURAL, str_starts_with($this->sort, '-'))->values();
+        }
         // The page tree is shown whole (it's arranged by dragging); dated chapters a page at a time.
         $lastPage = $structured ? 1 : max(1, (int) ceil($entries->count() / self::PER_PAGE));
         if ($this->findChosen && ! $structured && ($at = $entries->search(fn (Entry $e) => $e->id() === $this->selected)) !== false) {
@@ -405,7 +442,13 @@ class Entries extends Component
             $statuses = array_slice($statuses, 0, 2, true) + ['review' => 'In review'] + array_slice($statuses, 2, null, true);
         }
 
-        return $this->titled(view('livewire.admin.entries', [
+        $authors = $desk
+            ? User::query()->whereIn('id', collect($rows)->map(fn ($row) => $row['entry']->get('author'))->filter()->unique()->values())->get()->keyBy('id')
+            : collect();
+
+        return $this->titled(view($desk && ! $structured ? 'livewire.admin.entries-table' : 'livewire.admin.entries', [
+            'authors' => $authors,
+            'sort' => $this->sort,
             'model' => $collection,
             'entries' => $entries,
             'rows' => $rows,
@@ -433,7 +476,7 @@ class Entries extends Component
             'counts' => $counts,
             'statuses' => $statuses,
             'reviewStates' => $reviewStates,
-            'chosenReading' => $selected && $selected->status() === 'published'
+            'chosenReading' => ! $desk && $selected && $selected->status() === 'published'
                 ? rescue(fn () => \App\Support\VisitStats::forEntries([$selected->id()])[$selected->id()] ?? ['views' => 0, 'reads' => 0], null, false)
                 : null,
             'chosen' => $selected,
@@ -441,7 +484,7 @@ class Entries extends Component
                 || (string) $selected->get('author') === (string) request()->user()?->id),
             'author' => $selected?->get('author') ? User::find($selected->get('author')) : null,
             'excerpt' => $selected ? Str::limit(trim(strip_tags(Str::markdown((string) $selected->get('content', '')))), 320) : null,
-            'editions' => $selected ? Booklet::revisions()->whereKey($selected->revisionKey())->count() : 0,
+            'editions' => ! $desk && $selected ? Booklet::revisions()->whereKey($selected->revisionKey())->count() : 0,
         ]), $collection->title());
     }
 }

@@ -135,8 +135,10 @@ class Contents extends Component
         $hour = now()->hour;
 
         $newer = $user->isAdmin() ? \App\Support\Updates::available() : null;
+        // The Dashboard layout has its own Contents: panels and tables on one page.
+        $desk = \App\Support\YourBook::of($user)['layout'] === 'dashboard';
 
-        return view('livewire.admin.contents', [
+        return view($desk ? 'livewire.admin.contents-dashboard' : 'livewire.admin.contents', [
             'user' => $user,
             'update' => $newer && (((array) $user->preferences)['update_seen'] ?? null) !== $newer['version'] ? [
                 'version' => $newer['version'],
@@ -169,7 +171,7 @@ class Contents extends Component
             'stickers' => \App\Support\Milestones::wanted($user) ? rescue(fn () => \App\Support\Milestones::for($user), collect(), false) : null,
             'waitingComments' => Comment::where('status', 'waiting')->count(),
             'contributors' => $contributors,
-            'recent' => $entries->sortByDesc(fn (Entry $e) => $e->lastModified())->take(4)->values(),
+            'recent' => $entries->sortByDesc(fn (Entry $e) => $e->lastModified())->take($desk ? 6 : 4)->values(),
         ]);
     }
 }
