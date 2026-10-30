@@ -28,6 +28,8 @@ class Entries extends Component
 
     use Stamps;
 
+    use \App\Livewire\Concerns\Paged;
+
     public const TEMPLATES = [
         'default' => ['Default', 'Text column'],
         'full_width' => ['Full width', 'Edge to edge'],
@@ -44,11 +46,23 @@ class Entries extends Component
     #[Url(as: 'entry', except: null)]
     public ?string $selected = null;
 
-    /** A page of a dated chapter's list: a book with thousands of posts shows them fifty at a time. */
-    #[Url(except: 1)]
-    public int $page = 1;
-
+    /** A dated chapter's list goes a page at a time (fifty, unless you choose otherwise); see Paged. */
     public const PER_PAGE = 50;
+
+    protected function pagedList(): string
+    {
+        return 'entries';
+    }
+
+    protected function defaultPageSize(): int
+    {
+        return self::PER_PAGE;
+    }
+
+    protected function pageResetsOn(): array
+    {
+        return ['search', 'status', 'by', 'in', 'when', 'edited', 'within'];
+    }
 
     /** The table's order in the Dashboard layout: title, date or edited, "-" first for newest or Z–A. */
     #[Url(except: '')]
@@ -84,13 +98,6 @@ class Entries extends Component
     public const WHEN = ['week' => 'Last 7 days', 'month' => 'Last 30 days', 'year' => 'This year', 'older' => 'Older than a year', 'upcoming' => 'Still to come'];
 
     public const EDITED = ['today' => 'Today', 'week' => 'In the last 7 days', 'month' => 'In the last 30 days', 'stale' => 'Not in 6 months'];
-
-    public function updated(string $name): void
-    {
-        if (in_array(\Illuminate\Support\Str::before($name, '.'), ['by', 'in', 'when', 'edited', 'within'], true)) {
-            $this->page = 1;
-        }
-    }
 
     /** Take one filter away: by, when, edited, within, or in.{field}. */
     public function dropFilter(string $which): void
@@ -225,15 +232,6 @@ class Entries extends Component
         $this->selected = $id;
     }
 
-    public function turnTo(int $page): void
-    {
-        $this->page = max(1, $page);
-    }
-
-    public function updatedSearch(): void
-    {
-        $this->page = 1;
-    }
 
     /** Sort the table by a column; again to turn the order round. */
     public function sortBy(string $column): void
@@ -263,6 +261,13 @@ class Entries extends Component
         $this->ticked = array_diff($ids, $this->ticked) === []
             ? array_values(array_diff($this->ticked, $ids))
             : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    /** Tick everything the filters let through, on every page (up to 500). */
+    public function tickThese(array $ids): void
+    {
+        $ids = array_values(array_filter($ids, 'is_string'));
+        $this->ticked = array_slice(array_values(array_unique(array_merge($this->ticked, $ids))), 0, 500);
     }
 
     public function untickAll(): void
@@ -617,14 +622,14 @@ class Entries extends Component
             }, SORT_NATURAL, str_starts_with($this->sort, '-'))->values();
         }
         // The page tree is shown whole (it's arranged by dragging); dated chapters a page at a time.
-        $lastPage = $structured ? 1 : max(1, (int) ceil($entries->count() / self::PER_PAGE));
+        $lastPage = $structured ? 1 : max(1, (int) ceil($entries->count() / $this->rowsPerPage()));
         if ($this->findChosen && ! $structured && ($at = $entries->search(fn (Entry $e) => $e->id() === $this->selected)) !== false) {
-            $this->page = intdiv((int) $at, self::PER_PAGE) + 1;
+            $this->page = intdiv((int) $at, $this->rowsPerPage()) + 1;
         }
         $this->page = min(max(1, $this->page), $lastPage);
         $rows = $structured
             ? $this->treeRows($entries)
-            : $entries->forPage($this->page, self::PER_PAGE)->map(fn (Entry $e) => ['entry' => $e, 'depth' => 0, 'parent' => null])->values()->all();
+            : $entries->forPage($this->page, $this->rowsPerPage())->map(fn (Entry $e) => ['entry' => $e, 'depth' => 0, 'parent' => null])->values()->all();
 
         $selected = $entries->first(fn (Entry $e) => $e->id() === $this->selected && collect($rows)->contains(fn ($row) => $row['entry']->id() === $e->id()))
             ?? ($rows[0]['entry'] ?? null);
@@ -704,6 +709,9 @@ class Entries extends Component
 
         return $this->titled(view($desk ? 'livewire.admin.entries-table' : 'livewire.admin.entries', [
             'filterChoices' => $filterChoices,
+            // The pager's view of it (the page tree is shown whole, so it has none).
+            'pages' => new \Illuminate\Pagination\LengthAwarePaginator([], $structured ? 0 : $entries->count(), $this->rowsPerPage(), $this->page),
+            'matchingIds' => $structured ? [] : $entries->map(fn (Entry $e) => $e->id())->all(),
             'activeFilters' => $activeFilters,
             'filtersOn' => $this->filtersOn(),
             'authors' => $authors,

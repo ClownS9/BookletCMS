@@ -22,6 +22,13 @@ class Bin extends Component
 {
     use Stamps;
 
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'bin';
+    }
+
     public const KINDS = [
         'entry' => ['Posts & pages', 'var(--sun)'],
         'asset' => ['Files', 'var(--sky)'],
@@ -87,7 +94,7 @@ class Bin extends Component
         $counts = (clone $all)->reorder()->selectRaw('kind, count(*) as n')->groupBy('kind')->pluck('n', 'kind');
 
         return view('livewire.admin.bin', [
-            'items' => (clone $all)->with('deleter')->when($this->kind, fn ($q) => $q->where('kind', $this->kind))->limit(200)->get(),
+            'items' => $this->pageOf((clone $all)->with('deleter')->when($this->kind, fn ($q) => $q->where('kind', $this->kind))),
             'counts' => $counts,
             'kinds' => self::KINDS,
             'canEmpty' => $user->isAdmin(),

@@ -15,7 +15,6 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 /**
  * Readers & groups: the people with an account on the public site, the
@@ -26,7 +25,19 @@ use Livewire\WithPagination;
 #[Title('Readers & groups')]
 class Readers extends Component
 {
-    use Stamps, WithPagination;
+    use Stamps;
+
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'readers';
+    }
+
+    protected function pageResetsOn(): array
+    {
+        return ['search', 'show', 'inGroup', 'tab'];
+    }
 
     #[Url(except: 'readers')]
     public string $tab = 'readers';
@@ -436,8 +447,8 @@ class Readers extends Component
             ->when($this->inGroup !== '', fn ($q) => $q->whereIn('id', GroupMember::query()->select('member_id')->where('member_type', 'reader')->where('state', 'in')
                 ->whereIn('group_id', Group::query()->select('id')->where('handle', $this->inGroup))))
             ->when($this->search !== '', fn ($q) => $q->where(fn ($w) => $w->where('email', 'like', '%'.mb_strtolower($this->search).'%')->orWhere('name', 'like', '%'.$this->search.'%')))
-            ->latest()
-            ->paginate(25);
+            ->latest();
+        $readers = $this->pageOf($readers);
 
         $memberGroups = GroupMember::query()->where('member_type', 'reader')->whereIn('member_id', $readers->pluck('id'))->get()->groupBy('member_id');
 

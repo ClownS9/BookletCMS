@@ -23,6 +23,13 @@ class Redirects extends Component
 {
     use Stamps;
 
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'redirects';
+    }
+
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
@@ -119,9 +126,8 @@ class Redirects extends Component
             ->when($this->search !== '', fn ($q) => $q->where(fn ($q) => $q
                 ->where('from_path', 'like', '%'.$this->search.'%')
                 ->orWhere('to_path', 'like', '%'.$this->search.'%')))
-            ->orderByDesc('updated_at')
-            ->limit(300)
-            ->get();
+            ->orderByDesc('updated_at');
+        $redirects = $this->pageOf($redirects);
 
         // Live addresses, to spot a redirect that's hidden by a page, or one that leads nowhere.
         $live = rescue(fn () => Booklet::entries()->all()

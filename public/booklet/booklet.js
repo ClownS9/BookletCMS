@@ -2093,3 +2093,47 @@ window.bookletDragList = ($wire) => ({
         window.addEventListener('keydown', esc);
     },
 });
+
+/*
+ * Turning a list's pages from the keyboard: ← and → press the pager's
+ * Previous and Next, when you're not typing, choosing or in a window.
+ * After a turn, the top of the list comes back into view.
+ */
+(() => {
+    if (window.bookletPagerKeys) return;
+    window.bookletPagerKeys = true;
+    const visible = (el) => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+    document.addEventListener('keydown', (e) => {
+        if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        const t = e.target;
+        if (t instanceof Element && t.closest('input, textarea, select, button[role="slider"], [contenteditable=""], [contenteditable="true"], [role="slider"], [role="dialog"], [role="menu"], .crumb-switch')) return;
+        if ([...document.querySelectorAll('[aria-modal="true"], dialog[open]')].some(visible)) return;
+        const pager = [...document.querySelectorAll('[data-pager]')].find(visible);
+        const button = pager?.querySelector(e.key === 'ArrowLeft' ? '[data-pager-prev]' : '[data-pager-next]');
+        if (!button || button.disabled) return;
+        e.preventDefault();
+        button.click();
+    });
+    window.addEventListener('pager-turned', () => {
+        requestAnimationFrame(() => {
+            const pager = [...document.querySelectorAll('[data-pager]')].find(visible);
+            if (!pager) return;
+            const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+            // A book's page scrolls inside itself: back to the top of that page.
+            for (let el = pager.parentElement; el && el !== document.body; el = el.parentElement) {
+                const y = getComputedStyle(el).overflowY;
+                if ((y === 'auto' || y === 'scroll') && el.scrollHeight > el.clientHeight + 4) {
+                    if (el.scrollTop > 0) el.scrollTo({ top: 0, behavior });
+                    return;
+                }
+            }
+            // Otherwise the window: the list's card comes back into view.
+            const top = pager.closest('.desk-card, .dash-card, .card, section, main');
+            const box = top?.getBoundingClientRect();
+            if (box && (box.top < 0 || box.top > window.innerHeight)) {
+                top.scrollIntoView({ block: 'start', behavior });
+            }
+        });
+    });
+})();

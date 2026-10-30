@@ -27,6 +27,13 @@ class Comments extends Component
 {
     use Stamps;
 
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'comments';
+    }
+
     public const STATUSES = ['waiting' => 'Waiting', 'approved' => 'Approved', 'spam' => 'Spam'];
 
     #[Url(except: 'waiting')]
@@ -41,13 +48,13 @@ class Comments extends Component
     public function pile()
     {
         // Notes, and readers' replies until they're approved (then they live in their conversation).
-        return Comment::query()
+        $pile = Comment::query()
             ->where(fn ($q) => $q->whereNull('parent_id')->orWhere('status', '!=', 'approved'))
             ->where('status', $this->status)
             ->with('parent')
-            ->latest()
-            ->limit(100)
-            ->get();
+            ->latest();
+
+        return $this->pageOf($pile);
     }
 
     #[Computed]
@@ -81,6 +88,9 @@ class Comments extends Component
     {
         $comment = Comment::find($id);
         if ($comment) {
+            if ($this->status !== $comment->status) {
+                $this->page = 1;
+            }
             $this->status = $comment->status;
             $this->selected = $comment->id;
             $this->reply = '';
@@ -170,7 +180,7 @@ class Comments extends Component
             'counts' => $counts,
             'entry' => $entry,
             'titles' => $this->pile->pluck('entry_id')->unique()
-                ->mapWithKeys(fn ($id) => [$id => Booklet::entries()->find($id)?->title() ?? 'a removed entry']),
+                ->mapWithKeys(fn ($id) => [$id => Booklet::entries()->find($id)?->title() ?? __('a removed entry')]),
         ]);
     }
 }

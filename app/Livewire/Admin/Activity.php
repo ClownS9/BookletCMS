@@ -9,7 +9,6 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 /**
  * Activity: every change, date-stamped like a library card.
@@ -18,7 +17,17 @@ use Livewire\WithPagination;
 #[Title('Activity')]
 class Activity extends Component
 {
-    use WithPagination;
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'activity';
+    }
+
+    protected function pageResetsOn(): array
+    {
+        return ['kind', 'person'];
+    }
 
     public const KINDS = [
         'edits' => ['Edits', 'var(--sun)'],
@@ -79,7 +88,7 @@ class Activity extends Component
             $query->where('user_id', (int) $this->person);
         }
 
-        $logs = $query->paginate(20);
+        $logs = $this->pageOf($query);
         $counts = ActivityLog::query()
             ->when($this->person !== '', fn ($q) => $q->where('user_id', (int) $this->person))
             ->selectRaw('kind, count(*) as n')->groupBy('kind')->pluck('n', 'kind');

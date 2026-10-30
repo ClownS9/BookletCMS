@@ -27,6 +27,18 @@ class Inbox extends Component
 {
     use \App\Livewire\Concerns\Stamps;
 
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'inbox';
+    }
+
+    protected function pageResetsOn(): array
+    {
+        return ['search', 'show', 'from'];
+    }
+
     #[Url(as: 'show', except: 'inbox')]
     public string $show = 'inbox';
 
@@ -186,6 +198,7 @@ class Inbox extends Component
                 Str::lower(implode(' ', array_filter($s->data(), 'is_scalar'))), Str::lower(trim($this->search))
             )))
             ->values();
+        $pile = $this->pageOf($pile);
 
         $chosen = $this->chosen();
         $contact = app(Site::class)->contactPage();

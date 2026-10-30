@@ -3924,5 +3924,20 @@
     "Showing :shown of :total|Showing :shown of :total": "Menunjukkan :shown daripada :total|Menunjukkan :shown daripada :total",
     "Stop searching for “:words”": "Berhenti mencari “:words”",
     "Remove filter :name: :value": "Buang penapis :name: :value",
-    "Clear all": "Kosongkan semua"
+    "Clear all": "Kosongkan semua",
+    "Showing :from–:to of :total": "Menunjukkan :from–:to daripada :total",
+    "Previous": "Sebelumnya",
+    "Next": "Seterusnya",
+    "Go to page": "Pergi ke halaman",
+    "Go": "Pergi",
+    "Per page": "Setiap halaman",
+    "Newer": "Lebih baharu",
+    "Older": "Lebih lama",
+    "Turn a list’s pages": "Selak halaman senarai",
+    "(:count on this page)|(:count on this page)": "(:count di halaman ini)|(:count di halaman ini)",
+    "Choose all :count|Choose all :count": "Pilih semua :count|Pilih semua :count",
+    "replied to :name on :title": "membalas :name pada :title",
+    "on :title": "pada :title",
+    "a note": "satu nota",
+    "Remove :email and forget the address?": "Buang :email dan lupakan alamat ini?"
 }

@@ -12,7 +12,6 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 /**
  * Readers who get new posts by email: who they are, what went out, and the
@@ -22,7 +21,14 @@ use Livewire\WithPagination;
 #[Title('Subscribers')]
 class Subscribers extends Component
 {
-    use Stamps, WithPagination;
+    use Stamps;
+
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'subscribers';
+    }
 
     #[Url(as: 'q', except: '')]
     public string $search = '';
@@ -121,8 +127,8 @@ class Subscribers extends Component
             ->when($this->show === 'waiting', fn ($q) => $q->whereNull('confirmed_at')->whereNull('unsubscribed_at'))
             ->when($this->show === 'unsubscribed', fn ($q) => $q->whereNotNull('unsubscribed_at'))
             ->when($this->search !== '', fn ($q) => $q->where('email', 'like', '%'.mb_strtolower($this->search).'%'))
-            ->latest()
-            ->paginate(25);
+            ->latest();
+        $people = $this->pageOf($people);
 
         return view('livewire.admin.subscribers', [
             'people' => $people,

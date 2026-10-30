@@ -6848,12 +6848,6 @@ a.dash-figure:hover { border-color: var(--faint); color: var(--ink); }
 .dash-bulk .input { width: auto; min-width: 140px; min-height: 34px; }
 .dash-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 18px; border-top: 1px solid var(--d-line2); font-size: 13px; color: var(--muted); }
 .dash-foot > span { flex: 1 1 160px; }
-.dash-pages { display: flex; flex-wrap: wrap; gap: 4px; }
-.dash-pages button, .dash-pages span { min-width: 32px; height: 32px; padding: 0 6px; box-sizing: border-box; display: grid; place-items: center; border: 1px solid var(--d-line); border-radius: 6px; background: var(--d-panel); color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
-.dash-pages span { border-color: transparent; background: transparent; cursor: default; }
-.dash-pages button[aria-current="page"] { border-color: var(--d-accent); background: var(--d-accent); color: var(--d-on-accent); font-weight: 600; }
-.dash-pages button:disabled { opacity: .45; cursor: default; }
-.dash-pages button:hover:not(:disabled, [aria-current="page"]) { border-color: var(--faint); }
 
 /* The row's own menu */
 .dash-more { position: relative; display: inline-block; }
@@ -7632,4 +7626,45 @@ body.is-drag-sorting, body.is-drag-sorting * { cursor: grabbing !important; user
 @media (max-width: 640px) {
     .entry-find__filters .dash-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
     .entry-find .dash-filter-toggle { padding-inline: 12px; }
+}
+
+/* Turning a list's pages: the same pager on every list, in each layout's style */
+.pager { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.pager__count { flex: 1 1 160px; margin: 0; font-variant-numeric: tabular-nums; }
+.pager__turn { display: flex; align-items: center; gap: 4px; }
+.pager__numbers { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.pager__numbers button, .pager__step { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 34px; height: 34px; padding: 0 8px; box-sizing: border-box; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+.pager__numbers button:hover:not([aria-current]), .pager__step:hover:not(:disabled) { border-color: var(--faint); }
+.pager__numbers button[aria-current="page"] { border-color: var(--ink); background: var(--ink); color: var(--paper); font-weight: 600; cursor: default; }
+.pager__step:disabled { opacity: .4; cursor: default; }
+.pager__step > span[aria-hidden] { font-size: 16px; line-height: 1; }
+.pager__gap { min-width: 18px; text-align: center; color: var(--faint); }
+.pager__of { display: none; padding: 0 6px; white-space: nowrap; }
+.pager__jump { display: flex; align-items: center; gap: 6px; }
+.pager__jump label, .pager__per > span { white-space: nowrap; }
+.pager__jump input { width: 64px; min-height: 34px; padding: 4px 8px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13px; }
+.pager__per { display: flex; align-items: center; gap: 6px; }
+.pager__per select { width: auto; min-height: 34px; padding: 4px 28px 4px 10px; font-size: 13px; }
+.pager button:focus-visible, .pager input:focus-visible, .pager select:focus-visible { outline: 2px solid var(--focus, var(--sky)); outline-offset: 2px; }
+/* The Dashboard: square, quiet, with the accent for the page you're on */
+body.layout-dashboard .pager { margin-top: 0; }
+body.layout-dashboard .pager.picks-pager { padding: 12px 0 0; border-top: 1px solid var(--d-line2, var(--rule)); margin-top: 12px; }
+body.layout-dashboard .pager__numbers button, body.layout-dashboard .pager__step, body.layout-dashboard .pager__jump input { border-color: var(--d-line, var(--rule)); background: var(--d-panel, var(--paper)); border-radius: 6px; }
+body.layout-dashboard .pager__numbers button[aria-current="page"] { border-color: var(--d-accent); background: var(--d-accent); color: var(--d-on-accent, #fff); }
+/* The Book: words for turning, like a book's own */
+body:not(.layout-dashboard) .pager__step { border-color: transparent; background: none; font-style: italic; font-family: var(--serif, inherit); font-size: 15px; }
+body:not(.layout-dashboard) .pager__numbers button { border-radius: 50%; border-color: transparent; background: none; }
+body:not(.layout-dashboard) .pager__numbers button[aria-current="page"] { background: var(--ink); }
+.picks-pager.pager { justify-content: flex-start; padding-top: 14px; }
+/* Narrow: Previous · Page 2 of 7 · Next, then the rest below */
+@media (max-width: 720px) {
+    .pager__numbers { display: none; }
+    .pager__of { display: inline; }
+    .pager__turn { order: -1; flex: 1 1 100%; justify-content: space-between; }
+    .pager__count { flex-basis: auto; }
+}
+@media (max-width: 480px) {
+    .pager__word { display: none; }
+    .pager__step { min-width: 40px; }
+    .pager__turn { gap: 8px; }
 }

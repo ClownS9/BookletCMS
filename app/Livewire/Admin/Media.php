@@ -36,6 +36,28 @@ class Media extends Component
 {
     use WithFileUploads, Stamps;
 
+    use \App\Livewire\Concerns\Paged;
+
+    protected function pagedList(): string
+    {
+        return 'media';
+    }
+
+    protected function pageSizes(): array
+    {
+        return [24, 48, 96];
+    }
+
+    protected function defaultPageSize(): int
+    {
+        return 48;
+    }
+
+    protected function pageResetsOn(): array
+    {
+        return ['search', 'folder', 'container'];
+    }
+
     #[Url(as: 'in', except: '')]
     public string $container = '';
 
@@ -365,6 +387,7 @@ class Media extends Component
                 fn (Asset $a) => Str::contains(Str::lower($a->path().' '.$a->get('alt')), Str::lower($this->search))
             ))
             ->values();
+        $visible = $this->pageOf($visible);
 
         $folderCounts = $this->assets->countBy(fn (Asset $a) => $a->attribute('folder'));
 
@@ -375,7 +398,7 @@ class Media extends Component
             'visible' => $visible,
             'folderCounts' => $folderCounts,
             'total' => $this->assets->count(),
-            'urls' => $visible->concat(array_filter([$this->chosen]))
+            'urls' => $visible->getCollection()->concat(array_filter([$this->chosen]))
                 ->mapWithKeys(fn (Asset $a) => [$a->path() => $this->assetUrl($a)])
                 ->all(),
         ]);
