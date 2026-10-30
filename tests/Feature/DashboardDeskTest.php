@@ -262,6 +262,17 @@ class DashboardDeskTest extends TestCase
         $this->actingAs($person)->get(route('admin.media'))->assertOk()->assertDontSee('desk-narrow', false)->assertDontSee('deskbar__fold', false);
     }
 
+    public function test_ask_stacy_buttons_open_her_docked_card(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.media'))->assertOk()
+            ->assertSee('class="deskbar__stacy" data-stacy-dock aria-controls="orb-card"', false)
+            ->assertSee('class="dock__stacy" data-stacy-dock aria-controls="orb-card"', false);
+
+        $person = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($person)->get(route('admin.media'))->assertOk()
+            ->assertSee('data-stacy-dock aria-controls="orb-card"', false);
+    }
+
     public function test_the_sidebar_groups_content_tools_and_settings(): void
     {
         $this->actingAs($this->admin)->get(route('admin.media'))->assertOk()
