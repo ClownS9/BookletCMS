@@ -7467,3 +7467,37 @@ body.layout-dashboard .btn--danger:not(.btn--sm) { min-height: 40px; font-size: 
 .menu-edit__ghost { position: fixed; z-index: 90; margin: 0; border: 1px solid var(--rule-2); border-radius: 10px; background: var(--paper-3); box-shadow: 0 16px 36px rgba(20, 18, 14, .22); pointer-events: none; transform: rotate(-.6deg); }
 body.layout-dashboard .menu-edit__ghost { transform: none; border-color: var(--d-accent); background: var(--d-panel); }
 body.is-drag-sorting, body.is-drag-sorting * { cursor: grabbing !important; user-select: none; }
+
+/* ==========================================================================
+   Settings › Upkeep
+   ========================================================================== */
+.upkeep-title { margin: 0; font-size: 22px; }
+.upkeep-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 4px 0; }
+.upkeep-row + .upkeep-row { padding-top: 14px; border-top: 1px solid var(--rule); }
+.upkeep-row__text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.upkeep-row__text strong { font-size: 15px; font-weight: 600; }
+.upkeep-row__text small { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.upkeep-row__last { color: var(--faint) !important; }
+.upkeep-row .btn { flex: none; }
+.upkeep-row code, .upkeep-cli code, .upkeep-away code { font-family: var(--mono); font-size: 12px; }
+.upkeep-tidy { margin: 0; padding: 0; border: 0; }
+.upkeep-tidy legend { margin-bottom: 8px; padding: 0; font-weight: 600; font-size: 14px; }
+.upkeep-tidy ul { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow: auto; border: 1px solid var(--rule); border-radius: 10px; }
+.upkeep-tidy li + li { border-top: 1px solid var(--rule); }
+.upkeep-tidy .check { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; cursor: pointer; }
+.upkeep-tidy .check > span { display: flex; flex-direction: column; min-width: 0; }
+.upkeep-tidy .check small { font-size: 12.5px; color: var(--muted); }
+.upkeep-away { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 28%, var(--paper-3)); color: var(--ink); }
+.upkeep-away small { color: var(--muted); }
+.upkeep-away p { margin: 4px 0 0; }
+.upkeep-cli { margin: 0; display: flex; flex-direction: column; }
+.upkeep-cli > div { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr); gap: 4px 14px; padding: 8px 0; border-top: 1px solid var(--rule); }
+.upkeep-cli dt { margin: 0; }
+.upkeep-cli dd { margin: 0; font-size: 13.5px; color: var(--muted); }
+@media (max-width: 760px) {
+    .upkeep-row { flex-direction: column; }
+    .upkeep-cli > div { grid-template-columns: minmax(0, 1fr); }
+}
+/* An admin-wide reminder while readers see "back soon" */
+.away-bar { position: relative; z-index: 46; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px; background: var(--sun); color: #1E1C18; font-size: 14px; }
+.away-bar a { color: #1E1C18; font-weight: 600; }

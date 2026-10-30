@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * Booklet's command line: php booklet
+ *
+ *   php booklet                 Booklet's commands, grouped
+ *   php booklet backup          a short name runs booklet:backup
+ *   php booklet help tidy       more about one command
+ *   php booklet migrate         Laravel's own commands work here too
+ *
+ * php artisan still works as before.
+ */
+
+use Illuminate\Foundation\Application;
+
+define('LARAVEL_START', microtime(true));
+
+// Register the Composer autoloader...
+require __DIR__.'/vendor/autoload.php';
+
+// Bootstrap Laravel and handle the command, Booklet's way...
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+if ($version = App\Console\BookletCli::version($app, $_SERVER['argv'])) {
+    echo $version, PHP_EOL;
+    exit(0);
+}
+
+$status = $app->handleCommand(App\Console\BookletCli::input($app, $_SERVER['argv']));
+
+exit($status);

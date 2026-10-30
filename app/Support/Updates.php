@@ -21,7 +21,7 @@ use ZipArchive;
  *
  * Releases come from GitHub (config booklet.updates.repo), each with a
  * booklet-x.y.zip attached: the whole of Booklet, vendor folder included, as
- * `php artisan booklet:package` makes it.
+ * `php booklet package` makes it.
  *
  * Updating, step by step (each its own request, so slow hosting doesn't time out):
  *   1. backup     a backup of the book, as Settings › Backups makes one
@@ -53,7 +53,7 @@ final class Updates
         'public/booklet', 'public/index.php',
         'bootstrap/app.php', 'bootstrap/providers.php',
         'themes/harbour', 'themes/README.md', 'inserts/README.md',
-        'artisan', 'composer.json', 'composer.lock', '.env.example', 'README.md',
+        'artisan', 'booklet', 'composer.json', 'composer.lock', '.env.example', 'README.md',
     ];
 
     /** Must be in a release, or it isn't a whole Booklet. */
@@ -189,7 +189,7 @@ final class Updates
     {
         $root = self::root();
         if (is_dir($root.'/.git')) {
-            return __('This copy of Booklet is kept with git, so update it with git (git pull, then php artisan migrate).');
+            return __('This copy of Booklet is kept with git, so update it with git (git pull, then php booklet migrate).');
         }
         if (! class_exists(ZipArchive::class)) {
             return __('This server can’t open .zip files (PHP’s zip extension is missing). Turn it on in your hosting panel.');
@@ -362,7 +362,7 @@ final class Updates
                 if ($stream === false || file_put_contents($target, $stream) === false) {
                     throw new RuntimeException(__('The download couldn’t be unpacked (is the server out of space?).'));
                 }
-                if ($relative === 'artisan') {
+                if ($relative === 'artisan' || $relative === 'booklet') {
                     @chmod($target, 0755);
                 }
             }

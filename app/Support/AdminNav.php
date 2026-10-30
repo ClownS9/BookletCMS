@@ -76,6 +76,7 @@ class AdminNav
             ['bin', __('The bin'), __('Put back what was deleted'), route('admin.bin'), 'bin', 'sand', $r->routeIs('admin.bin'), null, 'tools'],
             ['collections', __('Collections'), __('Chapters & blueprints'), route('admin.collections'), 'layers', 'sand', $r->routeIs('admin.collections'), null, 'tools'],
             ['settings', __('Settings'), __('Site, look & Stacy'), route('admin.settings'), 'settings', 'sand', $r->routeIs('admin.settings', 'admin.settings.*'), null, 'you'],
+            $user?->isAdmin() ? ['upkeep', __('Upkeep'), __('Clear caches, tidy, readers away'), route('admin.settings.upkeep'), 'pulse', 'sand', $r->routeIs('admin.settings.upkeep'), \App\Support\Upkeep::readersAway() ? '!' : null, 'you'] : null,
             $user?->isAdmin() ? ['backups', __('Backups'), __('The whole book in one file'), route('admin.backups'), 'book', 'sand', $r->routeIs('admin.backups'), null, 'you'] : null,
             $user?->isAdmin() ? ['version-control', __('Version control'), __('Every change kept in git'), route('admin.settings.version-control'), 'history', 'sand', $r->routeIs('admin.settings.version-control'), null, 'you'] : null,
             $user?->isAdmin() ? ['look', __('The cover'), __('Themes, fonts & colours'), route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,
@@ -229,6 +230,7 @@ class AdminNav
         $add('email', 'back', __('Appendix C'), __('Settings'), __('Email'), route('admin.settings.email'), 'sand');
         $add('backups', 'back', __('Appendix C'), __('Settings'), __('Backups'), route('admin.backups'), 'sand');
         $add('health', 'back', __('Appendix C'), __('Settings'), __('Check-up'), route('admin.settings.health'), 'sand');
+        $add('upkeep', 'back', __('Appendix C'), __('Settings'), __('Upkeep'), route('admin.settings.upkeep'), 'sand');
         $add('version-control', 'back', __('Appendix C'), __('Settings'), __('Version control'), route('admin.settings.version-control'), 'sand');
         $add('static', 'back', __('Appendix C'), __('Settings'), __('Publish as plain files'), route('admin.settings.static'), 'sand');
         $add('look', 'back', __('Appendix C'), __('Settings'), __('The cover'), route('admin.settings.look'), 'sand');
@@ -341,6 +343,7 @@ class AdminNav
             $r->routeIs('admin.entries') => "list:{$collection}",
             $r->routeIs('admin.settings.email') => 'email',
             $r->routeIs('admin.settings.health') => 'health',
+            $r->routeIs('admin.settings.upkeep') => 'upkeep',
             $r->routeIs('admin.settings.version-control') => 'version-control',
             $r->routeIs('admin.settings.static', 'admin.settings.static.*') => 'static',
             $r->routeIs('admin.settings.look') => 'look',
@@ -602,7 +605,7 @@ class AdminNav
         'people' => ['readers', 'subscribers'],
         'comments' => ['inbox', 'forms'],
         'activity' => ['visits', 'bin'],
-        'settings' => ['look', 'collections', 'backups', 'version-control', 'static', 'api', 'webhooks', 'updates', 'import'],
+        'settings' => ['look', 'collections', 'upkeep', 'backups', 'version-control', 'static', 'api', 'webhooks', 'updates', 'import'],
     ];
 
     /**

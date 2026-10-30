@@ -13,8 +13,8 @@ return [
     | the class name of your own App\Booklet\Stores\Store implementation here.
     |
     | Move existing content between drivers with:
-    |   php artisan booklet:export   (database → files)
-    |   php artisan booklet:import   (files → database)
+    |   php booklet export   (database → files)
+    |   php booklet import   (files → database)
     |
     */
 
@@ -26,7 +26,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Extras tucked into the book: each is a folder in inserts/ with an
-    | insert.php (php artisan booklet:insert my-thing makes one). Switch them
+    | insert.php (php booklet insert my-thing makes one). Switch them
     | on and off in Settings › Inserts. Safe mode starts with every insert off,
     | for when one is causing trouble.
     |
@@ -64,7 +64,7 @@ return [
     'github_token' => env('BOOKLET_GITHUB_TOKEN'),
 
     // Where new versions of Booklet come from (GitHub releases with a booklet-x.y.zip
-    // attached, made by `php artisan booklet:package`), and whether to look daily.
+    // attached, made by `php booklet package`), and whether to look daily.
     // Behind a proxy or load balancer that handles https (Cloudflare, a host's front server),
     // trust what it says about the address, or passkeys and secure cookies see plain http.
     // TRUSTED_PROXIES=* trusts any; or list the proxies' addresses, separated by commas.

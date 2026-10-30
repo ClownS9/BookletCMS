@@ -12,7 +12,7 @@ own repository: add them from Settings › Inserts › Add. (Copies of them live
 
 ## Making one
 
-    php artisan booklet:insert reading-list
+    php booklet insert reading-list
 
 makes `inserts/reading-list/` with a working example. Then change it.
 
@@ -166,10 +166,10 @@ people you trust. Admins only.
 
 The same from the command line:
 
-    php artisan booklet:insert-install someone/booklet-recipes
-    php artisan booklet:insert-install ~/Downloads/recipes.zip
-    php artisan booklet:insert-update          # bring in newer versions
-    php artisan booklet:insert-undo recipes    # put the copy before the last update back
+    php booklet insert-install someone/booklet-recipes
+    php booklet insert-install ~/Downloads/recipes.zip
+    php booklet insert-update          # bring in newer versions
+    php booklet insert-undo recipes    # put the copy before the last update back
 
 Inserts added from GitHub or a link are checked for newer versions every day; the
 shelf shows **Update** when there is one. `BOOKLET_INSERTS_INSTALL=false` in `.env`
@@ -182,7 +182,7 @@ In Booklet: pick the insert in Settings › Inserts and open **Share it with oth
 Booklet sites**, a step-by-step guide with a download button and the names filled in.
 From the command line:
 
-    php artisan booklet:share recipes
+    php booklet share recipes
 
 packs it into a .zip, checked the same way the shelf checks an insert being added.
 No GitHub needed: send the .zip, and anyone can add it.

@@ -132,7 +132,7 @@
                     </button>
                     <button type="button" class="link-button" wire:click="cancel" wire:loading.remove wire:target="bringIn">{{ __('Cancel') }}</button>
                 </div>
-                <p class="field__hint">{{ __('A big site can take several minutes. Keep this page open until it’s done. (For very big ones, whoever runs the server can use') }} <code>{{ __('php artisan booklet:import-wordpress') }}</code>.)</p>
+                <p class="field__hint">{{ __('A big site can take several minutes. Keep this page open until it’s done. (For very big ones, whoever runs the server can use') }} <code>{{ __('php booklet import-wordpress') }}</code>.)</p>
             @else
                 <div class="ribbon-clear import-empty">
                     <span class="sticker sticker--sand" style="--tilt: -3deg">{{ __('Moving boxes') }}</span>

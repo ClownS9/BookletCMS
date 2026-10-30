@@ -44,7 +44,7 @@ class HealthTest extends TestCase
     {
         $never = $this->check('scheduler');
         $this->assertSame('fail', $never['state']);
-        $this->assertStringContainsString('php artisan schedule:run', $never['command']);
+        $this->assertStringContainsString('php booklet schedule:run', $never['command']);
         $this->assertStringContainsString(base_path(), $never['command']);
 
         Cache::forever(Health::BEAT, now()->subMinutes(45)->timestamp);
@@ -65,7 +65,7 @@ class HealthTest extends TestCase
         DB::table('migrations')->where('migration', 'like', '%add_sources_to_inserts')->delete();
         $pending = $this->check('migrations');
         $this->assertSame('fail', $pending['state']);
-        $this->assertSame('php artisan migrate --force', $pending['command']);
+        $this->assertSame('php booklet migrate --force', $pending['command']);
 
         config(['app.debug' => true]);
         $this->app['env'] = 'production';
@@ -133,7 +133,7 @@ class HealthTest extends TestCase
             ->assertSee('Check-up')
             ->assertSee('to fix')
             ->assertSee('Scheduler')
-            ->assertSee('php artisan schedule:run')
+            ->assertSee('php booklet schedule:run')
             ->assertSee('Every check');
 
         // Contents nudges admins about what's broken.
@@ -153,7 +153,7 @@ class HealthTest extends TestCase
     {
         $this->artisan('booklet:doctor')
             ->expectsOutputToContain('Running on its own')
-            ->expectsOutputToContain('php artisan schedule:run')
+            ->expectsOutputToContain('php booklet schedule:run')
             ->assertExitCode(1);
 
         Cache::forever(Health::BEAT, now()->timestamp);

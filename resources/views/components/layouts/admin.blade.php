@@ -38,6 +38,16 @@
         <x-admin.lamp />
     @endpersist
 
+    @if (\App\Support\Upkeep::readersAway())
+        {{-- A reminder on every page while readers see "back soon" --}}
+        <p class="away-bar" role="status">
+            <span>{{ __('Readers are seeing “back soon”. You can still use the book and see the site.') }}</span>
+            @if (request()->user()?->isAdmin())
+                <a href="{{ route('admin.settings.upkeep') }}" wire:navigate>{{ __('Let them back in') }}</a>
+            @endif
+        </p>
+    @endif
+
     @if ($as = request()->user()?->viewingAs())
         {{-- Trying the book out as another role --}}
         <form method="POST" action="{{ route('admin.view-as.stop') }}" class="viewing-as" role="status">

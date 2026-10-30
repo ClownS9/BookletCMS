@@ -144,6 +144,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
         ]);
     })->where('form', '[a-z0-9-]+')->name('forms.csv');
     Route::get('/settings/health', Admin\Health::class)->name('settings.health');
+    Route::get('/settings/upkeep', Admin\Upkeep::class)->name('settings.upkeep');
     Route::get('/settings/version-control', Admin\VersionControl::class)->name('settings.version-control');
     Route::get('/settings/plain-files', Admin\StaticPublishing::class)->name('settings.static');
     Route::get('/settings/cover', Admin\CoverDesigner::class)->name('settings.look');

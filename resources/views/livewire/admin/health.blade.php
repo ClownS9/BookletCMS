@@ -52,7 +52,7 @@
                 <button type="button" class="btn" wire:click="again" wire:loading.attr="disabled" wire:target="again">
                     <span wire:loading.remove wire:target="again">{{ __('Check again') }}</span><span wire:loading wire:target="again">{{ __('Checking…') }}</span>
                 </button>
-                <p class="field__hint" style="margin: 0">{{ __('On the server,') }} <code>{{ __('php artisan booklet:doctor') }}</code> {{ __('runs the same check-up.') }}</p>
+                <p class="field__hint" style="margin: 0">{{ __('On the server,') }} <code>{{ __('php booklet doctor') }}</code> {{ __('runs the same check-up.') }}</p>
             </div>
         </x-admin.card>
 

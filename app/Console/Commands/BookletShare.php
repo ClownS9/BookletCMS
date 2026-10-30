@@ -7,8 +7,8 @@ use Illuminate\Console\Command;
 use RuntimeException;
 
 /**
- * php artisan booklet:share harbour
- * php artisan booklet:share events --to=~/Desktop
+ * php booklet share harbour
+ * php booklet share events --to=~/Desktop
  *
  * Packs a theme (themes/) or an insert (inserts/) into a .zip to share,
  * after checking it the same way Booklet checks one being added. The same

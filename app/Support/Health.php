@@ -15,7 +15,7 @@ use Throwable;
  * folders it can write to…) Each check says what it found in plain words,
  * and how to fix it when something's wrong.
  *
- * Shown in Settings › Check-up, by `php artisan booklet:doctor`, and to
+ * Shown in Settings › Check-up, by `php booklet doctor`, and to
  * Stacy. One check that can't run never stops the others.
  */
 class Health
@@ -130,7 +130,7 @@ class Health
     {
         $migrator = app('migrator');
         if (! $migrator->repositoryExists()) {
-            return ['group' => 'server', 'label' => __('Database tables'), 'state' => 'fail', 'text' => __('The database is empty.'), 'command' => 'php artisan migrate --force'];
+            return ['group' => 'server', 'label' => __('Database tables'), 'state' => 'fail', 'text' => __('The database is empty.'), 'command' => 'php booklet migrate --force'];
         }
         $files = array_keys($migrator->getMigrationFiles([database_path('migrations')]));
         $pending = array_diff($files, $migrator->getRepository()->getRan());
@@ -139,7 +139,7 @@ class Health
             ? ['group' => 'server', 'label' => __('Database tables'), 'state' => 'ok', 'text' => __('Up to date.')]
             : ['group' => 'server', 'label' => __('Database tables'), 'state' => 'fail',
                 'text' => trans_choice(':count change to the database hasn’t been made yet (after an update, usually), so some pages may break.|:count changes to the database haven’t been made yet (after an update, usually), so some pages may break.', count($pending)),
-                'command' => 'php artisan migrate --force'];
+                'command' => 'php booklet migrate --force'];
     }
 
     protected static function folders(): array
@@ -160,7 +160,7 @@ class Health
         return is_dir($link) || is_link($link)
             ? ['group' => 'server', 'label' => __('Pictures folder'), 'state' => 'ok', 'text' => __('public/storage points to the uploads, so pictures show.')]
             : ['group' => 'server', 'label' => __('Pictures folder'), 'state' => 'fail', 'text' => __('public/storage is missing, so uploaded pictures don’t show on the site.'),
-                'command' => 'php artisan storage:link'];
+                'command' => 'php booklet storage:link'];
     }
 
     protected static function space(): ?array
@@ -182,7 +182,7 @@ class Health
     {
         return config('app.key')
             ? ['group' => 'safe', 'label' => __('App key'), 'state' => 'ok', 'text' => __('Set. (Keep it: saved passwords for email and AI services can only be read with it.)')]
-            : ['group' => 'safe', 'label' => __('App key'), 'state' => 'fail', 'text' => __('APP_KEY is empty, so sign-ins and saved passwords aren’t safe.'), 'command' => 'php artisan key:generate'];
+            : ['group' => 'safe', 'label' => __('App key'), 'state' => 'fail', 'text' => __('APP_KEY is empty, so sign-ins and saved passwords aren’t safe.'), 'command' => 'php booklet key:generate'];
     }
 
     protected static function debug(): array
@@ -221,7 +221,7 @@ class Health
     protected static function scheduler(): array
     {
         $beat = (int) rescue(fn () => Cache::get(self::BEAT, 0), 0, false);
-        $line = '* * * * * cd '.base_path().' && php artisan schedule:run >> /dev/null 2>&1';
+        $line = '* * * * * cd '.base_path().' && php booklet schedule:run >> /dev/null 2>&1';
         $what = __('scheduled posts going out, emails to subscribers, nightly backups and update checks');
 
         if (in_array(config('cache.default'), ['array', 'null'], true)) {
@@ -244,18 +244,18 @@ class Health
         $driver = (string) config('queue.default');
         $failed = rescue(fn () => Schema::hasTable('failed_jobs') ? DB::table('failed_jobs')->count() : 0, 0, false);
         if ($driver === 'sync') {
-            return $failed ? ['group' => 'running', 'label' => __('Background jobs'), 'state' => 'warn', 'text' => trans_choice(':count failed job on record.|:count failed jobs on record.', $failed), 'command' => 'php artisan queue:failed'] : null;
+            return $failed ? ['group' => 'running', 'label' => __('Background jobs'), 'state' => 'warn', 'text' => trans_choice(':count failed job on record.|:count failed jobs on record.', $failed), 'command' => 'php booklet queue:failed'] : null;
         }
         if ($driver === 'database') {
             $stuck = rescue(fn () => DB::table('jobs')->where('available_at', '<', now()->subMinutes(10)->timestamp)->count(), 0, false);
             if ($stuck) {
                 return ['group' => 'running', 'label' => __('Background jobs'), 'state' => 'fail', 'text' => trans_choice(':count job waiting for more than ten minutes: nothing is working through it.|:count jobs waiting for more than ten minutes: nothing is working through them.', $stuck),
-                    'fix' => __('Run a queue worker (your host may call it a “daemon” or “background process”), or set QUEUE_CONNECTION=sync in .env.'), 'command' => 'php artisan queue:work --tries=3'];
+                    'fix' => __('Run a queue worker (your host may call it a “daemon” or “background process”), or set QUEUE_CONNECTION=sync in .env.'), 'command' => 'php booklet queue:work --tries=3'];
             }
         }
 
         return $failed
-            ? ['group' => 'running', 'label' => __('Background jobs'), 'state' => 'warn', 'text' => trans_choice(':count failed job on record.|:count failed jobs on record.', $failed), 'command' => 'php artisan queue:failed']
+            ? ['group' => 'running', 'label' => __('Background jobs'), 'state' => 'warn', 'text' => trans_choice(':count failed job on record.|:count failed jobs on record.', $failed), 'command' => 'php booklet queue:failed']
             : ['group' => 'running', 'label' => __('Background jobs'), 'state' => 'ok', 'text' => __('Nothing waiting.')];
     }
 

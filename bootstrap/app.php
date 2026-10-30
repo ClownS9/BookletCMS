@@ -38,6 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // A brand new book opens on First setup, not the public site.
             \App\Http\Middleware\RedirectToSetup::class,
             \App\Http\Middleware\ApplySiteSettings::class,
+            // Readers see "back soon" while the book is being looked after (php booklet down).
+            \App\Http\Middleware\ReadersAway::class,
             // The book in the language its reader chose (readers' pages speak the site's).
             \App\Http\Middleware\SpeakBookLanguage::class,
             \App\Http\Middleware\CountVisit::class,

@@ -1,6 +1,6 @@
 <?php
 
-// What runs on its own (php artisan schedule:run, every minute from cron).
+// What runs on its own (php booklet schedule:run, every minute from cron).
 // Booklet's commands themselves are classes in app/Console/Commands.
 
 // Stacy's natural voice keeps recent audio so repeated words aren't paid for twice; clear out old clips.

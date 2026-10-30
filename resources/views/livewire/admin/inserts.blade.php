@@ -18,7 +18,7 @@
             @endif
 
             @if ($inserts->isEmpty())
-                <p class="empty-note">{{ __('No inserts yet. Add one, or make your own with') }} <code>{{ __('php artisan booklet:insert my-insert') }}</code>.</p>
+                <p class="empty-note">{{ __('No inserts yet. Add one, or make your own with') }} <code>{{ __('php booklet insert my-insert') }}</code>.</p>
             @else
                 <ul class="picks">
                     @foreach ($inserts as $i)
@@ -40,7 +40,7 @@
             @endif
             <div class="insert-add-start">
                 <button type="button" class="btn" wire:click="startAdding" @if ($adding) aria-pressed="true" @endif><x-admin.icon name="plus" size="16" /> {{ __('Add an insert') }}</button>
-                <p class="field__hint" style="margin: 0">{{ __('From a .zip, a link, or GitHub. Or make your own with') }} <code>{{ __('php artisan booklet:insert my-insert') }}</code>.</p>
+                <p class="field__hint" style="margin: 0">{{ __('From a .zip, a link, or GitHub. Or make your own with') }} <code>{{ __('php booklet insert my-insert') }}</code>.</p>
             </div>
         </x-admin.card>
 

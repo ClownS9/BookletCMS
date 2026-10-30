@@ -8,8 +8,8 @@ use Symfony\Component\Finder\Finder;
 use ZipArchive;
 
 /**
- * php artisan booklet:package
- * php artisan booklet:package --to=~/Desktop
+ * php booklet package
+ * php booklet package --to=~/Desktop
  *
  * The download people install from: the whole of Booklet in one .zip, the
  * vendor folder included (shared hosting has no terminal to run Composer),
@@ -33,7 +33,7 @@ class BookletPackage extends Command
         'app', 'bootstrap/app.php', 'bootstrap/providers.php', 'config', 'database/migrations', 'database/seeders', 'database/factories',
         'lang', 'public/booklet', 'public/index.php', 'public/.htaccess', 'public/favicon.ico',
         'resources/views', 'resources/css', 'resources/js', 'resources/fonts', 'resources/install', 'resources/blueprints', 'resources/fieldsets',
-        'routes', 'themes', 'inserts/README.md', 'database/.gitignore', 'vendor', 'artisan', 'composer.json', 'composer.lock', '.env.example', '.htaccess', 'README.md', 'LICENSE',
+        'routes', 'themes', 'inserts/README.md', 'database/.gitignore', 'vendor', 'artisan', 'booklet', 'composer.json', 'composer.lock', '.env.example', '.htaccess', 'README.md', 'LICENSE',
     ];
 
     /** Folders made empty (with a .gitignore so they survive being unpacked anywhere). */
@@ -90,8 +90,10 @@ class BookletPackage extends Command
                 }
             }
         }
-        if (is_file($base.'/artisan')) {
-            $zip->setExternalAttributesName('booklet/artisan', ZipArchive::OPSYS_UNIX, 0755 << 16);
+        foreach (['artisan', 'booklet'] as $runnable) {
+            if (is_file($base.'/'.$runnable)) {
+                $zip->setExternalAttributesName('booklet/'.$runnable, ZipArchive::OPSYS_UNIX, 0755 << 16);
+            }
         }
         foreach (self::EMPTY as $dir) {
             if ($zip->locateName('booklet/'.$dir.'/.gitignore') === false) {

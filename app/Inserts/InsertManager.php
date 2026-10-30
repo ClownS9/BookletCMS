@@ -96,7 +96,7 @@ class InsertManager
      * Inserts that became part of Booklet: never run any more, and the shelf
      * says where they went.
      */
-    public const BUILT_IN = ['page-builder' => 'Building on the page, for every page and post and the blog page (since Booklet 1.4). What you built with it comes across with php artisan booklet:builder-import'];
+    public const BUILT_IN = ['page-builder' => 'Building on the page, for every page and post and the blog page (since Booklet 1.4). What you built with it comes across with php booklet builder-import'];
 
     // Public pages --------------------------------------------------------------------------
 

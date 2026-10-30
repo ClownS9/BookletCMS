@@ -15,7 +15,7 @@ use Symfony\Component\Process\PhpExecutableFinder;
 /**
  * Settings › Publish as plain files: the public site as ordinary web pages
  * for GitHub Pages, Netlify or any host. Made in a separate run of Booklet
- * (php artisan booklet:publish-static), so it sees the site exactly as a
+ * (php booklet publish-static), so it sees the site exactly as a
  * visitor would. Admins only.
  */
 #[Layout('components.layouts.admin')]
@@ -80,7 +80,7 @@ class StaticPublishing extends Component
 
         $php = (new PhpExecutableFinder)->find(false);
         if (! $php) {
-            $this->addError('publish', __('Booklet couldn’t find PHP to run the publishing on this server. Run php artisan booklet:publish-static there instead.'));
+            $this->addError('publish', __('Booklet couldn’t find PHP to run the publishing on this server. Run php booklet publish-static there instead.'));
 
             return;
         }

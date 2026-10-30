@@ -46,7 +46,7 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 ### Your site, your way
 - **The cover:** the site's look chosen from five presets (Notebook, Broadsheet, Kopitiam, Botanic, Studio), then changed bit by bit: fonts for titles and for menus, the accent colour, the paper, how the header and the home page are laid out, corners and tilted stickers. A live preview, wide or phone-sized, shows it before anyone else sees it. No CSS needed.
-- **Themes:** find themes on GitHub without leaving The cover (search, newest or most starred, with what you already have and newer versions marked), or add one from a .zip, a link or a GitHub repository. **Cover packs** bring their own fonts, colours, presets and settings (a wave under the masthead, round pictures…) and are safe to add from anyone: Booklet reads their styles through first. **Themes with templates** change the pages themselves; they're code, so adding one asks for your password. Either way, Booklet's own pieces (menus, comments, share cards, search-engine data) come along, and a broken template never reaches readers: they get Booklet's own page, and The cover says what broke. **Harbour**, a cover pack, comes with Booklet. Making one: `php artisan booklet:make-theme`, and [`themes/README.md`](themes/README.md). **Sharing one** (a theme or an insert): a step-by-step guide right beside it, with a checked .zip to download and the GitHub steps filled in. Searches are kept for half an hour; GitHub answers 60 an hour for a server without a token, and many more with one (`BOOKLET_GITHUB_TOKEN` in `.env`, read-only access to public repositories is enough).
+- **Themes:** find themes on GitHub without leaving The cover (search, newest or most starred, with what you already have and newer versions marked), or add one from a .zip, a link or a GitHub repository. **Cover packs** bring their own fonts, colours, presets and settings (a wave under the masthead, round pictures…) and are safe to add from anyone: Booklet reads their styles through first. **Themes with templates** change the pages themselves; they're code, so adding one asks for your password. Either way, Booklet's own pieces (menus, comments, share cards, search-engine data) come along, and a broken template never reaches readers: they get Booklet's own page, and The cover says what broke. **Harbour**, a cover pack, comes with Booklet. Making one: `php booklet make-theme`, and [`themes/README.md`](themes/README.md). **Sharing one** (a theme or an insert): a step-by-step guide right beside it, with a checked .zip to download and the GitHub steps filled in. Searches are kept for half an hour; GitHub answers 60 an hour for a server without a token, and many more with one (`BOOKLET_GITHUB_TOKEN` in `.env`, read-only access to public repositories is enough).
 - **Publish as plain files:** one button turns the public site into ordinary web pages, pictures and styles, for GitHub Pages, Netlify or any host that serves files (no PHP needed there). With GitHub connected, they go to the `gh-pages` branch, and Booklet can publish again by itself a couple of minutes after you stop making changes. Search still works, in the reader's browser.
 - **Content API:** your published posts and pages as JSON, for an app or another website. Keys are made in Settings and can be switched off one at a time, or the API can be opened to everyone. Read-only, and drafts never leave.
 
@@ -89,7 +89,7 @@ Everyone who writes in Booklet can set it up their own way, from Your account �
 ### Readers and groups
 - **Accounts for your readers** on the public site: join, confirm their email, sign in, forgotten password, and their own page (details, password, groups, new posts by email, delete the account). Readers are kept apart from the people who write: a reader's account can never open the admin.
 - **How people join:** anyone, anyone who asks (you let them in), by invitation only, or nobody new. Invite someone by email from **People › Readers & groups**.
-- **Groups**, like Statamic's: "Members", "Kuih Club", "Staff". Readers and people from the book can be in several. Each group is open, by request, by invitation link, or added by you.
+- **Groups**: "Members", "Kuih Club", "Staff". Readers and people from the book can be in several. Each group is open, by request, by invitation link, or added by you.
 - **Members-only posts and pages:** in the editor, *Who can read it*: everyone, signed-in readers, or some groups. Everyone else sees the title, first lines and a way in; search, feeds, the content API and the plain-file copy leave the rest out. Page-builder sections can be shown only to signed-in readers or only to people who aren't.
 - **Make it yours:** extra sign-up questions, the words on the pages, a line in the welcome email, where readers land after signing in, and the "Sign in" button in the top bar. The pages live under `/members` (change it with `BOOKLET_READERS_PATH`), and a theme can replace any of them: `site/readers/*.blade.php` and `site/locked.blade.php`.
 
@@ -108,7 +108,8 @@ Everyone who writes in Booklet can set it up their own way, from Your account �
 See [Security](#security) for how Booklet protects your data, sign-ins and uploads.
 - **Backups:** the whole book in one file, nightly if you like, and restored with a look inside first.
 - **Version control:** with content kept as files, every change is committed to git on its own, credited to whoever made it. You can browse the history and put the whole book back to any point. **Send it to GitHub in three steps** from the same page, no commands needed. Booklet won't commit files with unfinished merge marks, and it offers to take private files out of git if any were committed before.
-- **Check-up:** a page (and `php artisan booklet:doctor`) that tells you what the server is missing and how to fix it.
+- **Check-up:** a page (and `php booklet doctor`) that tells you what the server is missing and how to fix it.
+- **Upkeep:** clear caches, prepare the site for speed, remake every picture, tidy how posts and pages are written (you see each change first), and show readers a "back soon" page while you work. All of it is in Settings › Upkeep and on the command line, `php booklet`.
 - A bin that keeps deleted things for 30 days.
 
 ![Version control: the three steps to GitHub on the left, every change as a stitch in the binding on the right](docs/screenshots/version-control.png)
@@ -135,13 +136,13 @@ cd booklet
 
 composer install
 cp .env.example .env
-php artisan key:generate
+php booklet key:generate
 
 touch database/database.sqlite
-php artisan migrate
-php artisan storage:link
+php booklet migrate
+php booklet storage:link
 
-php artisan serve
+php booklet serve
 ```
 
 Then open **http://localhost:8000**. The first visit takes you to a short setup: your site's name, your colour, and the first admin account.
@@ -160,9 +161,9 @@ Hosts that don't allow the `public/storage` link still work: Booklet hands out u
 
 When a new version is out, admins see it on the contents page and in **Settings › Updates**, with what changed. **Update** makes a backup of the book, downloads the release, checks it against GitHub's fingerprint and that it's whole, then swaps Booklet's own files (keeping the old ones) and updates the database. Your posts, uploads, settings, `.env` and themes you added aren't touched. If anything goes wrong it goes back by itself, and **Go back** undoes an update afterwards.
 
-A copy kept with git is updated with git instead (`git pull`, `composer install`, `php artisan migrate`). New versions come from `BOOKLET_UPDATES_REPO` (default `ClownS9/BookletCMS`); `BOOKLET_UPDATES_CHECK=false` stops the daily look.
+A copy kept with git is updated with git instead (`git pull`, `composer install`, `php booklet migrate`). New versions come from `BOOKLET_UPDATES_REPO` (default `ClownS9/BookletCMS`); `BOOKLET_UPDATES_CHECK=false` stops the daily look.
 
-**Making a release:** `composer install --no-dev --optimize-autoloader`, raise `version` in `config/booklet.php`, run `php artisan booklet:package`, and attach the .zip it makes to a GitHub release tagged with that version, with what changed in the release notes.
+**Making a release:** `composer install --no-dev --optimize-autoloader`, raise `version` in `config/booklet.php`, run `php booklet package`, and attach the .zip it makes to a GitHub release tagged with that version, with what changed in the release notes.
 
 ### Keep content as files (recommended)
 
@@ -178,14 +179,14 @@ Files are easy to read, back up and keep in git. People, comments, form replies 
 BOOKLET_DRIVER=file
 ```
 
-Each kind of content can also be set on its own (`BOOKLET_ENTRIES_DRIVER`, `BOOKLET_TERMS_DRIVER`, …). To move existing content across, use `php artisan booklet:export` (database → files) or `php artisan booklet:import` (files → database).
+Each kind of content can also be set on its own (`BOOKLET_ENTRIES_DRIVER`, `BOOKLET_TERMS_DRIVER`, …). To move existing content across, use `php booklet export` (database → files) or `php booklet import` (files → database).
 
 ### Let it run on its own
 
 Scheduled posts, nightly backups, emails to subscribers, link checks, version control and publishing plain files again after changes all need Laravel's scheduler. Run it every minute, for example with cron:
 
 ```cron
-* * * * * cd /path/to/booklet && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /path/to/booklet && php booklet schedule:run >> /dev/null 2>&1
 ```
 
 The check-up (Settings › Check-up) tells you if it isn't running.
@@ -200,22 +201,33 @@ In **Settings › Stacy's brain**, pick an AI service and paste its key, or poin
 
 ## Useful commands
 
+Booklet has its own command line, `php booklet`. Run it on its own to see every command, grouped; `php booklet help <command>` explains one. Anything Laravel offers works through it too (`php booklet migrate`), and `php artisan booklet:<command>` still works for scripts written before.
+
 | Command | What it does |
 | --- | --- |
-| `php artisan booklet:doctor` | The check-up, in the terminal |
-| `php artisan booklet:backup` / `booklet:restore` | Make a backup, or restore one |
-| `php artisan booklet:export` / `booklet:import` | Move content between the database and files |
-| `php artisan booklet:git-commit` | Commit content changes to git now |
-| `php artisan booklet:import-wordpress` | Move in from a WordPress export |
-| `php artisan booklet:pictures` | Make (or `--clear`) the smaller copies of pictures |
-| `php artisan booklet:links` | Check every link in published posts and pages |
-| `php artisan booklet:pages-clear` | Make every cached page fresh |
-| `php artisan booklet:insert-install` / `insert-update` / `insert-undo` | Add, update or roll back an insert |
-| `php artisan booklet:send-posts` | Send new posts to subscribers now |
-| `php artisan booklet:package` | Pack Booklet into the .zip people install and update from |
-| `php artisan booklet:share` | Pack a theme or insert into a .zip to share, checked as Booklet checks one being added |
-| `php artisan booklet:make-theme` | Make a theme in `themes/` to change (`--templates` to start from Booklet's templates) |
-| `php artisan booklet:publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |
+| `php booklet` | List Booklet's commands (`php booklet list --all` for everything) |
+| `php booklet doctor` | The check-up, in the terminal |
+| `php booklet cache:clear` | Clear kept pages, compiled templates and cached settings. Booklet's own notes (link reports, updates, sign-in steps) are kept |
+| `php booklet optimize` | Prepare settings, routes and templates ahead, for a live server |
+| `php booklet down "Back by six"` / `up` | Show readers a calm "back soon" page (`--for=60` to come back by itself), and let them back in. Everyone signed in keeps working |
+| `php booklet tidy` | Look at what tidying the writing would change (stray spaces, empty lines, invisible characters, skipped heading levels); `--apply` to do it, `--only=` to choose. Code is left alone and each earlier version stays in History |
+| `php booklet backup` / `restore` | Make a backup, or restore one |
+| `php booklet export` / `import` | Move content between the database and files |
+| `php booklet git-commit` | Commit content changes to git now |
+| `php booklet import-wordpress` | Move in from a WordPress export |
+| `php booklet pictures` | Make (or `--clear`) the smaller copies of pictures |
+| `php booklet pictures:rebuild` | Throw away every picture's smaller copies and crops, and make them again |
+| `php booklet links` | Check every link in published posts and pages |
+| `php booklet pages-clear` | Make every cached page fresh |
+| `php booklet insert-install` / `insert-update` / `insert-undo` | Add, update or roll back an insert |
+| `php booklet send-posts` | Send new posts to subscribers now |
+| `php booklet package` | Pack Booklet into the .zip people install and update from |
+| `php booklet share` | Pack a theme or insert into a .zip to share, checked as Booklet checks one being added |
+| `php booklet make-theme` | Make a theme in `themes/` to change (`--templates` to start from Booklet's templates) |
+| `php booklet publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |
+| `php booklet reset` | Start again from the starter book. Backs up first and asks you to type the site's name |
+
+Most of these are also in **Settings › Upkeep**, which shows when each last ran.
 
 ## Content API
 
@@ -343,7 +355,7 @@ A **theme with templates** is code, like an insert: it asks for the admin's pass
 
 Browsers only make passkeys on an address that is secure and has a name:
 
-- **Quickest:** `php artisan serve`, then open **http://localhost:8000**. `localhost` counts as secure. `127.0.0.1` doesn't work: it's numbers, not a name.
+- **Quickest:** `php booklet serve`, then open **http://localhost:8000**. `localhost` counts as secure. `127.0.0.1` doesn't work: it's numbers, not a name.
 - **A local name** such as `booklet.test`: give it https. With Laravel Herd, `herd secure booklet`; with Valet, `valet secure booklet`; otherwise make a certificate with [mkcert](https://github.com/FiloSottile/mkcert). Then set `APP_URL=https://booklet.test`.
 - Avoid a real domain name (like `booklet.com`) pointed at your own computer over plain http: it isn't secure, so the browser says no.
 - **Touch ID on a Mac:** a fingerprint added in System Settings › Touch ID & Password. Safari and Chrome both use it; the passkey is kept in your iCloud Keychain (Safari) or Chrome's password manager.
@@ -358,7 +370,7 @@ Browsers only make passkeys on an address that is secure and has a name:
 - [ ] Turn on two-step sign-in for every admin.
 - [ ] Make sure only the web server's user can read `.env`, the database file and `storage/`.
 - [ ] Run the scheduler, so nightly backups happen, and download a backup now and then.
-- [ ] Open **Settings › Check-up** (or run `php artisan booklet:doctor`) and fix anything it lists.
+- [ ] Open **Settings › Check-up** (or run `php booklet doctor`) and fix anything it lists.
 - [ ] Keep dependencies up to date with `composer update`.
 
 ### Reporting a problem
@@ -368,7 +380,7 @@ If you find a security issue, please report it privately through GitHub's **Secu
 ## Tests
 
 ```bash
-php artisan test
+php booklet test
 ```
 
 Tests always run against an in-memory database and never touch your real content.

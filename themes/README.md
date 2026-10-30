@@ -17,8 +17,8 @@ There are two kinds:
 
 ## Making one
 
-    php artisan booklet:make-theme lighthouse              # a cover pack
-    php artisan booklet:make-theme lighthouse --templates  # starting from copies of Booklet's templates
+    php booklet make-theme lighthouse              # a cover pack
+    php booklet make-theme lighthouse --templates  # starting from copies of Booklet's templates
 
 Then pick it in Settings › The cover. To share it, zip the folder (or put it on
 GitHub: people can add it from there, and look for updates later).
@@ -30,7 +30,7 @@ sites**. It has a download button for a checked .zip, and the GitHub steps below
 the names already filled in and a button that opens GitHub's new-repository page.
 From the command line:
 
-    php artisan booklet:share lighthouse
+    php booklet share lighthouse
 
 packs it into a .zip, checked the same way Booklet checks a theme being added, so
 what you send is what others can add. Anyone can add that .zip in The cover.

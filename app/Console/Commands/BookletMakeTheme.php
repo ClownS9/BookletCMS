@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 /**
- * php artisan booklet:make-theme lighthouse
- * php artisan booklet:make-theme lighthouse --templates
+ * php booklet make-theme lighthouse
+ * php booklet make-theme lighthouse --templates
  *
  * Makes a theme in themes/lighthouse/ that already works: a theme.json with
  * a preset, a font, a paper and an option, and a stylesheet to change. With

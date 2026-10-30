@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
 /**
- * php artisan booklet:insert my-thing
+ * php booklet insert my-thing
  *
  * Makes a new insert in inserts/my-thing/ that already works: a page in the
  * book with a little list you can add to, a [[my-thing]] slip that shows the
