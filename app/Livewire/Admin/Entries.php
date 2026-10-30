@@ -56,12 +56,164 @@ class Entries extends Component
 
     public const SORTS = ['title', '-title', 'date', '-date', 'edited', '-edited'];
 
+    // Filters (the Dashboard's table) -----------------------------------------
+
+    /** Who wrote it: a person's id, "me", or "nobody". */
+    #[Url(except: '')]
+    public string $by = '';
+
+    /** A category or tag for each kind there is: field => term slug ("-" for none). */
+    #[Url(except: [])]
+    public array $in = [];
+
+    /** When it's dated: week, month, year, older, upcoming. */
+    #[Url(except: '')]
+    public string $when = '';
+
+    /** When it was last changed: today, week, month, stale. */
+    #[Url(except: '')]
+    public string $edited = '';
+
+    /** What the search looks through: titles and addresses, or everything (the writing too). */
+    #[Url(except: 'titles')]
+    public string $within = 'titles';
+
+    /** The filter row is open. */
+    public bool $filtersOpen = false;
+
+    public const WHEN = ['week' => 'Last 7 days', 'month' => 'Last 30 days', 'year' => 'This year', 'older' => 'Older than a year', 'upcoming' => 'Still to come'];
+
+    public const EDITED = ['today' => 'Today', 'week' => 'In the last 7 days', 'month' => 'In the last 30 days', 'stale' => 'Not in 6 months'];
+
+    public function updated(string $name): void
+    {
+        if (in_array(\Illuminate\Support\Str::before($name, '.'), ['by', 'in', 'when', 'edited', 'within'], true)) {
+            $this->page = 1;
+        }
+    }
+
+    /** Take one filter away: by, when, edited, within, or in.{field}. */
+    public function dropFilter(string $which): void
+    {
+        if (str_starts_with($which, 'in.')) {
+            unset($this->in[substr($which, 3)]);
+        } elseif (in_array($which, ['by', 'when', 'edited'], true)) {
+            $this->{$which} = '';
+        } elseif ($which === 'within') {
+            $this->within = 'titles';
+        }
+        $this->page = 1;
+    }
+
+    public function clearFilters(): void
+    {
+        $this->reset('by', 'in', 'when', 'edited', 'within', 'search');
+        $this->page = 1;
+    }
+
+    protected function filtersOn(): int
+    {
+        return ($this->by !== '' ? 1 : 0) + count(array_filter($this->in, fn ($v) => is_string($v) && $v !== ''))
+            + ($this->when !== '' ? 1 : 0) + ($this->edited !== '' ? 1 : 0) + ($this->within !== 'titles' ? 1 : 0);
+    }
+
+    /**
+     * The entries the filters and search let through.
+     *
+     * @param  \Illuminate\Support\Collection<int, Entry>  $entries
+     * @return \Illuminate\Support\Collection<int, Entry>
+     */
+    protected function filtered(\Illuminate\Support\Collection $entries, array $termFields, array $termTitles): \Illuminate\Support\Collection
+    {
+        $me = (string) request()->user()?->id;
+        if ($this->by !== '') {
+            $who = $this->by === 'me' ? $me : $this->by;
+            $entries = $entries->filter(fn (Entry $e) => $this->by === 'nobody'
+                ? ! $e->get('author')
+                : (string) $e->get('author') === $who);
+        }
+        foreach ($this->in as $field => $slug) {
+            if (! is_string($slug) || $slug === '' || ! isset($termFields[$field])) {
+                continue;
+            }
+            $entries = $entries->filter(function (Entry $e) use ($field, $slug) {
+                $has = array_filter((array) $e->get($field, []), 'is_string');
+
+                return $slug === '-' ? $has === [] : in_array($slug, $has, true);
+            });
+        }
+        if (isset(self::WHEN[$this->when])) {
+            $now = now();
+            $entries = $entries->filter(function (Entry $e) use ($now) {
+                $d = $e->date();
+                if (! $d) {
+                    return false;
+                }
+
+                return match ($this->when) {
+                    'week' => $d->between($now->copy()->subDays(7), $now),
+                    'month' => $d->between($now->copy()->subDays(30), $now),
+                    'year' => $d->year === $now->year && $d->lte($now),
+                    'older' => $d->lt($now->copy()->subYear()),
+                    default => $d->gt($now), // upcoming
+                };
+            });
+        }
+        if (isset(self::EDITED[$this->edited])) {
+            $now = now();
+            $entries = $entries->filter(function (Entry $e) use ($now) {
+                $at = $e->lastModified() ? rescue(fn () => \Illuminate\Support\Carbon::parse($e->lastModified()), null, false) : null;
+                if (! $at) {
+                    return $this->edited === 'stale';
+                }
+
+                return match ($this->edited) {
+                    'today' => $at->isSameDay($now),
+                    'week' => $at->gte($now->copy()->subDays(7)),
+                    'month' => $at->gte($now->copy()->subDays(30)),
+                    default => $at->lt($now->copy()->subMonths(6)), // stale
+                };
+            });
+        }
+
+        $words = array_filter(preg_split('/\s+/u', Str::lower(trim($this->search))) ?: [], fn ($w) => $w !== '');
+        if ($words !== []) {
+            $names = $this->within === 'everything' ? User::query()->pluck('name', 'id')->all() : [];
+            $entries = $entries->filter(function (Entry $e) use ($words, $termFields, $termTitles, $names) {
+                $text = $e->title().' '.$e->slug();
+                if ($this->within === 'everything') {
+                    foreach ($termFields as $field => $f) {
+                        foreach ((array) $e->get($field, []) as $slug) {
+                            $text .= ' '.($termTitles[$f['taxonomy']][$slug] ?? $slug);
+                        }
+                    }
+                    $content = $e->get('content');
+                    $text .= ' '.strip_tags(is_string($content) ? $content : (string) json_encode($content, JSON_UNESCAPED_UNICODE));
+                    $text .= ' '.(string) $e->get('excerpt', '').' '.($names[$e->get('author')] ?? '');
+                }
+                $text = Str::lower($text);
+
+                // Every word somewhere, in any order: "pandan cake" finds "Pandan chiffon cake".
+                foreach ($words as $word) {
+                    if (! str_contains($text, $word)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
+
+        return $entries->values();
+    }
+
     /** On first opening with ?entry=…, turn to the page it's on. */
     protected bool $findChosen = false;
 
     public function mount(string $collection): void
     {
         $this->findChosen = $this->selected !== null && $this->page === 1;
+        $this->filtersOpen = $this->filtersOn() > 0;
         abort_unless(Booklet::collections()->find($collection) !== null, 404);
         abort_unless(request()->user()->canOpen($collection), 403, 'Your role doesn’t open this chapter.');
 
@@ -426,17 +578,39 @@ class Entries extends Component
         $reviewStates = $all->mapWithKeys(fn (Entry $e) => [$e->id() => \App\Support\Reviews::state($e)])->filter();
         $counts->put('review', $reviewStates->filter(fn ($s) => $s === 'waiting')->count());
 
-        $entries = $all
+        // The Dashboard layout shows the chapter as a table, which can be sorted and filtered.
+        $desk = \App\Support\YourBook::of(request()->user())['layout'] === 'dashboard';
+        $termTitles = [];
+        foreach ($termFields as $f) {
+            $termTitles[$f['taxonomy']] ??= Booklet::terms()->all()
+                ->filter(fn ($t) => $t->attribute('taxonomy') === $f['taxonomy'])
+                ->mapWithKeys(fn ($t) => [(string) $t->attribute('slug') => (string) $t->title()])->all();
+        }
+        if (! $desk) {
+            // The Book layout has only its search box: titles and addresses.
+            $this->by = $this->when = $this->edited = '';
+            $this->in = [];
+            $this->within = 'titles';
+        }
+        if (! isset(self::WHEN[$this->when]) || ! $collection->dated()) {
+            $this->when = '';
+        }
+        if (! isset(self::EDITED[$this->edited])) {
+            $this->edited = '';
+        }
+        if (! in_array($this->within, ['titles', 'everything'], true)) {
+            $this->within = 'titles';
+        }
+        // A category or tag nothing here uses (an old link, a renamed tag) isn't kept as a filter.
+        $this->in = array_filter($this->in, fn ($v, $k) => is_string($v) && $v !== '' && isset($termFields[$k])
+            && ($v === '-' || $all->contains(fn (Entry $e) => in_array($v, (array) $e->get($k, []), true))), ARRAY_FILTER_USE_BOTH);
+
+        $entries = $this->filtered($all
             ->when($this->status === 'review', fn ($c) => $c->filter(fn (Entry $e) => ($reviewStates[$e->id()] ?? null) === 'waiting'))
-            ->when(! in_array($this->status, ['all', 'review'], true), fn ($c) => $c->filter(fn (Entry $e) => $e->status() === $this->status))
-            ->when($this->search !== '', fn ($c) => $c->filter(
-                fn (Entry $e) => Str::contains(Str::lower($e->title().' '.$e->slug()), Str::lower($this->search))
-            ))
-            ->values();
+            ->when(! in_array($this->status, ['all', 'review'], true), fn ($c) => $c->filter(fn (Entry $e) => $e->status() === $this->status)),
+            $termFields, $termTitles);
 
         $structured = $collection->structured();
-        // The Dashboard layout shows the chapter as a table, which can be sorted.
-        $desk = \App\Support\YourBook::of(request()->user())['layout'] === 'dashboard';
         if (! in_array($this->sort, self::SORTS, true)) {
             $this->sort = '';
         }
@@ -497,7 +671,49 @@ class Entries extends Component
             ? User::query()->whereIn('id', collect($rows)->map(fn ($row) => $row['entry']->get('author'))->filter()->unique()->values())->get()->keyBy('id')
             : collect();
 
+        // What the filters can choose from: only what's in this chapter.
+        $filterChoices = [];
+        $activeFilters = [];
+        if ($desk) {
+            $writers = $all->map(fn (Entry $e) => (string) $e->get('author'))->filter()->countBy();
+            $people = User::query()->whereIn('id', $writers->keys())->orderBy('name')->get();
+            $filterChoices['by'] = ['' => __('Anyone'), 'me' => __('Me')]
+                + $people->reject(fn ($u) => (string) $u->id === (string) request()->user()?->id)
+                    ->mapWithKeys(fn ($u) => [(string) $u->id => $u->name.' ('.$writers[(string) $u->id].')'])->all()
+                + ($all->contains(fn (Entry $e) => ! $e->get('author')) ? ['nobody' => __('Nobody yet')] : []);
+            $filterChoices['in'] = [];
+            foreach ($termFields as $handle => $f) {
+                $used = $all->flatMap(fn (Entry $e) => array_filter((array) $e->get($handle, []), 'is_string'))->countBy();
+                $filterChoices['in'][$handle] = ['label' => __($f['label']), 'options' => ['' => __('Any')]
+                    + $used->sortKeys()->mapWithKeys(fn ($n, $slug) => [$slug => ($termTitles[$f['taxonomy']][$slug] ?? $slug).' ('.$n.')'])
+                        ->sortBy(fn ($label) => Str::lower($label))->all()
+                    + ['-' => __('None')]];
+            }
+            $filterChoices['when'] = $collection->dated() ? ['' => __('Any time')] + array_map(fn ($l) => __($l), self::WHEN) : [];
+            $filterChoices['edited'] = ['' => __('Any time')] + array_map(fn ($l) => __($l), self::EDITED);
+
+            if ($this->by !== '') {
+                $activeFilters[] = ['key' => 'by', 'label' => __('By'), 'value' => $filterChoices['by'][$this->by] ?? $this->by];
+            }
+            foreach ($this->in as $handle => $slug) {
+                $activeFilters[] = ['key' => 'in.'.$handle, 'label' => __($termFields[$handle]['label']), 'value' => $slug === '-' ? __('None') : ($termTitles[$termFields[$handle]['taxonomy']][$slug] ?? $slug)];
+            }
+            if ($this->when !== '') {
+                $activeFilters[] = ['key' => 'when', 'label' => __('Date'), 'value' => __(self::WHEN[$this->when])];
+            }
+            if ($this->edited !== '') {
+                $activeFilters[] = ['key' => 'edited', 'label' => __('Edited'), 'value' => __(self::EDITED[$this->edited])];
+            }
+            if ($this->within !== 'titles') {
+                $activeFilters[] = ['key' => 'within', 'label' => __('Search in'), 'value' => __('everything, the writing too')];
+            }
+            $activeFilters = array_map(fn ($f) => ['value' => preg_replace('/ \(\d+\)$/', '', (string) $f['value'])] + $f, $activeFilters);
+        }
+
         return $this->titled(view($desk ? 'livewire.admin.entries-table' : 'livewire.admin.entries', [
+            'filterChoices' => $filterChoices,
+            'activeFilters' => $activeFilters,
+            'filtersOn' => $this->filtersOn(),
             'authors' => $authors,
             'menuIds' => $desk && $structured ? collect($rows)->map(fn ($row) => $row['entry']->id())->filter(fn ($id) => Menus::has('header', $id))->values()->all() : [],
             'movingEntry' => $movingEntry,
