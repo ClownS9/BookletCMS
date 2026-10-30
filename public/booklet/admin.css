@@ -7401,3 +7401,61 @@ body.layout-dashboard .editor-delete.is-desk:focus-visible { outline: 2px solid 
 body.layout-dashboard .btn--danger:not(.btn--sm) { min-height: 40px; font-size: 14px; }
 /* On a computer the header carries Save and Preview, so Delete starts the side column's foot */
 @media (min-width: 1081px) { body.layout-dashboard .editor-delete.is-desk { margin-top: 4px; } }
+
+/* --------------------------------------------------------------------------
+   Sub-menus in the Dashboard's sidebar
+   -------------------------------------------------------------------------- */
+.sidebar__item { position: relative; }
+.sidebar__row { display: flex; align-items: center; gap: 2px; }
+.sidebar__row > a { flex: 1 1 auto; min-width: 0; }
+.sidebar__more { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--faint); cursor: pointer; }
+.sidebar__more:hover { background: var(--d-hover); color: var(--ink); }
+.sidebar__more svg { transition: transform .18s ease; }
+.sidebar__item.is-open > .sidebar__row .sidebar__more svg { transform: rotate(90deg); }
+.sidebar__item.has-current > .sidebar__row > a { color: var(--ink); font-weight: 600; }
+
+.sidebar__sub { list-style: none; margin: 1px 0 4px 15px; padding: 0 0 0 12px; border-left: 1px solid var(--d-line); display: none; flex-direction: column; gap: 1px; }
+.sidebar__item.is-open > .sidebar__sub { display: flex; }
+.sidebar__flyhead { display: none; }
+.sidebar .sidebar__sub a { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: 7px; color: var(--muted); font-size: 13.5px; font-weight: 500; }
+.sidebar .sidebar__sub a:hover { background: var(--d-hover); color: var(--ink); }
+.sidebar .sidebar__sub a[aria-current="page"] { position: relative; border-color: var(--d-line); background: var(--d-panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(20, 18, 14, .05); }
+.sidebar .sidebar__sub a[aria-current="page"]::before { content: ''; position: absolute; left: -14px; top: 7px; bottom: 7px; width: 2px; border-radius: 2px; background: var(--tone); }
+
+/* Folded to the rail: no chevrons; the sub-menu flies out beside the icon */
+@media (min-width: 1081px) {
+    body.desk-narrow .sidebar__more { display: none; }
+    body.desk-narrow .sidebar__sub, body.desk-narrow .sidebar__item.is-open > .sidebar__sub { display: none; }
+    body.desk-narrow .sidebar__item.is-flying > .sidebar__sub {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        left: 60px;
+        top: var(--fly-top, 80px);
+        width: 220px;
+        margin: 0;
+        padding: 6px 6px 6px 14px;
+        border: 0;
+        background: transparent;
+    }
+    body.desk-narrow .sidebar__item.is-flying > .sidebar__sub::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 0 8px;
+        z-index: -1;
+        border: 1px solid var(--d-line);
+        border-radius: 10px;
+        background: var(--d-panel);
+        box-shadow: 0 12px 32px rgba(20, 18, 14, .16);
+    }
+    body.desk-narrow .sidebar__flyhead { display: block; }
+    body.desk-narrow .sidebar .sidebar__flyhead a { color: var(--ink); font-weight: 700; }
+    body.desk-narrow .sidebar .sidebar__sub a[aria-current="page"]::before { display: none; }
+    body.desk-narrow .sidebar__item.has-current .sidebar__icon { background: var(--tone); box-shadow: 0 0 0 2px var(--d-panel), 0 0 0 4px var(--tone); }
+}
+@media (min-width: 1081px) {
+    body.desk-narrow .sidebar .sidebar__sub a { position: relative; justify-content: flex-start; gap: 8px; min-height: 34px; padding: 0 10px; }
+    body.desk-narrow .sidebar .sidebar__sub .sidebar__label { position: static; width: auto; height: auto; overflow: hidden; clip: auto; text-overflow: ellipsis; }
+    body.desk-narrow .sidebar .sidebar__sub .sidebar__badge { position: static; margin-left: auto; }
+    body.desk-narrow .sidebar .sidebar__flyhead a { min-height: 34px; border-bottom: 1px solid var(--d-line2); border-radius: 7px 7px 0 0; margin-bottom: 2px; }
+}

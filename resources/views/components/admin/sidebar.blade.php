@@ -1,53 +1,23 @@
 {{-- The Dashboard layout's sidebar: your stickers as Content, your tabs as
-     Tools, then Settings; at the foot who else is here and your own menu. --}}
+     Tools, then Settings, each with its pages in a sub-menu; at the foot who
+     else is here and your own menu. --}}
 @php
     $user = request()->user();
-    $stickers = \App\Support\AdminNav::menuIn('sticker');
-    $tools = \App\Support\AdminNav::menuIn('thumb');
+    $side = \App\Support\AdminNav::sidebar($user);
     $waitingComments = collect(\App\Support\AdminNav::waiting())->firstWhere('key', 'comments')['count'] ?? 0;
     $here = rescue(fn () => \App\Models\User::query()->whereKeyNot($user->id)->where('last_seen_at', '>', now()->subMinutes(5))->orderByDesc('last_seen_at')->take(3)->get(), collect(), false);
 @endphp
 <aside class="sidebar" id="desk-sidebar" aria-label="{{ __('Booklet') }}">
-    @if ($stickers !== [])
-        <p class="sidebar__group" id="sidebar-content">{{ __('Content') }}</p>
-        <nav aria-labelledby="sidebar-content" class="sidebar__list">
-            @foreach ($stickers as $item)
-                <a href="{{ $item['href'] }}" wire:navigate data-tip="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
-                    <span class="sidebar__dot" aria-hidden="true"></span>
-                    <span class="sidebar__icon" aria-hidden="true"><x-admin.icon :name="$item['icon']" size="16" /></span>
-                    <span class="sidebar__label">{{ $item['label'] }}</span>
-                    @if ($item['key'] === 'comments' && $waitingComments > 0)
-                        <span class="sidebar__badge">{{ $waitingComments }}<span class="sr-only"> {{ __('waiting') }}</span></span>
-                    @elseif ($item['badge'])
-                        <span class="sidebar__badge">{{ $item['badge'] }}</span>
-                    @endif
-                </a>
-            @endforeach
-        </nav>
-    @endif
-
-    @if ($tools !== [])
-        <p class="sidebar__group" id="sidebar-tools">{{ __('Tools') }}</p>
-        <nav aria-labelledby="sidebar-tools" class="sidebar__list">
-            @foreach ($tools as $item)
-                <a href="{{ $item['href'] }}" wire:navigate data-tip="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
-                    <span class="sidebar__dot" aria-hidden="true"></span>
-                    <span class="sidebar__icon" aria-hidden="true"><x-admin.icon :name="$item['icon']" size="16" /></span>
-                    <span class="sidebar__label">{{ $item['label'] }}</span>
-                    @if ($item['badge'])<span class="sidebar__badge">{{ $item['badge'] }}</span>@endif
-                </a>
-            @endforeach
-        </nav>
-    @endif
-
-    <p class="sidebar__group" id="sidebar-back">{{ __('Back of the book') }}</p>
-    <nav aria-labelledby="sidebar-back" class="sidebar__list">
-        <a href="{{ route('admin.settings') }}" wire:navigate data-tip="{{ __('Settings') }}" style="--tone: var(--sand)" @if (request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
-            <x-admin.icon name="settings" size="15" class="sidebar__gear" />
-            <span class="sidebar__icon" aria-hidden="true"><x-admin.icon name="settings" size="16" /></span>
-            <span class="sidebar__label">{{ __('Settings') }}</span>
-        </a>
-    </nav>
+    @foreach (['content' => __('Content'), 'tools' => __('Tools'), 'settings' => __('Back of the book')] as $part => $title)
+        @if ($side[$part] !== [])
+            <p class="sidebar__group" id="sidebar-{{ $part === 'settings' ? 'back' : $part }}">{{ $title }}</p>
+            <nav aria-labelledby="sidebar-{{ $part === 'settings' ? 'back' : $part }}" class="sidebar__list">
+                @foreach ($side[$part] as $item)
+                    <x-admin.sidebar-item :item="$item" :waiting-comments="$waitingComments" />
+                @endforeach
+            </nav>
+        @endif
+    @endforeach
 
     {{-- Who's here, and you --}}
     <div class="sidebar__foot">

@@ -273,6 +273,39 @@ class DashboardDeskTest extends TestCase
             ->assertSee('data-stacy-dock aria-controls="orb-card"', false);
     }
 
+    public function test_the_sidebar_has_sub_menus_and_keeps_tools_short(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.calendar'))->assertOk();
+        $side = \App\Support\AdminNav::sidebar($this->admin);
+        $posts = collect($side['content'])->firstWhere('key', 'posts');
+
+        $this->assertSame(['calendar', 'taxonomies', 'print'], array_column($posts['subs'], 'key'));
+        $this->assertTrue($posts['open']); // you're on one of its pages
+        $this->assertNotContains('calendar', array_column($side['tools'], 'key'));
+        $this->assertContains('look', array_column($side['settings'][0]['subs'], 'key'));
+
+        $page = $this->actingAs($this->admin)->get(route('admin.calendar'))->getContent();
+        $this->assertStringContainsString('aria-controls="sub-posts"', $page);
+        $this->assertMatchesRegularExpression('/<ul class="sidebar__sub" id="sub-posts"/', $page);
+    }
+
+    public function test_what_someone_hid_stays_out_of_the_sub_menus(): void
+    {
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Admin\YourMenu::class)->call('place', 'calendar', 'hidden');
+        $this->actingAs($this->admin->fresh())->get(route('admin.media'));
+        $posts = collect(\App\Support\AdminNav::sidebar($this->admin->fresh())['content'])->firstWhere('key', 'posts');
+        $this->assertNotContains('calendar', array_column($posts['subs'], 'key'));
+    }
+
+    public function test_a_writer_sees_no_sub_pages_they_cannot_open(): void
+    {
+        $writer = User::factory()->create(['role' => 'writer']);
+        YourBook::save($writer, ['layout' => 'dashboard']);
+        $this->actingAs($writer->fresh())->get(route('admin.media'))->assertOk()
+            ->assertDontSee(route('admin.menus'), false)
+            ->assertDontSee(route('admin.redirects'), false);
+    }
+
     public function test_the_sidebar_groups_content_tools_and_settings(): void
     {
         $this->actingAs($this->admin)->get(route('admin.media'))->assertOk()

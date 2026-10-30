@@ -593,6 +593,65 @@ class AdminNav
         ]));
     }
 
+    // The Dashboard's sidebar, with sub-menus ----------------------------------
+
+    /** What opens under each item in the Dashboard's sidebar. */
+    public const SUBMENUS = [
+        'posts' => ['calendar', 'taxonomies', 'print'],
+        'pages' => ['menus', 'redirects'],
+        'people' => ['readers', 'subscribers'],
+        'comments' => ['inbox', 'forms'],
+        'activity' => ['visits', 'bin'],
+        'settings' => ['look', 'collections', 'backups', 'version-control', 'static', 'api', 'webhooks', 'updates', 'import'],
+    ];
+
+    /**
+     * The sidebar's sections: Content (the stickers), Tools (the side tabs) and
+     * Settings, each item with the pages that open under it. A page shown under
+     * another isn't repeated in Tools, and what this person hid stays hidden.
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public static function sidebar(?\App\Models\User $user = null): array
+    {
+        $user ??= request()->user();
+        $chapters = collect(static::chapters())->keyBy('key');
+        $menu = collect(static::menu($user))->keyBy('key');
+        foreach ($menu as $key => $item) { // Visits lives only in the menu
+            if (! $chapters->has($key)) {
+                $chapters->put($key, $item);
+            }
+        }
+        $hidden = fn (string $key) => ($menu[$key]['where'] ?? null) === 'hidden';
+        $child = function (string $key) use ($chapters, $menu): array {
+            $c = $chapters[$key];
+
+            return ['key' => $key, 'label' => $menu[$key]['label'] ?? $c['label'], 'href' => $c['href'], 'active' => (bool) $c['active'], 'badge' => $c['badge'], 'tone' => $menu[$key]['tone'] ?? $c['tone'], 'icon' => $c['icon']];
+        };
+        $withSubs = function (array $item) use ($chapters, $hidden, $child): array {
+            $subs = [];
+            foreach (self::SUBMENUS[$item['key']] ?? [] as $key) {
+                if ($chapters->has($key) && ! $hidden($key)) {
+                    $subs[] = $child($key);
+                }
+            }
+            $item['subs'] = $subs;
+            $item['open'] = $item['active'] || collect($subs)->contains('active', true);
+
+            return $item;
+        };
+
+        $content = array_map($withSubs, static::menuIn('sticker'));
+        $settings = $chapters->has('settings') ? [$withSubs($child('settings'))] : [];
+        $under = collect([...$content, ...$settings])->flatMap(fn ($i) => array_column($i['subs'], 'key'))->all();
+        $tools = array_map($withSubs, array_values(array_filter(static::menuIn('thumb'), fn ($i) => ! in_array($i['key'], $under, true))));
+        // A tool's own sub-pages aren't repeated as tools either.
+        $underTools = collect($tools)->flatMap(fn ($i) => array_column($i['subs'], 'key'))->all();
+        $tools = array_values(array_filter($tools, fn ($i) => ! in_array($i['key'], $underTools, true)));
+
+        return ['content' => $content, 'tools' => $tools, 'settings' => $settings];
+    }
+
     // Your menu: each person's own arrangement -------------------------------
 
     /** Where things live until someone moves them. */

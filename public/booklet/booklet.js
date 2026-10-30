@@ -1991,3 +1991,38 @@ window.bookletStacyDock = (() => {
         },
     };
 })();
+
+/*
+ * A sub-menu in the Dashboard's sidebar. Open: the chevron folds it, and this
+ * browser remembers (the section you're in always starts open). Folded to the
+ * rail: hovering or tabbing to the item flies the sub-menu out beside it.
+ */
+window.bookletSideSub = (key, here) => ({
+    open: here,
+    flying: false,
+    timer: null,
+    init() {
+        if (here) return;
+        try { this.open = localStorage.getItem('booklet.side.' + key) === 'open'; } catch (e) { /* storage off: closed */ }
+    },
+    toggle() {
+        this.open = ! this.open;
+        try { localStorage.setItem('booklet.side.' + key, this.open ? 'open' : 'shut'); } catch (e) { /* fine */ }
+    },
+    railed() { return document.body.classList.contains('desk-narrow') && window.matchMedia('(min-width: 1081px)').matches; },
+    fly(el) {
+        if (! this.railed()) return;
+        clearTimeout(this.timer);
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--fly-top', Math.round(r.top) + 'px');
+        this.flying = true;
+        // A long one near the bottom moves up to stay in the window.
+        this.$nextTick(() => {
+            const sub = el.querySelector('.sidebar__sub');
+            if (!sub) return;
+            const over = sub.getBoundingClientRect().bottom - (window.innerHeight - 8);
+            if (over > 0) el.style.setProperty('--fly-top', Math.max(8, Math.round(r.top - over)) + 'px');
+        });
+    },
+    land() { clearTimeout(this.timer); this.timer = setTimeout(() => { this.flying = false; }, 120); },
+});
