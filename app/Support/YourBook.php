@@ -66,6 +66,12 @@ class YourBook
         return self::$memo[$user->id.':'.md5(json_encode($user->preferences['yours'] ?? null))] ??= self::clean((array) ($user->preferences['yours'] ?? []));
     }
 
+    /** Is the person signed in now using the Dashboard layout? */
+    public static function desk(): bool
+    {
+        return self::of(request()->user())['layout'] === 'dashboard';
+    }
+
     /**
      * Only known values are kept; anything else falls back to the default.
      *

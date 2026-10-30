@@ -342,6 +342,50 @@ class Entries extends Component
         $tree->nudge($entry->id(), $by < 0 ? -1 : 1)->save();
     }
 
+    // The page tree as a table (Dashboard layout): the same actions, one row at a time.
+
+    /** The page being moved under another, while its picker is open. */
+    public ?string $moving = null;
+
+    public function templateFor(string $id, string $template): void
+    {
+        $this->selected = $id;
+        $this->setTemplate($template);
+    }
+
+    public function menuFor(string $id): void
+    {
+        $this->selected = $id;
+        $this->toggleMenu();
+    }
+
+    public function nudgeRow(string $id, int $by): void
+    {
+        $this->selected = $id;
+        $this->nudge($by);
+    }
+
+    public function startMove(string $id): void
+    {
+        abort_unless($this->canArrange(), 403);
+        $this->selected = $id;
+        $this->chosenEntry();
+        $this->moving = $id;
+    }
+
+    public function moveTo(string $parent): void
+    {
+        abort_unless($this->moving !== null, 422);
+        $this->selected = $this->moving;
+        $this->moving = null;
+        $this->moveUnder($parent);
+    }
+
+    public function cancelMove(): void
+    {
+        $this->moving = null;
+    }
+
     /**
      * Pages in tree order, with their depth; any page not in the tree yet comes last.
      */
@@ -442,12 +486,20 @@ class Entries extends Component
             $statuses = array_slice($statuses, 0, 2, true) + ['review' => 'In review'] + array_slice($statuses, 2, null, true);
         }
 
+        $tree = $structured ? PageTree::for($this->collection) : null;
+        $movingEntry = $structured && $this->moving ? $all->first(fn (Entry $e) => $e->id() === $this->moving) : null;
         $authors = $desk
             ? User::query()->whereIn('id', collect($rows)->map(fn ($row) => $row['entry']->get('author'))->filter()->unique()->values())->get()->keyBy('id')
             : collect();
 
-        return $this->titled(view($desk && ! $structured ? 'livewire.admin.entries-table' : 'livewire.admin.entries', [
+        return $this->titled(view($desk ? 'livewire.admin.entries-table' : 'livewire.admin.entries', [
             'authors' => $authors,
+            'menuIds' => $desk && $structured ? collect($rows)->map(fn ($row) => $row['entry']->id())->filter(fn ($id) => Menus::has('header', $id))->values()->all() : [],
+            'movingEntry' => $movingEntry,
+            'moveChoices' => $movingEntry
+                ? $all->reject(fn (Entry $e) => $e->id() === $movingEntry->id()
+                    || in_array($e->id(), $tree->descendantsOf($movingEntry->id()), true))->values()
+                : collect(),
             'sort' => $this->sort,
             'model' => $collection,
             'entries' => $entries,
