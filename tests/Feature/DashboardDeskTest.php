@@ -137,10 +137,10 @@ class DashboardDeskTest extends TestCase
         }
 
         $list = Livewire::actingAs($this->admin)->test(Entries::class, ['collection' => 'posts'])
-            ->assertSee('dash-pages', false)
+            ->assertSee('data-pager', false)
             ->assertSee('aria-current="page"', false);
         $list->call('turnTo', 2)->assertSet('page', 2);
-        $list->set('status', 'draft')->assertSet('page', 1)->assertDontSee('dash-pages', false);
+        $list->set('status', 'draft')->assertSet('page', 1)->assertDontSee('pager__numbers', false);
     }
 
     public function test_pages_are_a_tree_table_with_their_own_row_actions(): void

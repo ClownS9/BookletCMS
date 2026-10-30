@@ -6,9 +6,6 @@
         $dated = $model->dated();
         $sortMark = fn (string $col) => ltrim($sort, '-') === $col ? (str_starts_with($sort, '-') ? '↓' : '↑') : '↕';
         $ariaSort = fn (string $col) => ltrim($sort, '-') === $col ? (str_starts_with($sort, '-') ? 'descending' : 'ascending') : 'none';
-        $from = $shown === 0 ? 0 : ($page - 1) * \App\Livewire\Admin\Entries::PER_PAGE + 1;
-        $to = min($shown, $page * \App\Livewire\Admin\Entries::PER_PAGE);
-        $pageNumbers = collect([1, $page - 1, $page, $page + 1, $lastPage])->filter(fn ($n) => $n >= 1 && $n <= $lastPage)->unique()->sort()->values();
     @endphp
     <section class="page page--single page--dash" aria-labelledby="chapter-title">
         <div class="dash">
@@ -72,7 +69,7 @@
                     @include('livewire.admin.partials.entry-filters')
                 @else
                     <div class="dash-tools dash-bulk" role="region" aria-label="{{ __('Do to the chosen ones') }}" wire:key="ticks">
-                        <strong>{{ trans_choice(':count chosen|:count chosen', count($ticked)) }}</strong>
+                        @include('livewire.admin.partials.ticked-count')
                         @if ($canArrange)
                             <button type="button" class="btn btn--sm" wire:click="publishTicked">{{ __('Publish') }}</button>
                             <button type="button" class="btn btn--sm" wire:click="draftTicked">{{ __('Make drafts') }}</button>
@@ -244,19 +241,11 @@
                         </table>
                     </div>
 
-                    <div class="dash-foot">
-                        <span>{{ __('Showing :from–:to of :count', ['from' => number_format($from), 'to' => number_format($to), 'count' => number_format($shown)]) }}</span>
-                        @if ($lastPage > 1)
-                            <nav class="dash-pages" aria-label="{{ __('Pages of :what', ['what' => __($model->title())]) }}">
-                                <button type="button" wire:click="turnTo({{ $page - 1 }})" @disabled($page <= 1) aria-label="{{ __('Previous page') }}">‹</button>
-                                @foreach ($pageNumbers as $i => $n)
-                                    @if ($i > 0 && $n - $pageNumbers[$i - 1] > 1)<span aria-hidden="true">…</span>@endif
-                                    <button type="button" wire:click="turnTo({{ $n }})" @if ($n === $page) aria-current="page" @endif aria-label="{{ __('Page :n', ['n' => $n]) }}">{{ $n }}</button>
-                                @endforeach
-                                <button type="button" wire:click="turnTo({{ $page + 1 }})" @disabled($page >= $lastPage) aria-label="{{ __('Next page') }}">›</button>
-                            </nav>
-                        @endif
-                    </div>
+                    @if ($structured)
+                        <div class="dash-foot"><span>{{ trans_choice(':count page|:count pages', $shown) }}</span></div>
+                    @else
+                        <x-admin.pager :of="$pages" :sizes="$pageSizes" class="dash-foot" id="entries-pager" always />
+                    @endif
                 @endif
             </section>
         </div>

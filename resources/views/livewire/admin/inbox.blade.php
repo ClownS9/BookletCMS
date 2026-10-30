@@ -87,6 +87,7 @@
                         </li>
                     @endforeach
                 </ul>
+                <x-admin.pager :of="$pile" :sizes="$pageSizes" class="picks-pager" id="inbox-pager" :previous="__('Newer')" :next="__('Older')" />
             @endif
         </x-admin.card>
 

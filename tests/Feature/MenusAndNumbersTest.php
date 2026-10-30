@@ -41,7 +41,8 @@ class MenusAndNumbersTest extends TestCase
 
     public function test_each_visit_is_counted_by_hour_and_kind_of_device(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-10-30 20:15', config('app.timezone')));
+        // Tomorrow evening: after the starter post went out, whenever the tests run.
+        Carbon::setTestNow(Carbon::tomorrow(config('app.timezone'))->setTime(20, 15));
 
         $this->get('/blog/hello-from-booklet', ['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148'])->assertOk();
         $this->get('/blog/hello-from-booklet', ['User-Agent' => 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)'])->assertOk();

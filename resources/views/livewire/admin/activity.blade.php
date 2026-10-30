@@ -91,14 +91,7 @@
             </div>
 
             <div style="margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
-                <div style="display: flex; gap: 8px">
-                    @if (! $logs->onFirstPage())
-                        <button type="button" class="btn" wire:click="previousPage">{{ __('← Newer stamps') }}</button>
-                    @endif
-                    @if ($logs->hasMorePages())
-                        <button type="button" class="btn" wire:click="nextPage">{{ __('Older stamps →') }}</button>
-                    @endif
-                </div>
+                <x-admin.pager :of="$logs" :sizes="$pageSizes" class="picks-pager" id="activity-pager" :previous="__('Newer')" :next="__('Older')" />
                 <x-admin.folio side="right" style="margin: 0; padding: 0" />
             </div>
         </x-admin.card>

@@ -211,6 +211,7 @@
                         </button>
                     @endforeach
                 </div>
+                <x-admin.pager :of="$visible" :sizes="$pageSizes" class="picks-pager" id="media-pager" />
             @endif
         </x-admin.card>
 

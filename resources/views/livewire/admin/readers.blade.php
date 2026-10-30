@@ -173,10 +173,7 @@
                             </li>
                         @endforeach
                     </ul>
-                    <div style="display: flex; gap: 8px">
-                        @if (! $readers->onFirstPage()) <button type="button" class="btn btn--sm" wire:click="previousPage">{{ __('← Newer') }}</button> @endif
-                        @if ($readers->hasMorePages()) <button type="button" class="btn btn--sm" wire:click="nextPage">{{ __('Older →') }}</button> @endif
-                    </div>
+                    <x-admin.pager :of="$readers" :sizes="$pageSizes" class="picks-pager" id="readers-pager" :previous="__('Newer')" :next="__('Older')" />
                 @endif
 
             @elseif ($tab === 'groups')

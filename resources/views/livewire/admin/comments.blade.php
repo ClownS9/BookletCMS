@@ -40,7 +40,7 @@
                                 <span class="avatar" style="--size: 36px; --tone: {{ $tones[$comment->id % count($tones)] }}">{{ mb_strtoupper(mb_substr($comment->author_name, 0, 1)) }}</span>
                                 <span style="flex: 1 1 auto; min-width: 0">
                                     <span style="display: block; font-size: 14px; font-weight: 600">{{ $comment->author_name }}
-                                        <span style="font-weight: 400; color: var(--faint)">{{ $comment->parent_id ? 'replied to '.($comment->parent?->author_name ?? 'a note').' on' : 'on' }} {{ $titles[$comment->entry_id] ?? '' }}</span>
+                                        <span style="font-weight: 400; color: var(--faint)">{{ $comment->parent_id ? __('replied to :name on :title', ['name' => $comment->parent?->author_name ?? __('a note'), 'title' => $titles[$comment->entry_id] ?? '']) : __('on :title', ['title' => $titles[$comment->entry_id] ?? '']) }}</span>
                                     </span>
                                     <span class="serif" style="display: block; margin-top: 3px; font-size: 16px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ $comment->body }}</span>
                                 </span>
@@ -48,6 +48,7 @@
                         </li>
                     @endforeach
                 </ul>
+                <x-admin.pager :of="$this->pile" :sizes="$pageSizes" class="picks-pager" id="comments-pager" />
             @endif
         </x-admin.card>
 

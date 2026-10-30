@@ -82,6 +82,7 @@
                         </li>
                     @endforeach
                 </ul>
+                <x-admin.pager :of="$items" :sizes="$pageSizes" class="picks-pager" id="bin-pager" />
             @endif
         </x-admin.card>
 

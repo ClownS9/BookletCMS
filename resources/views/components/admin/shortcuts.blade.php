@@ -29,6 +29,7 @@
         'Here and there' => [
             [['↵'], 'Stick a note (Shift ↵ for a new line)'],
             [['↵'], 'Tug the lamp cord, at night'],
+            [['←', '→'], 'Turn a list’s pages'],
             [['←', '→', '↑', '↓'], 'Move a picture’s focal point'],
         ],
     ];

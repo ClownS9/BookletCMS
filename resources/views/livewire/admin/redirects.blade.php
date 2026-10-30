@@ -128,6 +128,7 @@
                         </li>
                     @endforeach
                 </ul>
+                <x-admin.pager :of="$redirects" :sizes="$pageSizes" class="picks-pager" id="redirects-pager" />
             @endif
         </x-admin.card>
 

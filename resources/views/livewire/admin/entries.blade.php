@@ -92,7 +92,7 @@
             @if ($ticked !== [])
                 <div class="ticks" role="region" aria-label="{{ __('Do to the chosen ones') }}" wire:key="ticks">
                     <div class="ticks__head">
-                        <strong>{{ trans_choice(':count chosen|:count chosen', count($ticked)) }}</strong>
+                        @include('livewire.admin.partials.ticked-count')
                         <button type="button" class="btn btn--quiet btn--sm" wire:click="untickAll">{{ __('Clear') }}</button>
                     </div>
                     <div class="ticks__do">
@@ -126,13 +126,8 @@
                     @endif
                 </div>
             @endif
-            @if ($lastPage > 1)
-                <nav class="picks-pager" aria-label="{{ __('Pages of :what', ['what' => $model->title()]) }}">
-                    <button type="button" class="btn btn--quiet btn--sm" wire:click="turnTo({{ $page - 1 }})" @disabled($page <= 1)>{{ __('← Newer') }}</button>
-                    <span class="field__hint" style="margin: 0">{{ __('Page :n of :count', ['n' => $page, 'count' => $lastPage]) }} · {{ trans_choice(':count entry|:count entries', $shown) }}</span>
-                    <button type="button" class="btn btn--quiet btn--sm" wire:click="turnTo({{ $page + 1 }})" @disabled($page >= $lastPage)>{{ __('Older →') }}</button>
-                </nav>
-            @endif
+            <x-admin.pager :of="$pages" :sizes="$pageSizes" class="picks-pager" id="entries-pager"
+                           :previous="$model->dated() ? __('Newer') : null" :next="$model->dated() ? __('Older') : null" />
         @endif
 
         <x-admin.folio side="left" />

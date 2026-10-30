@@ -118,14 +118,11 @@
                                 @endif
                             </span>
                             <button type="button" class="link-button subscriber-list__remove" wire:click="remove({{ $person->id }})"
-                                    wire:confirm="Remove {{ $person->email }} and forget the address?">{{ __('Remove') }}</button>
+                                    wire:confirm="{{ __('Remove :email and forget the address?', ['email' => $person->email]) }}">{{ __('Remove') }}</button>
                         </li>
                     @endforeach
                 </ul>
-                <div style="display: flex; gap: 8px">
-                    @if (! $people->onFirstPage()) <button type="button" class="btn btn--sm" wire:click="previousPage">{{ __('← Newer') }}</button> @endif
-                    @if ($people->hasMorePages()) <button type="button" class="btn btn--sm" wire:click="nextPage">{{ __('Older →') }}</button> @endif
-                </div>
+                <x-admin.pager :of="$people" :sizes="$pageSizes" class="picks-pager" id="subscribers-pager" :previous="__('Newer')" :next="__('Older')" />
             @endif
 
             <form wire:submit="invite" class="subscriber-invite">
