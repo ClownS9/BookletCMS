@@ -273,7 +273,7 @@
             </section>
         @endif
 
-        @if ($this->model->dated())
+        @if ($this->model->dated() || $status === 'scheduled')
             <div class="field">
                 <label for="entry-date">{{ $status === 'scheduled' ? __('Goes out on') : __('Date') }}</label>
                 <input id="entry-date" type="datetime-local" wire:model="date">

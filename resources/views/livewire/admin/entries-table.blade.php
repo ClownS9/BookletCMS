@@ -205,7 +205,7 @@
                                             @if ($review === 'waiting')
                                                 <span class="dash-status dash-status--review"><i aria-hidden="true"></i>{{ __('In review') }}</span>
                                             @else
-                                                <span class="dash-status dash-status--{{ $entry->status() }}"><i aria-hidden="true"></i>{{ __(ucfirst($entry->status())) }}@if ($review && $review !== 'waiting') · {{ __('sent back') }}@endif</span>
+                                                <span class="dash-status dash-status--{{ $entry->status() }}"><i aria-hidden="true"></i>{{ __(ucfirst($entry->status())) }}@if ($structured && $entry->status() === 'scheduled' && $entry->date()) · {{ $entry->date()->translatedFormat('j M, g:i A') }}@endif@if ($review && $review !== 'waiting') · {{ __('sent back') }}@endif</span>
                                             @endif
                                         </td>
                                         <td style="width: 1%">

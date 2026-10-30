@@ -68,7 +68,7 @@
                             <span class="dot" style="--dot: var(--{{ ['draft' => 'sun', 'scheduled' => 'sky', 'published' => 'mint'][$entry->status()] }}); --tilt: {{ $i % 2 ? '-6deg' : '6deg' }}"></span>
                             @if ($structured)
                                 <span class="pick__title" style="flex: 1 1 auto; min-width: 0">{{ $entry->title() ?: __('Untitled') }}@if ($entry->get('translation_of'))<span class="pick__lang" title="{{ __('Translation') }}">{{ strtoupper((string) $entry->get('lang')) }}</span>@endif@if ($n = $noteCounts[$entry->id()] ?? 0)<span class="pick__notes" title="{{ trans_choice(':count sticky note|:count sticky notes', $n) }}">{{ $n }}</span>@endif</span>
-                                <span class="pick__path">{{ $entry->uri() ?? '—' }}</span>
+                                <span class="pick__path">@if ($entry->status() === 'scheduled' && $entry->date()){{ __('Goes out :when', ['when' => $entry->date()->translatedFormat('j M, g:i A')]) }}@else{{ $entry->uri() ?? '—' }}@endif</span>
                             @else
                                 <span style="min-width: 0">
                                     <span class="pick__title">{{ $entry->title() ?: __('Untitled') }}@if ($entry->get('translation_of'))<span class="pick__lang" title="{{ __('Translation') }}">{{ strtoupper((string) $entry->get('lang')) }}</span>@endif@if ($n = $noteCounts[$entry->id()] ?? 0)<span class="pick__notes" title="{{ trans_choice(':count sticky note|:count sticky notes', $n) }}">{{ $n }}</span>@endif</span>

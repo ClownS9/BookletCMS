@@ -3773,5 +3773,7 @@
     "Content: :list.": "Kandungan: :list.",
     "Tools: :list.": "Alatan: :list.",
     "Open the sidebar": "Buka bar sisi",
-    "Fold the sidebar": "Lipat bar sisi"
+    "Fold the sidebar": "Lipat bar sisi",
+    "Choose a time that hasn’t passed yet.": "Pilih masa yang belum berlalu.",
+    "Goes out :when": "Keluar :when"
 }
