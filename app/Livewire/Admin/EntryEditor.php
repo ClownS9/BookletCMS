@@ -782,6 +782,11 @@ class EntryEditor extends Component
         if ($status !== 'draft' && ! $this->date) {
             $this->date = now()->format('Y-m-d\TH:i');
         }
+        // A page has no date of its own: scheduling one suggests tomorrow morning.
+        if ($status === 'scheduled' && ! $this->model->dated()
+            && (! $this->date || rescue(fn () => ! Carbon::parse($this->date)->isFuture(), true, false))) {
+            $this->date = now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i');
+        }
     }
 
     /** Every field's value as the conditions read it (tags as typed). */
@@ -815,7 +820,8 @@ class EntryEditor extends Component
         $rules = [
             'slug' => ['nullable', 'alpha_dash', 'max:200'],
             'status' => ['required', 'in:draft,scheduled,published'],
-            'date' => [$this->status === 'scheduled' ? 'required' : 'nullable', 'date'],
+            'date' => [$this->status === 'scheduled' ? 'required' : 'nullable', 'date',
+                ...($this->status === 'scheduled' && ! $this->model->dated() ? ['after:now'] : [])],
             'series' => ['nullable', 'string', 'max:120'],
             'seriesPart' => ['nullable', 'integer', 'min:1', 'max:999'],
             'takedown' => ['nullable', 'date', 'after:now', ...($this->status === 'scheduled' && $this->date ? ['after:date'] : []), function ($attribute, $value, $fail) {
@@ -861,6 +867,7 @@ class EntryEditor extends Component
             'takedown.after' => $this->status === 'scheduled' && $this->date && rescue(fn () => Carbon::parse((string) $this->takedown)->isFuture(), false, false)
                 ? 'It has to come down after it goes out.' : 'Choose a time that hasn’t been yet.',
             'takedown.date' => 'Choose a day and a time.',
+            'date.after' => 'Choose a time that hasn’t passed yet.',
         ];
     }
 
@@ -1181,6 +1188,10 @@ class EntryEditor extends Component
         $date = $this->date ? Carbon::parse($this->date) : null;
         if ($this->status === 'published' && (! $date || $date->isFuture())) {
             $date = $this->model->dated() ? now() : $date;
+        }
+        // A page keeps a date only while it's scheduled.
+        if (! $this->model->dated() && $this->status !== 'scheduled') {
+            $date = null;
         }
 
         $entry->setData($data)
@@ -1522,9 +1533,7 @@ class EntryEditor extends Component
             'canAddCutouts' => $this->canAddCutouts(),
             'statuses' => ! $this->canPublish()
                 ? ['draft' => 'Draft']
-                : ($this->model->dated()
-                ? ['draft' => 'Draft', 'scheduled' => 'Scheduled', 'published' => 'Published']
-                : ['draft' => 'Draft', 'published' => 'Published']),
+                : ['draft' => 'Draft', 'scheduled' => 'Scheduled', 'published' => 'Published'],
             'primaryLabel' => ['draft' => 'Save draft', 'scheduled' => 'Schedule', 'published' => 'Publish'][$this->status] ?? 'Save',
             'words' => \App\Support\Milestones::words((string) ($this->values['content'] ?? '')),
             'stacyHelp' => $stacyHelp = \App\Stacy\Writer::available(request()->user()),

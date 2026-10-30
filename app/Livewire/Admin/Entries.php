@@ -155,6 +155,10 @@ class Entries extends Component
             if ($model?->dated() && (! $entry->date() || $entry->date()->isFuture())) {
                 $entry->setAttribute('date', now());
             }
+            // A page waiting for its time goes out now, and keeps no date.
+            if (! $model?->dated()) {
+                $entry->setAttribute('date', null);
+            }
             $entry->setAttribute('published', true)->remove('taken_down_at')->save();
             app(\App\Inserts\InsertManager::class)->fire('entry.published', $entry);
             \App\Support\Reviews::settle($entry, request()->user());
@@ -478,7 +482,8 @@ class Entries extends Component
             : [];
 
         $statuses = ['all' => 'All', 'draft' => 'Drafts', 'published' => 'Published'];
-        if ($collection->dated()) {
+        // Pages get the Scheduled tab while any are waiting to go out.
+        if ($collection->dated() || ($counts['scheduled'] ?? 0) > 0 || $this->status === 'scheduled') {
             $statuses = ['all' => 'All', 'draft' => 'Drafts', 'scheduled' => 'Scheduled', 'published' => 'Published'];
         }
         // Drafts waiting for an editor get their own filter while there are any.

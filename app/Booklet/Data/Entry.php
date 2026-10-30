@@ -75,7 +75,8 @@ class Entry extends Item
 
         $date = $this->date();
 
-        return $date && $date->isFuture() && $this->collection()?->dated() ? 'scheduled' : 'published';
+        // A post's date is its date; a page has one only while it's waiting to go out.
+        return $date && $date->isFuture() ? 'scheduled' : 'published';
     }
 
     public function revisionKey(): string
