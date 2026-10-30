@@ -19,7 +19,11 @@
                 </x-admin.crumbs>
                 <h1 class="display display--page">{{ ($values['title'] ?? '') ?: ($entryId ? __('Untitled') : \Illuminate\Support\Str::ucfirst(__('New :one', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular(__($this->model->title())))]))) }}</h1>
                 <span class="dash-status dash-status--{{ $status }}"><i aria-hidden="true"></i>{{ __(ucfirst($status)) }}</span>
+                <span class="page-head__saved">@include('livewire.admin.partials.editor-saved')</span>
                 <span class="page-head__actions">
+                    @if ($entryId)
+                        <a href="{{ route('admin.entries.editions', [$collection, $entryId]) }}" class="btn btn--quiet" wire:navigate><x-admin.icon name="history" size="16" /> {{ trans_choice(':count edition|:count editions', $this->editions) }}</a>
+                    @endif
                     @if ($entryId)
                         <a href="{{ route('preview', $entryId) }}" class="btn" target="_blank" rel="noopener">{{ __('Preview') }}</a>
                     @endif
@@ -29,41 +33,15 @@
         @else
             <h1 class="sr-only">{{ $entryId ? 'Editing: '.(($values['title'] ?? '') ?: 'Untitled') : 'New '.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title())) }}</h1>
         @endif
-        <div class="toolbar">
-            @unless ($desk)
+        @unless ($desk)
+            <div class="toolbar">
                 <a href="{{ route('admin.entries', $collection) }}" class="back" wire:navigate>
                     <x-admin.icon name="back" size="16" /> {{ __($this->model->title()) }}
                 </a>
-            @endunless
-            @if ($bodyField)
-                <div class="format-bar" role="toolbar" aria-label="{{ __('Formatting') }}">
-                    <button type="button" x-on:click="format('heading')" title="{{ __('Heading') }}" aria-label="{{ __('Heading') }}"><span class="serif" style="font-weight: 600">H</span></button>
-                    <button type="button" x-on:click="format('bold')" title="{{ __('Bold (Ctrl/⌘ B)') }}" aria-label="{{ __('Bold') }}"><strong>B</strong></button>
-                    <button type="button" x-on:click="format('italic')" title="{{ __('Italic (Ctrl/⌘ I)') }}" aria-label="{{ __('Italic') }}"><em class="serif">I</em></button>
-                    <button type="button" x-on:click="format('link')" title="{{ __('Link (Ctrl/⌘ K)') }}" aria-label="{{ __('Link') }}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
-                    </button>
-                    <button type="button" x-on:click="format('list')" title="{{ __('List') }}" aria-label="{{ __('List') }}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
-                    </button>
-                    <button type="button" x-on:click="format('quote')" title="{{ __('Quote') }}" aria-label="{{ __('Quote') }}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 7h4v4c0 3-2 5-4 6M15 7h4v4c0 3-2 5-4 6"/></svg>
-                    </button>
-                    @if ($stacyHelp)
-                        <button type="button" class="format-bar__stacy" x-on:click="pen()" :aria-expanded="help.open ? 'true' : 'false'"
-                                title="{{ __('Ask Stacy to help with the words (Ctrl/⌘ J)') }}" aria-label="{{ __('Ask Stacy to help with the words') }}">
-                            <x-admin.icon name="stacy" size="15" /> <span>{{ __('Stacy') }}</span>
-                        </button>
-                    @endif
-                </div>
-            @endif
-            <span class="saved-note" wire:loading.remove wire:target="save" x-show="!autoLabel">
-                @if ($savedAt) {{ __('Saved :when', ['when' => \Illuminate\Support\Carbon::parse($savedAt)->diffForHumans()]) }} @elseif ($entryId) {{ __('Saved') }} @else {{ __('Not saved yet') }} @endif
-            </span>
-            <span class="saved-note" wire:loading.remove wire:target="save" x-show="autoLabel" x-cloak
-                  :class="{ 'saved-note--warn': auto === 'manual', 'saved-note--busy': auto === 'saving' }" x-text="autoLabel" aria-live="polite"></span>
-            <span class="saved-note" wire:loading wire:target="save">{{ __('Saving…') }}</span>
-        </div>
+                @include('livewire.admin.partials.editor-format-bar')
+                @include('livewire.admin.partials.editor-saved')
+            </div>
+        @endunless
 
         <p class="desk-note desk-note--offline" x-show="!online" x-cloak role="status">
             {{ __('You’re offline. Your words are safe on this page and will save when you’re back.') }}
@@ -87,15 +65,20 @@
         </div>
 
         @if ($titleField)
-            <label for="field-title" class="sr-only">{{ $titleField['display'] }}</label>
+            <label for="field-title" @class(['sr-only' => ! $desk, 'field__label editor-label' => $desk])>{{ __($titleField['display']) }}</label>
             <input id="field-title" type="text" class="title-input" wire:model.live.debounce.400ms="values.title" placeholder="{{ __('Untitled') }}" style="margin-top: 32px" autofocus>
             @error('values.title') <p class="field__error">{{ $message }}</p> @enderror
         @endif
 
-        <p class="serif muted" style="margin: 8px 0 26px; font-style: italic; font-size: 17px">
-            {{ trans_choice(':count word|:count words', $words) }}
-            @if ($this->blueprint) · {{ __($this->blueprint->title()) }} @endif
-        </p>
+        @unless ($desk)
+            <p class="serif muted" style="margin: 8px 0 26px; font-style: italic; font-size: 17px">
+                {{ trans_choice(':count word|:count words', $words) }}
+                @if ($this->blueprint) · {{ __($this->blueprint->title()) }} @endif
+            </p>
+        @endunless
+        @if ($desk)
+            @include('livewire.admin.partials.editor-slug', ['slugClass' => 'field editor-slug'])
+        @endif
 
         @if ($bodyField && $stacyHelp)
             {{-- Stacy at the desk: rewrite the selected words, or keep writing --}}
@@ -151,8 +134,17 @@
         @endif
 
         @if ($bodyField)
-            <label for="field-content" class="sr-only">{{ $bodyField['display'] }}</label>
+            <label for="field-content" @class(['sr-only' => ! $desk, 'field__label editor-label' => $desk])>{{ __($bodyField['display']) }}</label>
+            @if ($desk)
+                {{-- The Dashboard layout: the formatting bar sits on the writing box --}}
+                <div class="editor-box">
+                    @include('livewire.admin.partials.editor-format-bar')
+                    <textarea id="field-content" class="body-input" wire:model.blur="values.content" placeholder="{{ __('Start writing…') }}"></textarea>
+                </div>
+                <p class="field__hint editor-count">{{ trans_choice(':count word|:count words', $words) }}@if ($this->blueprint) · {{ __($this->blueprint->title()) }}@endif</p>
+            @else
             <textarea id="field-content" class="body-input" wire:model.blur="values.content" placeholder="{{ __('Start writing…') }}"></textarea>
+            @endif
             @error('values.content') <p class="field__error">{{ $message }}</p> @enderror
             @if ($jump = \App\Support\Headings::skip((string) ($values['content'] ?? '')))
                 <p class="body-hint" role="note">
@@ -187,6 +179,7 @@
     <aside class="page page--right page--narrow-right margin-notes" aria-label="{{ __('Entry details') }}" style="--ribbon: {{ $this->model->get('sticker', 'var(--sun)') }}">
         <div class="ribbon" aria-hidden="true" style="right: 44px"></div>
 
+        @unless ($desk)
         <div class="ribbon-clear" style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
             <span class="eyebrow">{{ __('Margin notes') }}</span>
             @if ($entryId)
@@ -195,7 +188,9 @@
                 </a>
             @endif
         </div>
+        @endunless
 
+        <x-admin.card :title="__('Publishing')">
         <fieldset style="margin: 0; padding: 0; border: 0">
             <legend class="field__label" style="padding: 0; margin-bottom: 10px">{{ __('Status') }}</legend>
             <div class="statuses" role="radiogroup" aria-label="{{ __('Status') }}">
@@ -298,8 +293,10 @@
                 <p class="field__hint">{{ __('Shown on the post as its byline.') }}</p>
             </div>
         @endif
+        </x-admin.card>
 
         @if ($this->model->dated())
+            <x-admin.card>
             {{-- Part of a numbered series ("Part 2 of 5", with the parts either side) --}}
             <details class="takedown series-pick" @if ($series !== '' || $errors->has('series') || $errors->has('seriesPart')) open @endif>
                 <summary>
@@ -323,10 +320,12 @@
                 </div>
                 <p class="field__hint">{{ __('Posts with the same series name are linked in order: “Part 2 of 5”, with the parts either side. Without a part number, they go by date.') }}</p>
             </details>
+            </x-admin.card>
         @endif
 
         {{-- Who can read it on the site: everyone, signed-in readers, or some groups --}}
         @if ($canChooseReaders)
+            <x-admin.card>
             <details class="takedown open-to" @if ($openTo !== 'everyone') open @endif>
                 <summary>
                     <span>{{ __('Who can read it') }}</span>
@@ -357,10 +356,12 @@
                     @if (request()->user()->arranges()) <a href="{{ route('admin.readers') }}" wire:navigate>{{ $readerGroups === [] ? __('Make a group →') : __('Readers & groups →') }}</a> @endif
                 </p>
             </details>
+            </x-admin.card>
         @endif
 
         {{-- Coming down by itself (an offer that ends, an event that's over) --}}
         @if ($canTakeDown && ! $isHome)
+            <x-admin.card>
             <details class="takedown" @if ($takedown || $errors->has('takedown') || $errors->has('takedownTo')) open @endif>
                 <summary>
                     <span>{{ __('Take it down on a date') }}</span>
@@ -382,31 +383,30 @@
                     <button type="button" class="link-button takedown__clear" wire:click="clearTakedown">{{ __('Don’t take it down') }}</button>
                 @endif
             </details>
+            </x-admin.card>
         @elseif ($takenDown)
+            <x-admin.card>
             <p class="field__hint takedown__done">{{ __('Came down by itself on :when, as planned. Publish it again to bring it back.', ['when' => $takenDown->translatedFormat('D j M Y, g:ia')]) }}</p>
+            </x-admin.card>
         @endif
 
-        <div class="field">
-            <label for="entry-slug">{{ __('Slug') }}</label>
-            <div class="slug">
-                <span class="muted">{{ $routePrefix ?: '/' }}</span>
-                <input id="entry-slug" type="text" wire:model.blur="slug" placeholder="{{ __('made-from-the-title') }}">
-            </div>
-            @error('slug') <p class="field__error">{{ $message }}</p> @enderror
-        </div>
+        @unless ($desk)
+            @include('livewire.admin.partials.editor-slug')
+        @endunless
 
         @foreach ($this->fields['side'] as $field)
             @continue(in_array($field['handle'], $hidden, true))
             @continue($searchCard && in_array($field['handle'], ['meta_title', 'meta_description'], true)) {{-- in the Search & sharing card --}}
-            @include('livewire.admin.fields.field', ['field' => $field])
+            <x-admin.card>@include('livewire.admin.fields.field', ['field' => $field])</x-admin.card>
         @endforeach
 
         @if ($searchCard)
-            @include('livewire.admin.partials.search-card')
+            <x-admin.card>@include('livewire.admin.partials.search-card')</x-admin.card>
         @endif
 
         {{-- New posts by email --}}
         @if ($newsletter && ! $translationOf)
+            <x-admin.card>
             <div class="field">
                 @if ($emailed)
                     <span class="field__label">{{ __('Email to subscribers') }}</span>
@@ -420,10 +420,12 @@
                     </label>
                 @endif
             </div>
+            </x-admin.card>
         @endif
 
         {{-- Other languages: translations of this entry, and making a new one --}}
         @if ($translations->isNotEmpty() || $canTranslate)
+            <x-admin.card>
             <div class="field languages" x-data="{ picking: false, lang: '' }">
                 <span class="field__label">{{ __('Languages') }}</span>
                 @if ($translations->isNotEmpty())
@@ -460,10 +462,12 @@
                     </div>
                 @endif
             </div>
+            </x-admin.card>
         @endif
 
         {{-- How it's being read --}}
         @if ($reading)
+            <x-admin.card>
             @php
                 $peak = max(1, max(array_column($reading['days'], 'views')));
                 $change = $reading['previous'] > 0 ? (int) round(($reading['views'] - $reading['previous']) / $reading['previous'] * 100) : null;
@@ -502,9 +506,11 @@
                     <a href="{{ route('admin.visits') }}" class="back reading__more" wire:navigate>{{ __('All visits →') }}</a>
                 @endif
             </section>
+            </x-admin.card>
         @endif
 
         @if ($this->linkedFrom->isNotEmpty())
+            <x-admin.card>
             <section class="linked-from" aria-labelledby="linked-from-title">
                 <h2 id="linked-from-title" class="field__label">{{ __('Linked from') }}</h2>
                 <ul role="list">
@@ -514,11 +520,14 @@
                 </ul>
                 @if ($this->linkedFrom->count() > 8) <p class="field__hint">{{ __('and :count more.', ['count' => $this->linkedFrom->count() - 8]) }}</p> @endif
             </section>
+            </x-admin.card>
         @endif
 
         @if ($entryId)
+            <x-admin.card>
             <livewire:admin.entry-notes :entry-id="$entryId" :key="'notes-'.$entryId" />
             <livewire:admin.proof-copies :entry-id="$entryId" :key="'proofs-'.$entryId" />
+            </x-admin.card>
         @else
             <p class="field__hint">{{ __('Once saved, you can stick notes for the team on this :one.', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title()))]) }}</p>
         @endif

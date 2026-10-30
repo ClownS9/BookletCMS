@@ -207,6 +207,34 @@ class DashboardDeskTest extends TestCase
             ->assertSee('editor-save is-desk', false);
     }
 
+    public function test_pages_are_made_of_cards_on_the_desk_and_unchanged_in_the_book(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.settings'))->assertOk()
+            ->assertSee('class="desk-card"', false);
+
+        $person = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($person)->get(route('admin.settings'))->assertOk()
+            ->assertDontSee('desk-card', false)
+            ->assertSee('class="ribbon"', false);
+    }
+
+    public function test_the_editor_has_labelled_fields_and_side_cards(): void
+    {
+        $post = $this->write('Kek lapis', '2026-10-01 09:00:00', published: false);
+
+        $this->actingAs($this->admin)->get(route('admin.entries.edit', ['posts', $post->id()]))->assertOk()
+            ->assertSee('editor-box', false)
+            ->assertSee('editor-slug', false)
+            ->assertSee('<h2 class="desk-card__title">Publishing</h2>', false)
+            ->assertDontSee('<div class="toolbar">', false);
+
+        $person = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($person)->get(route('admin.entries.edit', ['posts', $post->id()]))->assertOk()
+            ->assertSee('<div class="toolbar">', false)
+            ->assertDontSee('editor-box', false)
+            ->assertDontSee('desk-card', false);
+    }
+
     public function test_the_sidebar_groups_content_tools_and_settings(): void
     {
         $this->actingAs($this->admin)->get(route('admin.media'))->assertOk()

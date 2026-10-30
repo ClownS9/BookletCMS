@@ -6441,6 +6441,8 @@ body.layout-dashboard .book__pages > .page, body.layout-dashboard .book__pages >
     body.layout-dashboard .book__pages .page > div:has(> .page-head:first-child) { display: contents; }
 
     body.layout-dashboard .book__pages > .page--right, body.layout-dashboard .book__pages > * > .page--right { flex: 1 1 0; }
+    body.layout-dashboard .book__pages .page--left.page--wide-left, body.layout-dashboard .book__pages .page--wide-left { flex: 1 1 0; }
+    body.layout-dashboard .book__pages .page--right.page--narrow-right, body.layout-dashboard .book__pages .page--narrow-right { flex: 0 0 clamp(300px, 30%, 380px); }
     body.layout-dashboard .book__pages > .page, body.layout-dashboard .book__pages > * > .page {
         border: 1px solid var(--d-line);
         border-radius: 10px !important;
@@ -6564,6 +6566,10 @@ body.night .deskbar__stacy { box-shadow: 0 0 0 1px #4A453C; }
     body.layout-dashboard .book__pages { border-radius: 14px; overflow: hidden; background: var(--d-panel); }
     body.layout-dashboard .book__pages:has(.page--dash) { background: var(--d-bg); }
     body.layout-dashboard .book__pages .page--dash { padding: 16px 14px 24px; background: var(--d-bg); }
+    body.layout-dashboard .book__pages:has(.desk-card) { background: var(--d-bg); }
+    html body.layout-dashboard .book__pages .page:has(> .desk-card) { padding: 16px 12px 8px !important; gap: 12px; }
+    body.layout-dashboard .page-head { margin-bottom: 4px; }
+    body.layout-dashboard .page-head h1 { font-size: 22px; }
 }
 
 /* --------------------------------------------------------------------------
@@ -6649,6 +6655,100 @@ body.layout-dashboard .dash-card .section-label--gap:first-child { margin-top: 0
 .switch--table { width: 40px; height: 24px; }
 .switch--table::after { top: 3px; left: 3px; width: 18px; height: 18px; }
 .switch--table[aria-checked="true"]::after { left: 19px; }
+
+
+/* --------------------------------------------------------------------------
+   Cards (x-admin.card): a page in the Dashboard layout made of separate
+   panels. In the Book layout the component adds nothing.
+   -------------------------------------------------------------------------- */
+
+.desk-card { flex: none; min-width: 0; border: 1px solid var(--d-line); border-radius: 10px; background: var(--d-panel); box-shadow: 0 1px 2px rgba(20, 18, 14, .05); }
+.desk-card__title { margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--d-line2); font-family: var(--sans); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.desk-card__body { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.desk-card__body:empty { display: none; }
+.desk-card--flush .desk-card__body { padding: 0; }
+/* Things that were their own little boxes on paper are plain inside a card */
+.desk-card :is(.takedown, .review-card, .search-card, .linked-from) { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.desk-card .field__label:first-child, .desk-card .field > label:first-child { margin-top: 0; }
+/* A page made of cards has no panel of its own: the cards sit on the ground */
+body.layout-dashboard .book__pages .page:has(> .desk-card) {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    gap: 16px;
+}
+body.layout-dashboard .book__pages .page:has(> .desk-card) > :not(.desk-card, .page-head, .ribbon, .page__folio, .editor-save, div:has(> .page-head:first-child)) { padding: 0 4px; }
+
+/* The writing card in the Dashboard layout: labelled fields, the formatting bar on the box */
+body.layout-dashboard .page-head .eyebrow { display: none; }
+body.layout-dashboard .editor-label { display: block; margin: 0 0 6px; color: var(--ink); font-size: 14px; font-weight: 600; }
+body.layout-dashboard label[for="field-content"].editor-label { margin-top: 20px; }
+body.layout-dashboard .title-input {
+    min-height: 46px;
+    margin-top: 0 !important;
+    padding: 0 14px;
+    border: 1px solid var(--d-field);
+    border-radius: 8px;
+    background: var(--d-panel);
+    font-family: var(--sans);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -.005em;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+body.layout-dashboard .title-input:focus { border-color: var(--d-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--d-accent) 22%, transparent); }
+body.layout-dashboard .title-input:focus-visible, body.layout-dashboard .body-input:focus-visible { outline: none; }
+body.layout-dashboard .title-input::placeholder, body.layout-dashboard .body-input::placeholder { color: var(--faint); opacity: .7; }
+.editor-slug { margin-top: 18px; }
+body.layout-dashboard .slug { border-color: var(--d-field); border-radius: 8px; }
+body.layout-dashboard .slug > span { background: var(--d-head); border-right: 1px solid var(--d-field); padding: 0 10px; color: var(--muted); }
+body.layout-dashboard .slug input { padding: 0 12px; }
+body.layout-dashboard .slug:focus-within { border-color: var(--d-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--d-accent) 22%, transparent); }
+.editor-box { border: 1px solid var(--d-field); border-radius: 8px; overflow: hidden; background: var(--d-panel); transition: border-color .15s ease, box-shadow .15s ease; }
+.editor-box:focus-within { border-color: var(--d-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--d-accent) 22%, transparent); }
+.editor-box .format-bar { display: flex; flex-wrap: wrap; width: 100%; box-sizing: border-box; padding: 4px; border: 0; border-bottom: 1px solid var(--d-field); border-radius: 0; background: var(--d-head); box-shadow: none; }
+.editor-box .format-bar button { border-radius: 6px; }
+.editor-box .format-bar .format-bar__stacy { margin-left: auto; border-radius: 999px; }
+.editor-box .body-input { display: block; min-height: 360px; padding: 14px 16px; font-family: var(--sans); font-size: 16px; line-height: 1.7; }
+.editor-count { margin: 6px 0 0; }
+body.layout-dashboard .page-head__saved { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+body.layout-dashboard .page-head__saved .saved-note { font-family: var(--sans); font-style: normal; font-size: 13px; }
+
+
+/* A heading that opens a card becomes the card's title bar */
+body.layout-dashboard .desk-card__body > :is(h2, h3):first-child,
+body.layout-dashboard .desk-card__body > .section-head:first-child,
+body.layout-dashboard .desk-card__body > .eyebrow.section-label:first-child {
+    margin: -14px -16px 2px !important;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--d-line2);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0;
+    text-transform: none;
+}
+body.layout-dashboard .desk-card__body > .section-head:first-child { display: flex; align-items: center; justify-content: space-between; }
+body.layout-dashboard .desk-card__body > .section-head:first-child :is(h2, h3) { margin: 0; color: var(--ink); font-family: var(--sans); font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+body.layout-dashboard .desk-card__body > .section-head:first-child a { font-size: 13px; font-weight: 600; color: var(--d-accent-text) !important; }
+/* Section labels further down a card: quiet small headings */
+body.layout-dashboard .desk-card :is(.heading--sub, h2.heading:not(:first-child)) { font-size: 15px; font-weight: 600; }
+
+/* Lists read as table rows on the desk */
+body.layout-dashboard .picks { gap: 0; border-top: 1px solid var(--d-line2); }
+body.layout-dashboard .picks > li { border-bottom: 1px solid var(--d-line2); }
+body.layout-dashboard .pick { padding: 10px 12px; border-radius: 0; align-items: center; }
+body.layout-dashboard .pick .dot { margin-top: 0; }
+body.layout-dashboard .pick:hover { background: var(--d-hover); }
+body.layout-dashboard .pick[aria-pressed="true"] { background: var(--d-sel); box-shadow: inset 3px 0 0 var(--d-accent); }
+body.layout-dashboard .pick__title { font-size: 15px; font-weight: 600; }
+body.layout-dashboard .rows > li { border-bottom-color: var(--d-line2); }
+body.layout-dashboard .row { margin: 0; padding: 10px 12px; border-radius: 0; }
+body.layout-dashboard .row__title { font-size: 15px; font-weight: 600; }
+body.layout-dashboard :is(.setting-rows, .setting-row, .drivers li) { border-color: var(--d-line2); }
 
 /* --------------------------------------------------------------------------
    Panels and tables for the desk's own pages

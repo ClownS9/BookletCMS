@@ -12,28 +12,34 @@
             @endif
         </div>
 
-        @if ($page['left'] && $insert->hasView($page['left']))
-            {{ $insert->view($page['left'], $data) }}
-        @endif
+        <x-admin.card>
+            @if ($page['left'] && $insert->hasView($page['left']))
+                {{ $insert->view($page['left'], $data) }}
+            @endif
 
-        @if ($insert->slipHelp() !== [])
-            <p class="field__hint" style="margin-top: auto">In a post or page:
-                @foreach ($insert->slipHelp() as $line) <code>{{ __($line) }}</code>@if (! $loop->last), @endif @endforeach
-            </p>
-        @endif
+            @if ($insert->slipHelp() !== [])
+                <p class="field__hint" style="margin-top: auto">In a post or page:
+                    @foreach ($insert->slipHelp() as $line) <code>{{ __($line) }}</code>@if (! $loop->last), @endif @endforeach
+                </p>
+            @endif
+        </x-admin.card>
+
         <x-admin.folio side="left" />
     </section>
 
     {{-- Right page: the insert's own view --}}
     <section class="page page--right page--stack" style="--ribbon: var(--{{ $insert->sticker() }})">
         <div class="ribbon" aria-hidden="true"></div>
-        <div class="insert-page">
-            @if ($insert->hasView($page['view']))
-                {{ $insert->view($page['view'], $data) }}
-            @else
-                <p class="empty-note">This insert has no {{ $page['view'] }} view yet (inserts/{{ $insert->key }}/views/{{ $page['view'] }}.blade.php).</p>
-            @endif
-        </div>
+        <x-admin.card>
+            <div class="insert-page">
+                @if ($insert->hasView($page['view']))
+                    {{ $insert->view($page['view'], $data) }}
+                @else
+                    <p class="empty-note">This insert has no {{ $page['view'] }} view yet (inserts/{{ $insert->key }}/views/{{ $page['view'] }}.blade.php).</p>
+                @endif
+            </div>
+        </x-admin.card>
+
         <x-admin.folio side="right" style="margin-top: auto" />
     </section>
 </div>
