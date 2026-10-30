@@ -655,6 +655,105 @@ class AdminNav
         return ['content' => $content, 'tools' => $tools, 'settings' => $settings];
     }
 
+    // The crumb switcher ------------------------------------------------------
+
+    /**
+     * The section this page belongs to, with the pages beside it, for the
+     * Dashboard's breadcrumb (the ⇕ after "Dashboard / Settings"): jump
+     * sideways without the sidebar, start something new, or open the
+     * section's settings. Built from the sidebar, so the two always agree,
+     * and only what this person may open. Null where there's nowhere to go.
+     *
+     * @return array{label: string, href: string, groups: list<array{title: ?string, items: list<array{key: string, label: string, href: string, active: bool, tone: string}>}>, create: ?array{label: string, href: string}, configure: ?array{label: string, href: string}}|null
+     */
+    public static function switcher(?\App\Models\User $user = null): ?array
+    {
+        $user ??= request()->user();
+        if (! $user) {
+            return null;
+        }
+        $r = static::page();
+
+        // Your own pages: your account, how the book looks for you, your menu.
+        if ($r->routeIs('admin.account', 'admin.account.*')) {
+            $mine = [
+                ['key' => 'account', 'label' => __('Your account'), 'href' => route('admin.account'), 'active' => $r->routeIs('admin.account'), 'tone' => 'lilac'],
+                ['key' => 'make_it_yours', 'label' => __('Make it yours'), 'href' => route('admin.account.yours'), 'active' => $r->routeIs('admin.account.yours'), 'tone' => 'lilac'],
+                ['key' => 'your_menu', 'label' => __('Your menu'), 'href' => route('admin.account.menu'), 'active' => $r->routeIs('admin.account.menu'), 'tone' => 'lilac'],
+            ];
+
+            return ['label' => __('Your account'), 'href' => route('admin.account'), 'groups' => [['title' => null, 'items' => $mine]], 'create' => null, 'configure' => null];
+        }
+
+        $side = static::sidebar($user);
+        $all = [...$side['content'], ...$side['tools'], ...$side['settings']];
+
+        // Where you are: one of a section's pages first, then a section itself.
+        $parent = $current = null;
+        foreach ($all as $item) {
+            if ($sub = collect($item['subs'])->firstWhere('active', true)) {
+                [$parent, $current] = [$item, $sub];
+                break;
+            }
+        }
+        if (! $parent) {
+            foreach ($all as $item) {
+                if ($item['active'] && $item['key'] !== 'contents') {
+                    [$parent, $current] = [$item, $item];
+                    break;
+                }
+            }
+        }
+
+        $entry = fn (array $i, bool $active) => ['key' => $i['key'], 'label' => $i['label'], 'href' => $i['href'], 'active' => $active, 'tone' => $i['tone'] ?? 'sand'];
+        $groups = [];
+        $label = $parent['label'] ?? null;
+        $href = $parent['href'] ?? null;
+        $create = $configure = null;
+
+        // Writing in a collection: every collection you may open, side by side.
+        $handle = $r->route('collection');
+        if (is_string($handle) && $handle !== '') {
+            $collections = rescue(fn () => \App\Booklet\Facades\Booklet::collections()->all()
+                ->filter(fn ($c) => $user->canOpen($c->handle()))
+                ->sortBy(fn ($c) => [$c->handle() === 'posts' ? 0 : ($c->handle() === 'pages' ? 1 : 2), $c->title()])
+                ->values(), collect(), false);
+            $collection = $collections->first(fn ($c) => $c->handle() === $handle);
+            if ($collection) {
+                $label = __($collection->title());
+                $href = route('admin.entries', $handle);
+                $groups[] = ['title' => __('Collections'), 'items' => $collections->map(fn ($c) => [
+                    'key' => 'list:'.$c->handle(), 'label' => __($c->title()), 'href' => route('admin.entries', $c->handle()),
+                    'active' => $c->handle() === $handle, 'tone' => $c->handle() === 'posts' ? 'sun' : ($c->handle() === 'pages' ? 'mint' : 'sand'),
+                ])->all()];
+                if ($parent && $parent['subs'] !== [] && in_array($parent['key'], ['posts', 'pages'], true) && $parent['key'] === $handle) {
+                    $groups[] = ['title' => __($collection->title()), 'items' => array_map(fn ($s) => $entry($s, false), $parent['subs'])];
+                }
+                $create = ['label' => $handle === 'posts' ? __('New post') : ($handle === 'pages' ? __('New page') : __('New entry')), 'href' => route('admin.entries.create', $handle)];
+                $configure = $user->isAdmin() ? ['label' => __('Collection settings'), 'href' => route('admin.collections', ['chapter' => $handle])] : null;
+            }
+        } elseif ($parent) {
+            $items = [$entry($parent, $current['key'] === $parent['key'])];
+            foreach ($parent['subs'] as $sub) {
+                $items[] = $entry($sub, $sub['key'] === $current['key']);
+            }
+            $groups[] = ['title' => null, 'items' => $items];
+            if ($parent['key'] === 'people' && $user->isAdmin()) {
+                $create = ['label' => __('Invite someone'), 'href' => route('admin.people', ['invite' => 1])];
+            }
+        }
+
+        if ($label === null || $href === null) {
+            return null;
+        }
+        $links = array_sum(array_map(fn ($g) => count($g['items']), $groups));
+        if ($links < 2 && ! $create && ! $configure) {
+            return null; // nowhere else to go
+        }
+
+        return ['label' => $label, 'href' => $href, 'groups' => $groups, 'create' => $create, 'configure' => $configure];
+    }
+
     // Your menu: each person's own arrangement -------------------------------
 
     /** Where things live until someone moves them. */
