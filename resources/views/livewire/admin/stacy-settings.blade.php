@@ -1,9 +1,13 @@
 <div style="display: contents">
     {{-- Left page: the services --}}
     <section class="page page--left" style="flex-basis: 360px">
-        <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
+        <div class="page-head">
+            <x-admin.crumbs>
+                <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
+            </x-admin.crumbs>
             <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Stacy’s brain') }}</h1>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Stacy’s brain') }}</h1>
+        </div>
         <p class="lede" style="margin: 12px 0 14px; font-size: 15px">{{ __('Choose which AI services Stacy may think with. Each person picks their favourite model in their account.') }}</p>
         <a href="{{ route('admin.settings.stacy.behaviour') }}" class="behaviour-link" wire:navigate>
             <span><strong>{{ __('How Stacy behaves') }}</strong><small>{{ __('Answer length, tone, house style, what she may change, daily limits') }}</small></span>

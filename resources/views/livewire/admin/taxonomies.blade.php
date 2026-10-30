@@ -1,9 +1,13 @@
 <div style="display: contents">
     {{-- Left page: categories, like a book's index --}}
     <section class="page page--left" style="flex-basis: 400px">
-        <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
+        <div class="page-head">
+            <x-admin.crumbs>
+                <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
+            </x-admin.crumbs>
             <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Index') }}</h1>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Index') }}</h1>
+        </div>
         <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Categories are the sections of your blog. Each post sits in one. Pick one to rename or remove it.') }}</p>
 
         <h2 class="eyebrow section-label section-label--gap">{{ __('Categories') }}</h2>

@@ -2,8 +2,11 @@
     {{-- Left page: profile --}}
     <form wire:submit="saveProfile" class="page page--left page--stack" style="flex-basis: 440px">
         <div>
-            <p class="eyebrow">{{ __('Ex libris') }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Your account') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs />
+                <p class="eyebrow">{{ __('Ex libris') }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Your account') }}</h1>
+            </div>
         </div>
 
         {{-- Make it yours and Your menu: how Booklet looks and what's on the menu, for you --}}

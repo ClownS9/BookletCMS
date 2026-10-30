@@ -17,6 +17,9 @@
                     <p class="dash-crumbs"><a href="{{ route('admin.contents') }}" wire:navigate>{{ __('Dashboard') }}</a> <span aria-hidden="true">/</span> {{ __($model->title()) }}</p>
                     <h1 id="chapter-title">{{ __($model->title()) }}</h1>
                 </div>
+                @if ($structured && $canArrange)
+                    <a href="{{ route('admin.menus') }}" class="btn" wire:navigate>{{ __('Site menus') }}</a>
+                @endif
                 @if ($hasTaxonomies)
                     <a href="{{ route('admin.taxonomies') }}" class="btn has-handheld-twin" wire:navigate>{{ __('Categories & tags') }}</a>
                 @endif
@@ -24,7 +27,7 @@
                     <a href="{{ route('admin.calendar') }}" class="btn has-handheld-twin" wire:navigate>{{ __('Calendar') }}</a>
                 @endif
                 <a href="{{ route('admin.entries.create', $model->handle()) }}" class="btn btn--ink has-handheld-twin" wire:navigate>
-                    <x-admin.icon name="plus" size="16" /> {{ __('New') }}
+                    <x-admin.icon name="plus" size="16" /> {{ $structured ? __('New page') : __('New') }}
                 </a>
             </div>
             <x-admin.insert-links :chapter="$model->title()" />
@@ -38,16 +41,32 @@
                     @endforeach
                 </div>
 
-                @if ($ticked === [])
+                @if ($movingEntry)
+                    <div class="dash-tools dash-bulk" role="region" aria-label="{{ __('Move a page') }}" wire:key="moving">
+                        <label for="move-parent"><strong>{{ __('Put “:name” under', ['name' => $movingEntry->title() ?: __('Untitled')]) }}</strong></label>
+                        <select id="move-parent" class="input" style="width: auto; min-width: 220px" wire:change="moveTo($event.target.value)">
+                            <option value="" disabled selected>{{ __('Choose a page…') }}</option>
+                            <option value="">{{ __('— Top level') }}</option>
+                            @foreach ($moveChoices as $choice)
+                                <option value="{{ $choice->id() }}">{{ $choice->title() ?: __('Untitled') }}</option>
+                            @endforeach
+                        </select>
+                        <button type="button" class="btn btn--quiet btn--sm" wire:click="cancelMove">{{ __('Cancel') }}</button>
+                    </div>
+                @elseif ($ticked === [])
                     <div class="dash-tools">
                         <div class="search">
                             <x-admin.icon name="search" size="16" />
                             <label for="entry-search" class="sr-only">{{ __('Search :what', ['what' => __($model->title())]) }}</label>
                             <input id="entry-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ __('Search this chapter') }}">
                         </div>
-                        <span class="dash-tools__links has-handheld-twin">
-                            <a href="{{ route('admin.print', ['collection' => $model->handle()]) }}" wire:navigate>{{ __('Print as a book') }}</a>
-                        </span>
+                        @if ($structured)
+                            <span class="dash-tools__links">{{ __('Nested the way they appear on the site.') }}</span>
+                        @else
+                            <span class="dash-tools__links has-handheld-twin">
+                                <a href="{{ route('admin.print', ['collection' => $model->handle()]) }}" wire:navigate>{{ __('Print as a book') }}</a>
+                            </span>
+                        @endif
                     </div>
                 @else
                     <div class="dash-tools dash-bulk" role="region" aria-label="{{ __('Do to the chosen ones') }}" wire:key="ticks">
@@ -99,15 +118,22 @@
                                         <input type="checkbox" wire:click="tickAll(@js($pageIds))" @checked(array_diff($pageIds, $ticked) === [])
                                                aria-label="{{ $lastPage > 1 ? __('Choose all on this page') : __('Choose all') }}">
                                     </th>
-                                    <th scope="col" aria-sort="{{ $ariaSort('title') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('title')">{{ __('Title') }}<span aria-hidden="true">{{ $sortMark('title') }}</span></button></th>
-                                    <th scope="col" class="is-wide">{{ __('Author') }}</th>
-                                    @if ($termFields !== [])
-                                        <th scope="col" class="is-wide">{{ __('Categories & tags') }}</th>
+                                    @if ($structured)
+                                        <th scope="col">{{ __('Title') }}</th>
+                                        <th scope="col" class="is-wide">{{ __('Template') }}</th>
+                                        <th scope="col" class="is-wide">{{ __('In the menu') }}</th>
+                                        <th scope="col" class="is-wide">{{ __('Edited') }}</th>
+                                    @else
+                                        <th scope="col" aria-sort="{{ $ariaSort('title') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('title')">{{ __('Title') }}<span aria-hidden="true">{{ $sortMark('title') }}</span></button></th>
+                                        <th scope="col" class="is-wide">{{ __('Author') }}</th>
+                                        @if ($termFields !== [])
+                                            <th scope="col" class="is-wide">{{ __('Categories & tags') }}</th>
+                                        @endif
+                                        @if ($dated)
+                                            <th scope="col" aria-sort="{{ $ariaSort('date') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('date')">{{ __('Date') }}<span aria-hidden="true">{{ $sortMark('date') }}</span></button></th>
+                                        @endif
+                                        <th scope="col" aria-sort="{{ $ariaSort('edited') }}" class="is-wide"><button type="button" class="dash-table__sort" wire:click="sortBy('edited')">{{ __('Edited') }}<span aria-hidden="true">{{ $sortMark('edited') }}</span></button></th>
                                     @endif
-                                    @if ($dated)
-                                        <th scope="col" aria-sort="{{ $ariaSort('date') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('date')">{{ __('Date') }}<span aria-hidden="true">{{ $sortMark('date') }}</span></button></th>
-                                    @endif
-                                    <th scope="col" aria-sort="{{ $ariaSort('edited') }}" class="is-wide"><button type="button" class="dash-table__sort" wire:click="sortBy('edited')">{{ __('Edited') }}<span aria-hidden="true">{{ $sortMark('edited') }}</span></button></th>
                                     <th scope="col">{{ __('Status') }}</th>
                                     <th scope="col"><span class="sr-only">{{ __('More') }}</span></th>
                                 </tr>
@@ -128,20 +154,40 @@
                                             <input type="checkbox" wire:model.live="ticked" value="{{ $entry->id() }}" aria-label="{{ __('Choose “:name”', ['name' => $name]) }}">
                                         </td>
                                         <td class="dash-table__main">
+                                            @if ($structured && $row['depth'] > 0)<span class="dash-table__indent" style="--depth: {{ $row['depth'] }}" aria-hidden="true"></span>@endif
                                             <a class="dash-table__title" href="{{ $mine ? route('admin.entries.edit', [$model->handle(), $entry->id()]) : route('preview', $entry->id()) }}" @if ($mine) wire:navigate @else target="_blank" rel="noopener" @endif>{{ $name }}</a>
                                             @if ($entry->get('translation_of'))<span class="pick__lang" title="{{ __('Translation') }}">{{ strtoupper((string) $entry->get('lang')) }}</span>@endif
                                             @if ($n = $noteCounts[$entry->id()] ?? 0)<span class="pick__notes" title="{{ trans_choice(':count sticky note|:count sticky notes', $n) }}">{{ $n }}</span>@endif
                                             <span class="dash-table__sub">{{ $entry->uri() ?? '—' }}</span>
                                         </td>
-                                        <td class="is-wide">
-                                            @if ($writer)
-                                                <span class="dash-person"><x-admin.avatar :user="$writer" size="24" />{{ $writer->name }}</span>
-                                            @else
-                                                <span class="is-quiet">—</span>
-                                            @endif
-                                        </td>
-                                        @if ($termFields !== [])
+                                        @if ($structured)
+                                            @php $template = (string) $entry->get('template', 'default'); @endphp
                                             <td class="is-wide">
+                                                @if ($mine)
+                                                    <label for="tpl-{{ $entry->id() }}" class="sr-only">{{ __('Template for “:name”', ['name' => $name]) }}</label>
+                                                    <select id="tpl-{{ $entry->id() }}" class="input dash-table__select" wire:change="templateFor('{{ $entry->id() }}', $event.target.value)">
+                                                        @foreach ($templates as $value => [$label, $hint])
+                                                            <option value="{{ $value }}" @selected($template === $value)>{{ __($label) }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @else
+                                                    {{ __($templates[$template][0] ?? 'Default') }}
+                                                @endif
+                                            </td>
+                                            <td class="is-wide">
+                                                <button type="button" class="switch switch--table" role="switch" aria-checked="{{ in_array($entry->id(), $menuIds, true) ? 'true' : 'false' }}"
+                                                        aria-label="{{ __('Show “:name” in the site menu', ['name' => $name]) }}" wire:click="menuFor('{{ $entry->id() }}')" @disabled(! $canArrange)></button>
+                                            </td>
+                                        @else
+                                            <td class="is-wide">
+                                                @if ($writer)
+                                                    <span class="dash-person"><x-admin.avatar :user="$writer" size="24" />{{ $writer->name }}</span>
+                                                @else
+                                                    <span class="is-quiet">—</span>
+                                                @endif
+                                            </td>
+                                            @if ($termFields !== [])
+                                                <td class="is-wide">
                                                 @forelse ($words->take(2) as $w)
                                                     <span class="dash-tag">{{ $w }}</span>
                                                 @empty
@@ -152,6 +198,7 @@
                                         @endif
                                         @if ($dated)
                                             <td class="is-quiet">{{ $entry->date()?->translatedFormat('j M Y') ?? '—' }}</td>
+                                        @endif
                                         @endif
                                         <td class="is-quiet is-wide">{{ $entry->lastModified() ? \Illuminate\Support\Carbon::parse($entry->lastModified())->diffForHumans() : '—' }}</td>
                                         <td>
@@ -169,6 +216,14 @@
                                                 <div class="dash-more__menu" x-show="open" x-cloak x-transition.opacity.duration.120ms>
                                                     @if ($mine)
                                                         <a href="{{ route('admin.entries.edit', [$model->handle(), $entry->id()]) }}" wire:navigate>{{ __('Edit') }}</a>
+                                                    @endif
+                                                    @if ($structured)
+                                                        <a href="{{ route('admin.entries.create', [$model->handle(), 'parent' => $entry->id()]) }}" wire:navigate>{{ __('Add sub-page') }}</a>
+                                                        @if ($canArrange)
+                                                            <button type="button" x-on:click="open = false" wire:click="nudgeRow('{{ $entry->id() }}', -1)">{{ __('Move up') }}</button>
+                                                            <button type="button" x-on:click="open = false" wire:click="nudgeRow('{{ $entry->id() }}', 1)">{{ __('Move down') }}</button>
+                                                            <button type="button" x-on:click="open = false" wire:click="startMove('{{ $entry->id() }}')">{{ __('Put under another page…') }}</button>
+                                                        @endif
                                                     @endif
                                                     <a href="{{ route('preview', $entry->id()) }}" target="_blank" rel="noopener">{{ __('Preview') }}</a>
                                                     @if ($entry->uri() && $entry->status() === 'published')

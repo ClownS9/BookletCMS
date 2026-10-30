@@ -6,8 +6,11 @@
 <div style="display: contents">
     {{-- Left page: the pile --}}
     <section class="page page--left" style="flex-basis: 420px">
-        <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · {{ __('notes in the margin') }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Comments') }}</h1>
+        <div class="page-head">
+            <x-admin.crumbs />
+            <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · {{ __('notes in the margin') }}</p>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Comments') }}</h1>
+        </div>
         <x-admin.insert-links chapter="Comments" />
         @if (in_array(request()->user()->level(), ['admin', 'editor'], true))
             @php $newMessages = \App\Support\Inbox::newCount(); @endphp

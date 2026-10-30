@@ -2,9 +2,13 @@
     {{-- Left page: what's in the bin --}}
     <section class="page page--left page--stack" style="flex-basis: 320px">
         <div>
-            <a href="{{ route('admin.activity') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Activity') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('The bin') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.activity') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Activity') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('The bin') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Torn-out pages wait here for :value days, so nothing is lost by accident. Put anything back exactly as it was.', ['value' => \App\Support\Bin::DAYS]) }}</p>
         </div>
 

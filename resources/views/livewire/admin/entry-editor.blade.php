@@ -3,6 +3,7 @@
     $titleField = $main->firstWhere('handle', 'title');
     $bodyField = $main->firstWhere('handle', 'content');
     $otherMain = $main->reject(fn ($f) => in_array($f['handle'], ['title', 'content']) || in_array($f['handle'], $hidden, true));
+    $desk = \App\Support\YourBook::desk();
 @endphp
 
 <form wire:submit="save" style="display: contents">
@@ -10,11 +11,30 @@
     <section class="page page--left page--wide-left"
              x-data="writingDesk({ key: @js('booklet.draft.'.($entryId ?? 'new-'.$collection)), savedAt: @js($savedAt), others: @js($coEditors), words: @js(['offline' => __('Offline · kept on this page'), 'waiting' => __('Editing…'), 'saving' => __('Saving…'), 'justNow' => __('Saved just now'), 'moment' => __('Saved a moment ago'), 'manual' => __('Unsaved changes · press Save')]) })"
              x-on:keydown="shortcut($event)">
-        <h1 class="sr-only">{{ $entryId ? 'Editing: '.(($values['title'] ?? '') ?: 'Untitled') : 'New '.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title())) }}</h1>
+        @if ($desk)
+            {{-- The Dashboard layout: where you are, the title, its status and the main buttons, above the panels --}}
+            <div class="page-head page-head--editor">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.entries', $collection) }}" wire:navigate>{{ __($this->model->title()) }}</a>
+                </x-admin.crumbs>
+                <h1 class="display display--page">{{ ($values['title'] ?? '') ?: ($entryId ? __('Untitled') : \Illuminate\Support\Str::ucfirst(__('New :one', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular(__($this->model->title())))]))) }}</h1>
+                <span class="dash-status dash-status--{{ $status }}"><i aria-hidden="true"></i>{{ __(ucfirst($status)) }}</span>
+                <span class="page-head__actions">
+                    @if ($entryId)
+                        <a href="{{ route('preview', $entryId) }}" class="btn" target="_blank" rel="noopener">{{ __('Preview') }}</a>
+                    @endif
+                    <button type="submit" class="btn btn--ink" wire:loading.attr="disabled" wire:target="save">{{ __($primaryLabel) }}</button>
+                </span>
+            </div>
+        @else
+            <h1 class="sr-only">{{ $entryId ? 'Editing: '.(($values['title'] ?? '') ?: 'Untitled') : 'New '.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title())) }}</h1>
+        @endif
         <div class="toolbar">
-            <a href="{{ route('admin.entries', $collection) }}" class="back" wire:navigate>
-                <x-admin.icon name="back" size="16" /> {{ __($this->model->title()) }}
-            </a>
+            @unless ($desk)
+                <a href="{{ route('admin.entries', $collection) }}" class="back" wire:navigate>
+                    <x-admin.icon name="back" size="16" /> {{ __($this->model->title()) }}
+                </a>
+            @endunless
             @if ($bodyField)
                 <div class="format-bar" role="toolbar" aria-label="{{ __('Formatting') }}">
                     <button type="button" x-on:click="format('heading')" title="{{ __('Heading') }}" aria-label="{{ __('Heading') }}"><span class="serif" style="font-weight: 600">H</span></button>
@@ -503,7 +523,7 @@
             <p class="field__hint">{{ __('Once saved, you can stick notes for the team on this :one.', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title()))]) }}</p>
         @endif
 
-        <div style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--rule); display: flex; gap: 10px; flex-wrap: wrap">
+        <div @class(['editor-save', 'is-desk' => $desk]) style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--rule); display: flex; gap: 10px; flex-wrap: wrap">
             <button type="submit" class="btn btn--ink btn--lg" style="flex: 1 1 auto" wire:loading.attr="disabled" wire:target="save">{{ __($primaryLabel) }}</button>
             @if ($entryId)
                 <a href="{{ route('preview', $entryId) }}" class="btn" target="_blank" rel="noopener">{{ __('Preview') }}</a>

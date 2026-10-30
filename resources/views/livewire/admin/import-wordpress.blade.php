@@ -2,9 +2,13 @@
     {{-- Left page: how it works, and the upload --}}
     <section class="page page--left page--stack" style="flex-basis: 400px">
         <div>
-            <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Move in from WordPress') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Move in from WordPress') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Bring your posts, pages, categories, tags, comments and pictures across, with the old addresses forwarding to the new ones so shared links keep working.') }}</p>
         </div>
 

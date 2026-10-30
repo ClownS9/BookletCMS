@@ -2,9 +2,13 @@
     {{-- Left page: everything, in your order --}}
     <section class="page page--wide-left page--stack">
         <div>
-            <a href="{{ route('admin.account.yours') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Make it yours') }}</a>
-            <p class="eyebrow chapter-mark">{{ __('Ex libris · just for you') }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Your menu') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.account.yours') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Make it yours') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ __('Ex libris · just for you') }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Your menu') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.') }}</p>
             @if (\App\Support\YourBook::of(request()->user())['layout'] === 'dashboard')
                 <p class="field__hint" style="margin-top: 8px">{{ __('In the Dashboard layout, stickers are listed under Content in the sidebar, and side tabs under Tools.') }}</p>
@@ -55,16 +59,29 @@
     <section class="page page--narrow-right page--stack" style="--ribbon: var(--lilac)">
         <div class="ribbon" aria-hidden="true"></div>
         <p class="eyebrow ribbon-clear">{{ __('On a computer') }}</p>
-        <div class="menu-preview" role="img" aria-label="{{ __('Stickers: :list.', ['list' => implode(', ', array_column($stickers, 'label')) ?: __('none')]) }} {{ __('Side tabs: :list.', ['list' => implode(', ', array_column($tabs, 'label')) ?: __('none')]) }}">
-            <span class="menu-preview__flags">
-                <i class="menu-preview__stacy">{{ __('Ask Stacy') }}</i>
-                @foreach ($stickers as $item)<i style="background: var(--{{ $item['tone'] }})">{{ $item['label'] }}</i>@endforeach
-            </span>
-            <span class="menu-preview__book"><span></span><span></span></span>
-            <span class="menu-preview__tabs">
-                @foreach ($tabs as $item)<i style="background: var(--{{ $item['tone'] }})"><span>{{ $item['label'] }}</span></i>@endforeach
-            </span>
-        </div>
+        @if (\App\Support\YourBook::desk())
+            {{-- The Dashboard layout: the sidebar, as it will read --}}
+            <div class="menu-preview menu-preview--desk" role="img" aria-label="{{ __('Content: :list.', ['list' => implode(', ', array_column($stickers, 'label')) ?: __('none')]) }} {{ __('Tools: :list.', ['list' => implode(', ', array_column($tabs, 'label')) ?: __('none')]) }}">
+                <span class="menu-preview__side">
+                    <b>{{ __('Content') }}</b>
+                    @foreach ($stickers as $item)<i style="--tone: var(--{{ $item['tone'] }})">{{ $item['label'] }}</i>@endforeach
+                    <b>{{ __('Tools') }}</b>
+                    @foreach ($tabs as $item)<i style="--tone: var(--{{ $item['tone'] }})">{{ $item['label'] }}</i>@endforeach
+                </span>
+                <span class="menu-preview__panes"><span></span><span></span><span></span></span>
+            </div>
+        @else
+            <div class="menu-preview" role="img" aria-label="{{ __('Stickers: :list.', ['list' => implode(', ', array_column($stickers, 'label')) ?: __('none')]) }} {{ __('Side tabs: :list.', ['list' => implode(', ', array_column($tabs, 'label')) ?: __('none')]) }}">
+                <span class="menu-preview__flags">
+                    <i class="menu-preview__stacy">{{ __('Ask Stacy') }}</i>
+                    @foreach ($stickers as $item)<i style="background: var(--{{ $item['tone'] }})">{{ $item['label'] }}</i>@endforeach
+                </span>
+                <span class="menu-preview__book"><span></span><span></span></span>
+                <span class="menu-preview__tabs">
+                    @foreach ($tabs as $item)<i style="background: var(--{{ $item['tone'] }})"><span>{{ $item['label'] }}</span></i>@endforeach
+                </span>
+            </div>
+        @endif
         <p class="field__hint">
             @if ($indexOnly) {{ __('Only in the Index: :list.', ['list' => implode(', ', $indexOnly)]) }} @endif
             @if ($hidden) {{ __('Hidden: :list. Search still finds them.', ['list' => implode(', ', $hidden)]) }} @else {{ __('Nothing hidden.') }} @endif

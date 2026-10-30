@@ -2,9 +2,13 @@
     {{-- Left page: key, drafts, the chosen day --}}
     <section class="page page--left page--stack" style="flex-basis: 300px">
         <div>
-            <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Calendar') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Calendar') }}</h1>
+            </div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px">

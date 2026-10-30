@@ -6,9 +6,13 @@
     {{-- Left page: switching it on, and what's waiting --}}
     <section class="page page--left page--stack" style="flex-basis: 380px">
         <div>
-            <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Version control') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Version control') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Every change to the book, committed to git on its own: who changed what, and when. Look back through it, and put the whole book back to any point.') }}</p>
         </div>
 

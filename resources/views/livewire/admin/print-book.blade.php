@@ -2,9 +2,13 @@
     {{-- Left page: what goes in, and how it's cut --}}
     <section class="page page--left page--stack" style="flex-basis: 420px">
         <div>
-            <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Print as a book') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.entries', 'posts') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Posts') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Print as a book') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Your writing, typeset for paper: a title page, contents, each post starting on its own page, running heads and page numbers. Print it, or save it as a PDF for a print shop.') }}</p>
         </div>
 

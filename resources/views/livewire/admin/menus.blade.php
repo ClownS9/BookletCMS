@@ -2,9 +2,13 @@
     {{-- Left page: which menu, and what to add --}}
     <section class="page page--left page--stack" style="flex-basis: 400px">
         <div>
-            <a href="{{ route('admin.entries', 'pages') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Pages') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Site menus') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.entries', 'pages') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Pages') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Site menus') }}</h1>
+            </div>
             <p style="margin-top: 8px; font-size: 14px; color: var(--faint)">{{ __('Old links that forward to new pages live in') }} <a href="{{ route('admin.redirects') }}" wire:navigate>{{ __('Redirects') }}</a>.</p>
         </div>
 

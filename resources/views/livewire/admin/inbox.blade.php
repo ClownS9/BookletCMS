@@ -7,9 +7,13 @@
 <div style="display: contents">
     {{-- Left page: the letters --}}
     <section class="page page--left" style="flex-basis: 420px">
-        <a href="{{ route('admin.comments') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Comments') }}</a>
-        <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ __('letters to the book') }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Inbox') }}</h1>
+        <div class="page-head">
+            <x-admin.crumbs>
+                <a href="{{ route('admin.comments') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Comments') }}</a>
+            </x-admin.crumbs>
+            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ __('letters to the book') }}</p>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Inbox') }}</h1>
+        </div>
         <p class="lede" style="margin: 12px 0 0; font-size: 15px">{!! __('Messages readers send from the form on your :contact, and answers to :forms.', [
             'contact' => $contact ? '<a href="'.e(app(\App\Booklet\Site::class)->url($contact)).'" target="_blank" rel="noopener">'.e(__('Contact page ↗')).'</a>' : e(__('Contact page')),
             'forms' => '<a href="'.e(route('admin.forms')).'" wire:navigate>'.e(__('your own forms')).'</a>',

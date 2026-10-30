@@ -2,9 +2,13 @@
     {{-- Left page: what's waiting, the numbers, inviting --}}
     <section class="page page--left page--stack" style="flex-basis: 400px">
         <div>
-            <a href="{{ route('admin.people') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('People') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Readers & groups') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.people') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('People') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Readers & groups') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('People with an account on your site. They can read what’s open to members, but never this book: their accounts are kept apart from the people who write here.') }}</p>
         </div>
 

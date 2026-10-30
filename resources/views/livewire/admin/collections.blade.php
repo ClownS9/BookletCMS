@@ -6,9 +6,13 @@
 <div style="display: contents">
     {{-- Left page: every chapter --}}
     <section class="page page--left" style="flex-basis: 360px">
-        <a href="{{ route('admin.contents') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Contents') }}</a>
+        <div class="page-head">
+            <x-admin.crumbs>
+                <a href="{{ route('admin.contents') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Contents') }}</a>
+            </x-admin.crumbs>
             <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Collections') }}</h1>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Collections') }}</h1>
+        </div>
         <p class="lede" style="margin: 12px 0 22px; font-size: 15px">{{ __('Each collection is a chapter of your book with its own fields.') }}</p>
 
         <ul class="picks">

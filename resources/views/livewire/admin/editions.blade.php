@@ -7,11 +7,15 @@
 <div style="display: contents">
     {{-- Left page: the timeline --}}
     <section class="page page--left" style="flex-basis: 360px">
-        <a href="{{ route('admin.entries.edit', [$collection, $entryId]) }}" class="back" wire:navigate>
-            <x-admin.icon name="back" size="16" /> {{ __('Back to the editor') }}
-        </a>
-        <p class="eyebrow" style="margin-top: 18px">{{ $entry->title() ?: 'Untitled' }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Editions') }}</h1>
+        <div class="page-head">
+            <x-admin.crumbs>
+                <a href="{{ route('admin.entries.edit', [$collection, $entryId]) }}" class="back" wire:navigate>
+                <x-admin.icon name="back" size="16" /> {{ __('Back to the editor') }}
+                </a>
+            </x-admin.crumbs>
+            <p class="eyebrow" style="margin-top: 18px">{{ $entry->title() ?: 'Untitled' }}</p>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Editions') }}</h1>
+        </div>
         <p class="lede" style="margin: 12px 0 22px; font-size: 15px">{{ __('Every save is kept. Pick one to see what changed, compare it with any other, and bring back all of it or just a part.') }}</p>
 
         @if ($count === 0)

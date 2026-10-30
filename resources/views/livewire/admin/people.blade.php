@@ -3,17 +3,11 @@
 <div style="display: contents">
     {{-- Left page: everyone --}}
     <section class="page page--left" style="flex-basis: 400px">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+        <div class="page-head" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap">
             <div>
+                <x-admin.crumbs />
                 <p class="eyebrow">{{ __(':value · :online online now', ['value' => \App\Support\AdminNav::chapterLabel(), 'online' => $online]) }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('People') }}</h1>
-                <x-admin.insert-links chapter="People" />
-                @if (in_array(request()->user()->level(), ['admin', 'editor'], true))
-                    <div class="chapter-links has-handheld-twin">
-                        <a href="{{ route('admin.subscribers') }}" class="back" wire:navigate><x-admin.icon name="mail" size="16" /> {{ __('Subscribers →') }}</a>
-                        <a href="{{ route('admin.readers') }}" class="back" wire:navigate><x-admin.icon name="people" size="16" /> {{ __('Readers & groups →') }}</a>
-                    </div>
-                @endif
             </div>
             @if ($this->canManage)
                 <button type="button" class="btn btn--ink" wire:click="$toggle('inviting')" aria-expanded="{{ $inviting ? 'true' : 'false' }}">
@@ -21,6 +15,13 @@
                 </button>
             @endif
         </div>
+        <x-admin.insert-links chapter="People" />
+        @if (in_array(request()->user()->level(), ['admin', 'editor'], true))
+            <div class="chapter-links has-handheld-twin">
+                <a href="{{ route('admin.subscribers') }}" class="back" wire:navigate><x-admin.icon name="mail" size="16" /> {{ __('Subscribers →') }}</a>
+                <a href="{{ route('admin.readers') }}" class="back" wire:navigate><x-admin.icon name="people" size="16" /> {{ __('Readers & groups →') }}</a>
+            </div>
+        @endif
 
         @if ($inviting)
             <form wire:submit="invite" style="margin-top: 20px; padding: 18px; border: 1px solid var(--rule); border-radius: 12px; background: var(--paper-3); display: flex; flex-direction: column; gap: 12px">

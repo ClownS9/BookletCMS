@@ -2,8 +2,11 @@
     {{-- Left page: what this insert is, and anything it shows there --}}
     <section class="page page--left page--stack" style="flex-basis: 380px">
         <div>
-            <p class="eyebrow chapter-mark">{{ __(':value · an insert', ['value' => \App\Support\AdminNav::chapterLabel()]) }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ $page['title'] }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs />
+                <p class="eyebrow chapter-mark">{{ __(':value · an insert', ['value' => \App\Support\AdminNav::chapterLabel()]) }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ $page['title'] }}</h1>
+            </div>
             @if ($insert->about() !== '')
                 <p class="lede" style="margin-top: 12px; font-size: 15px">{{ $insert->about() }}</p>
             @endif

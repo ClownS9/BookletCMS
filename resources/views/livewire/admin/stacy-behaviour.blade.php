@@ -2,9 +2,13 @@
     {{-- Left page: how she answers --}}
     <section class="page page--left page--stack" style="flex-basis: 420px">
         <div>
-            <a href="{{ route('admin.settings.stacy') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Stacy’s brain') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('How Stacy behaves') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.settings.stacy') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Stacy’s brain') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('How Stacy behaves') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('How long she answers, how she sounds, and what she remembers. Changes apply from her next answer.') }}</p>
         </div>
 

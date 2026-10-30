@@ -1,9 +1,13 @@
 <div style="display: contents">
     {{-- Left page: where email goes, and the services --}}
     <section class="page page--left" style="flex-basis: 360px">
-        <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
-        <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-        <h1 class="display display--page" style="margin-top: 8px">{{ __('Email') }}</h1>
+        <div class="page-head">
+            <x-admin.crumbs>
+                <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>
+            </x-admin.crumbs>
+            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+            <h1 class="display display--page" style="margin-top: 8px">{{ __('Email') }}</h1>
+        </div>
         <p class="lede" style="margin: 12px 0 14px; font-size: 15px">{{ __('The mail server the book sends through: password resets, comment alerts and new posts to subscribers.') }}</p>
 
         <p @class(['mail-status', 'mail-status--'.$status['state']]) role="status">

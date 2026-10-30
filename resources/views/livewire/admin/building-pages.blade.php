@@ -16,9 +16,13 @@
     {{-- Left page: what it is, and where everything is --}}
     <section class="page page--left page--stack" style="flex-basis: 380px">
         <div>
-            <a href="{{ route('admin.contents') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Contents') }}</a>
-            <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Building pages') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs>
+                    <a href="{{ route('admin.contents') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Contents') }}</a>
+                </x-admin.crumbs>
+                <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Building pages') }}</h1>
+            </div>
             <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Any page or post can be made of sections (a hero, cards, prices, questions…) and changed right where readers see it. It stays the same page: its address, its chapter and its place in the menus don’t change.') }}</p>
         </div>
 

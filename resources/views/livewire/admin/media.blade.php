@@ -8,8 +8,11 @@
     {{-- Left page: upload, folders, the chosen file --}}
     <section class="page page--left page--stack" style="flex-basis: 340px">
         <div>
-            <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · {{ trans_choice(':count file|:count files', $total) }}</p>
-            <h1 class="display display--page" style="margin-top: 8px">{{ __('Media') }}</h1>
+            <div class="page-head">
+                <x-admin.crumbs />
+                <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · {{ trans_choice(':count file|:count files', $total) }}</p>
+                <h1 class="display display--page" style="margin-top: 8px">{{ __('Media') }}</h1>
+            </div>
             <x-admin.insert-links chapter="Media" />
             @if (request()->user()->isAdmin())
                 <div class="chapter-links">
