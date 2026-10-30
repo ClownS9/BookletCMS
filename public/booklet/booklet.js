@@ -1888,3 +1888,35 @@ window.bookletSidebarFold = (narrow, url) => ({
         }).catch(() => {});
     },
 });
+
+/*
+ * Names beside the folded rail: hovering or tabbing to an item in the
+ * Dashboard's folded sidebar shows its name next to it straight away.
+ * One label, made when first needed; it never takes the pointer or focus.
+ */
+(() => {
+    let tip = null;
+    const folded = () => document.body.classList.contains('desk-narrow') && window.matchMedia('(min-width: 1081px)').matches;
+    const hide = () => { if (tip) tip.hidden = true; };
+    const show = (el) => {
+        if (!folded()) return hide();
+        if (!tip || !document.body.contains(tip)) {
+            tip = document.createElement('div');
+            tip.className = 'rail-tip';
+            tip.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(tip);
+        }
+        const r = el.getBoundingClientRect();
+        tip.textContent = el.dataset.tip;
+        tip.style.left = Math.round(r.right + 10) + 'px';
+        tip.style.top = Math.round(r.top + r.height / 2) + 'px';
+        tip.hidden = false;
+    };
+    const find = (t) => t instanceof Element ? t.closest('.sidebar [data-tip]') : null;
+    document.addEventListener('mouseover', (e) => { const el = find(e.target); el ? show(el) : hide(); });
+    document.addEventListener('focusin', (e) => { const el = find(e.target); el && el.matches(':focus-visible') ? show(el) : hide(); });
+    document.addEventListener('focusout', hide);
+    document.addEventListener('click', hide, true);
+    window.addEventListener('scroll', hide, true);
+    document.addEventListener('livewire:navigating', hide);
+})();

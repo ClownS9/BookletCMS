@@ -12,8 +12,9 @@
         <p class="sidebar__group" id="sidebar-content">{{ __('Content') }}</p>
         <nav aria-labelledby="sidebar-content" class="sidebar__list">
             @foreach ($stickers as $item)
-                <a href="{{ $item['href'] }}" wire:navigate title="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
+                <a href="{{ $item['href'] }}" wire:navigate data-tip="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
                     <span class="sidebar__dot" aria-hidden="true"></span>
+                    <span class="sidebar__icon" aria-hidden="true"><x-admin.icon :name="$item['icon']" size="16" /></span>
                     <span class="sidebar__label">{{ $item['label'] }}</span>
                     @if ($item['key'] === 'comments' && $waitingComments > 0)
                         <span class="sidebar__badge">{{ $waitingComments }}<span class="sr-only"> {{ __('waiting') }}</span></span>
@@ -29,8 +30,9 @@
         <p class="sidebar__group" id="sidebar-tools">{{ __('Tools') }}</p>
         <nav aria-labelledby="sidebar-tools" class="sidebar__list">
             @foreach ($tools as $item)
-                <a href="{{ $item['href'] }}" wire:navigate title="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
+                <a href="{{ $item['href'] }}" wire:navigate data-tip="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
                     <span class="sidebar__dot" aria-hidden="true"></span>
+                    <span class="sidebar__icon" aria-hidden="true"><x-admin.icon :name="$item['icon']" size="16" /></span>
                     <span class="sidebar__label">{{ $item['label'] }}</span>
                     @if ($item['badge'])<span class="sidebar__badge">{{ $item['badge'] }}</span>@endif
                 </a>
@@ -40,8 +42,9 @@
 
     <p class="sidebar__group" id="sidebar-back">{{ __('Back of the book') }}</p>
     <nav aria-labelledby="sidebar-back" class="sidebar__list">
-        <a href="{{ route('admin.settings') }}" wire:navigate title="{{ __('Settings') }}" style="--tone: var(--sand)" @if (request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
-            <x-admin.icon name="settings" size="15" />
+        <a href="{{ route('admin.settings') }}" wire:navigate data-tip="{{ __('Settings') }}" style="--tone: var(--sand)" @if (request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
+            <x-admin.icon name="settings" size="15" class="sidebar__gear" />
+            <span class="sidebar__icon" aria-hidden="true"><x-admin.icon name="settings" size="16" /></span>
             <span class="sidebar__label">{{ __('Settings') }}</span>
         </a>
     </nav>
@@ -77,7 +80,7 @@
                     <button type="submit" class="is-danger"><x-admin.icon name="logout" size="16" /> {{ __('Sign out') }}</button>
                 </form>
             </div>
-            <button type="button" class="sidebar__card" x-on:click="open = ! open" :aria-expanded="open.toString()" aria-expanded="false" aria-controls="sidebar-menu">
+            <button type="button" class="sidebar__card" data-tip="{{ $user->name }}" x-on:click="open = ! open" :aria-expanded="open.toString()" aria-expanded="false" aria-controls="sidebar-menu">
                 <x-admin.avatar :user="$user" size="38" presence />
                 <span class="sidebar__who"><span>{{ $user->name }}</span><small>{{ __($user->roleName()) }}</small></span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>

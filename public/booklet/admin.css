@@ -7288,3 +7288,45 @@ body.desk-narrow .deskbar__fold-arrow { transform: scaleX(-1); }
     body.desk-narrow .sidebar__who, body.desk-narrow .sidebar__card > svg { display: none; }
     body.desk-narrow .sidebar__menu { position: fixed; left: 76px; right: auto; bottom: 14px; width: 248px; transform-origin: 0 100%; }
 }
+
+/* Folded rail: each item is its icon on its own colour, and its name pops
+   out beside it on hover or keyboard focus (bookletRailTips). */
+.sidebar__icon { display: none; }
+@media (min-width: 1081px) {
+    body.desk-narrow .sidebar__dot, body.desk-narrow .sidebar__gear { display: none; }
+    body.desk-narrow .sidebar__icon {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: color-mix(in srgb, var(--tone) 38%, var(--d-panel));
+        color: var(--ink);
+        transition: background-color .15s ease, transform .15s ease;
+    }
+    body.desk-narrow .sidebar__list a:hover .sidebar__icon { background: color-mix(in srgb, var(--tone) 60%, var(--d-panel)); }
+    body.desk-narrow .sidebar__list a[aria-current="page"] { border-color: transparent; background: transparent; box-shadow: none; }
+    body.desk-narrow .sidebar__list a[aria-current="page"] .sidebar__icon { background: var(--tone); color: #1E1C18; box-shadow: 0 0 0 2px var(--d-panel), 0 0 0 4px var(--tone); }
+    body.desk-narrow .sidebar__list a { min-height: 44px; }
+    body.desk-narrow .sidebar__badge { top: 2px; right: 4px; box-shadow: 0 0 0 2px var(--d-bg); }
+}
+.rail-tip {
+    position: fixed;
+    z-index: 80;
+    padding: 5px 10px;
+    border-radius: 7px;
+    background: #1E1C18;
+    color: #FBF8F1;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .2);
+    transform: translateY(-50%);
+    animation: rail-tip-in .12s ease both;
+}
+.rail-tip::before { content: ''; position: absolute; left: -4px; top: 50%; width: 8px; height: 8px; margin-top: -4px; background: inherit; transform: rotate(45deg); border-radius: 1px; }
+body.night .rail-tip { background: #EDE6D6; color: #1E1C18; }
+@keyframes rail-tip-in { from { opacity: 0; margin-left: -4px; } }
+@media (prefers-reduced-motion: reduce) { .rail-tip { animation: none; } }
