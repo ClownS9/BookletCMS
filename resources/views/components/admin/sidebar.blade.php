@@ -7,12 +7,12 @@
     $waitingComments = collect(\App\Support\AdminNav::waiting())->firstWhere('key', 'comments')['count'] ?? 0;
     $here = rescue(fn () => \App\Models\User::query()->whereKeyNot($user->id)->where('last_seen_at', '>', now()->subMinutes(5))->orderByDesc('last_seen_at')->take(3)->get(), collect(), false);
 @endphp
-<aside class="sidebar" aria-label="{{ __('Booklet') }}">
+<aside class="sidebar" id="desk-sidebar" aria-label="{{ __('Booklet') }}">
     @if ($stickers !== [])
         <p class="sidebar__group" id="sidebar-content">{{ __('Content') }}</p>
         <nav aria-labelledby="sidebar-content" class="sidebar__list">
             @foreach ($stickers as $item)
-                <a href="{{ $item['href'] }}" wire:navigate style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
+                <a href="{{ $item['href'] }}" wire:navigate title="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
                     <span class="sidebar__dot" aria-hidden="true"></span>
                     <span class="sidebar__label">{{ $item['label'] }}</span>
                     @if ($item['key'] === 'comments' && $waitingComments > 0)
@@ -29,7 +29,7 @@
         <p class="sidebar__group" id="sidebar-tools">{{ __('Tools') }}</p>
         <nav aria-labelledby="sidebar-tools" class="sidebar__list">
             @foreach ($tools as $item)
-                <a href="{{ $item['href'] }}" wire:navigate style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
+                <a href="{{ $item['href'] }}" wire:navigate title="{{ $item['label'] }}" style="--tone: var(--{{ $item['tone'] }})" @if ($item['active']) aria-current="page" @endif>
                     <span class="sidebar__dot" aria-hidden="true"></span>
                     <span class="sidebar__label">{{ $item['label'] }}</span>
                     @if ($item['badge'])<span class="sidebar__badge">{{ $item['badge'] }}</span>@endif
@@ -40,7 +40,7 @@
 
     <p class="sidebar__group" id="sidebar-back">{{ __('Back of the book') }}</p>
     <nav aria-labelledby="sidebar-back" class="sidebar__list">
-        <a href="{{ route('admin.settings') }}" wire:navigate style="--tone: var(--sand)" @if (request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
+        <a href="{{ route('admin.settings') }}" wire:navigate title="{{ __('Settings') }}" style="--tone: var(--sand)" @if (request()->routeIs('admin.settings', 'admin.settings.*', 'admin.backups', 'admin.import')) aria-current="page" @endif>
             <x-admin.icon name="settings" size="15" />
             <span class="sidebar__label">{{ __('Settings') }}</span>
         </a>

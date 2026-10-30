@@ -235,6 +235,33 @@ class DashboardDeskTest extends TestCase
             ->assertDontSee('desk-card', false);
     }
 
+    public function test_the_sidebar_folds_to_a_rail_and_stays_that_way_for_that_person(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.media'))->assertOk()
+            ->assertSee('deskbar__fold', false)
+            ->assertSee('aria-controls="desk-sidebar"', false)
+            ->assertDontSee('desk-narrow', false);
+
+        $this->actingAs($this->admin)->postJson(route('admin.sidebar'), ['narrow' => true])->assertOk()->assertJson(['narrow' => true]);
+        $this->assertTrue($this->admin->fresh()->preferences['sidebar_narrow']);
+        $this->assertMatchesRegularExpression('/<body class="[^"]*desk-narrow/', $this->actingAs($this->admin->fresh())->get(route('admin.media'))->getContent());
+
+        // Someone else's sidebar is their own.
+        $other = User::factory()->create(['role' => 'editor']);
+        YourBook::save($other, ['layout' => 'dashboard']);
+        $this->assertDoesNotMatchRegularExpression('/<body class="[^"]*desk-narrow/', $this->actingAs($other->fresh())->get(route('admin.media'))->getContent());
+
+        // Without a value it flips; open again leaves nothing behind.
+        $this->actingAs($this->admin->fresh())->post(route('admin.sidebar'))->assertRedirect();
+        $this->assertArrayNotHasKey('sidebar_narrow', (array) $this->admin->fresh()->preferences);
+    }
+
+    public function test_the_book_layout_never_folds_a_sidebar(): void
+    {
+        $person = User::factory()->create(['role' => 'admin', 'preferences' => ['sidebar_narrow' => true]]);
+        $this->actingAs($person)->get(route('admin.media'))->assertOk()->assertDontSee('desk-narrow', false)->assertDontSee('deskbar__fold', false);
+    }
+
     public function test_the_sidebar_groups_content_tools_and_settings(): void
     {
         $this->actingAs($this->admin)->get(route('admin.media'))->assertOk()

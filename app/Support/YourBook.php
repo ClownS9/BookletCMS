@@ -137,6 +137,7 @@ class YourBook
             'density-snug' => $look['density'] === 'snug',
             'text-'.$look['size'] => $look['size'] !== 'm',
             'no-turn' => ! $look['turn'],
+            'desk-narrow' => $look['layout'] === 'dashboard' && (bool) ($user?->preferences['sidebar_narrow'] ?? false),
         ];
     }
 

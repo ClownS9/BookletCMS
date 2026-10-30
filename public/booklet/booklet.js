@@ -1869,3 +1869,22 @@ window.bookletRowMenu = () => ({
     },
     destroy() { this.close(); },
 });
+
+/*
+ * The Dashboard's sidebar, folded to a narrow rail or open. It changes at once
+ * and is kept on the person's account, so it stays that way on every page and
+ * device (the page is drawn with it already folded, so nothing jumps).
+ */
+window.bookletSidebarFold = (narrow, url) => ({
+    narrow,
+    toggle() {
+        this.narrow = ! this.narrow;
+        document.body.classList.toggle('desk-narrow', this.narrow);
+        const token = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ narrow: this.narrow }),
+        }).catch(() => {});
+    },
+});

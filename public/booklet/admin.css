@@ -7257,3 +7257,34 @@ body.layout-dashboard .switch-row { align-items: center; }
 body.layout-dashboard .switch-row span { padding-top: 0; }
 body.layout-dashboard .nav-switch:has(input[role="switch"]) { align-items: center; }
 body.layout-dashboard .nav-switch input[role="switch"] { margin-top: 0; }
+
+/* --------------------------------------------------------------------------
+   The sidebar folded to a narrow rail (the button at the top left). Each
+   chapter keeps its coloured marker, its name shows on hover, and the
+   page gets the room.
+   -------------------------------------------------------------------------- */
+.deskbar__fold { flex: none; color: var(--muted); }
+.deskbar__fold:hover { color: var(--ink); }
+.deskbar__fold-arrow { transition: transform .2s ease; transform-origin: 14.5px 12px; }
+body.desk-narrow .deskbar__fold-arrow { transform: scaleX(-1); }
+
+@media (min-width: 1081px) {
+    body.layout-dashboard .desk { transition: grid-template-columns .2s ease; }
+    body.layout-dashboard.desk-narrow .desk { grid-template-columns: 68px minmax(0, 1fr); }
+    body.desk-narrow .deskbar__brand { flex-basis: auto; }
+
+    body.desk-narrow .sidebar { padding: 8px 10px 12px; align-items: stretch; overflow-x: hidden; }
+    body.desk-narrow .sidebar__group { height: 1px; margin: 12px 6px; overflow: hidden; background: var(--d-line); color: transparent; font-size: 0; }
+    body.desk-narrow .sidebar__group:first-child { height: 0; margin: 4px 0; }
+    body.desk-narrow .sidebar__list a { position: relative; justify-content: center; gap: 0; min-height: 40px; padding: 0; }
+    body.desk-narrow .sidebar__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    body.desk-narrow .sidebar__dot { width: 14px; height: 14px; border-radius: 4px; }
+    body.desk-narrow .sidebar__list a > svg { margin: 0; }
+    body.desk-narrow .sidebar__badge { position: absolute; top: 4px; right: 6px; min-width: 16px; padding: 0 4px; font-size: 10px; line-height: 16px; }
+
+    body.desk-narrow .sidebar__here { display: none; }
+    body.desk-narrow .sidebar__card { justify-content: center; padding: 6px 0; border-color: transparent; background: transparent; }
+    body.desk-narrow .sidebar__card:hover, body.desk-narrow .sidebar__card[aria-expanded="true"] { border-color: var(--d-line); background: var(--d-panel); }
+    body.desk-narrow .sidebar__who, body.desk-narrow .sidebar__card > svg { display: none; }
+    body.desk-narrow .sidebar__menu { position: fixed; left: 76px; right: auto; bottom: 14px; width: 248px; transform-origin: 0 100%; }
+}

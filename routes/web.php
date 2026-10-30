@@ -194,6 +194,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
 
         return back();
     })->name('night');
+    // The Dashboard's sidebar folded to a narrow rail, or open: each person's own.
+    Route::post('/sidebar', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $narrow = $request->has('narrow') ? $request->boolean('narrow') : ! ($user->preferences['sidebar_narrow'] ?? false);
+        $preferences = (array) $user->preferences;
+        if ($narrow) {
+            $preferences['sidebar_narrow'] = true;
+        } else {
+            unset($preferences['sidebar_narrow']);
+        }
+        $user->forceFill(['preferences' => $preferences])->save();
+
+        return $request->expectsJson() ? response()->json(['narrow' => $narrow]) : back();
+    })->name('sidebar');
     Route::get('/activity', Admin\Activity::class)->name('activity');
     Route::get('/visits', Admin\Visits::class)->name('visits');
     Route::get('/bin', Admin\Bin::class)->name('bin');
