@@ -137,7 +137,7 @@
                                 <span class="backup-list__text">
                                     <span class="backup-list__date serif">{{ $b['at']->format('j M Y') }} <span>{{ $b['at']->format('g:ia') }}</span></span>
                                     <span class="backup-list__meta">
-                                        <span class="sticker sticker--{{ $tone }}" style="--tilt: 0deg; font-size: 11px; padding: 2px 8px">{{ $kindLabel }}</span>
+                                        <span class="sticker sticker--{{ $tone }}" style="--tilt: 0deg; font-size: 11px; padding: 2px 8px">{{ __($kindLabel) }}</span>
                                         {{ $size($b['size']) }} · {{ $b['at']->diffForHumans() }}
                                     </span>
                                 </span>

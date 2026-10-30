@@ -56,7 +56,7 @@
                     </p>
                     <div class="spark" role="img" aria-label="{{ $tile['label'] }}, {{ __('each day:') }} {{ collect($tile['days'])->map(fn ($d) => $d['date'].' '.$d['n'])->implode(', ') }}" style="--spark: var(--{{ $tile['tone'] }})">
                         @foreach ($tile['days'] as $day)
-                            <span class="spark__bar" style="--h: {{ max(4, round($day['n'] / $peak * 100)) }}%" title="{{ $day['date'] }} · {{ number_format($day['n']) }}"></span>
+                            <span @class(['spark__bar', 'is-zero' => $day['n'] === 0]) style="--h: {{ $day['n'] === 0 ? 0 : max(10, round($day['n'] / $peak * 100)) }}%; --i: {{ $loop->index }}" title="{{ $day['date'] }} · {{ number_format($day['n']) }}"></span>
                         @endforeach
                     </div>
                     <div class="spark__days" aria-hidden="true">
@@ -106,7 +106,7 @@
                     @php $hourPeak = max(1, max($hours['hours'])); @endphp
                     <div class="hour-bars" role="img" aria-label="{{ $hours['busiest'] !== null ? __('Visits by hour of the day; busiest around :hour.', ['hour' => \Illuminate\Support\Carbon::createFromTime($hours['busiest'])->translatedFormat('g A')]) : __('No visits yet.') }}">
                         @foreach ($hours['hours'] as $h => $n)
-                            <span @class(['is-busy' => $hours['busiest'] !== null && abs($h - $hours['busiest']) <= 1]) style="--h: {{ max(3, round($n / $hourPeak * 100)) }}%"></span>
+                            <span @class(['is-busy' => $hours['busiest'] !== null && abs($h - $hours['busiest']) <= 1]) style="--h: {{ max(3, round($n / $hourPeak * 100)) }}%; --i: {{ $h }}" title="{{ sprintf('%02d:00', $h) }} · {{ number_format($n) }}"></span>
                         @endforeach
                     </div>
                     <div class="hour-bars__axis" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
@@ -270,7 +270,7 @@
                 <h3 id="out-title" class="eyebrow section-label">{{ __('Published · these 4 weeks') }}</h3>
                 <div class="pub-grid" role="img" aria-label="{{ trans_choice('Something went out on :count day of the last four weeks.|Something went out on :count days of the last four weeks.', $publishing['active']) }}">
                     @foreach ($publishing['days'] as $day)
-                        <span @class(['pub-grid__day', 'is-future' => $day['future']]) data-level="{{ $day['level'] }}" title="{{ $day['date'] }} · {{ trans_choice(':count post|:count posts', $day['n']) }}"></span>
+                        <span @class(['pub-grid__day', 'is-future' => $day['future']]) style="--i: {{ $loop->index }}" data-level="{{ $day['level'] }}" title="{{ $day['date'] }} · {{ trans_choice(':count post|:count posts', $day['n']) }}"></span>
                     @endforeach
                 </div>
                 <p class="dog-ear-hint" style="margin-top: 8px">

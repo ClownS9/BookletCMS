@@ -44,7 +44,7 @@
             <div class="visit-chart" role="img" aria-label="{{ __('Page views per day') }}">
                 @foreach ($stats['days'] as $day)
                     @php $h = $day['views'] / $peak * 100; @endphp
-                    <span class="visit-chart__bar" style="--h: {{ max(2, $h) }}%"
+                    <span class="visit-chart__bar" style="--h: {{ max(2, $h) }}%; --i: {{ $loop->index }}"
                           title="{{ \Illuminate\Support\Carbon::parse($day['day'])->translatedFormat('D j M') }}: {{ trans_choice(':count view|:count views', $day['views'], ['count' => number_format($day['views'])]) }}, {{ trans_choice('about :count reader|about :count readers', $day['visitors']) }}">
                         <i></i>
                     </span>
@@ -73,7 +73,7 @@
                     @foreach ($hours['week'] as $d => $blocks)
                         <span class="week-heat__day">{{ mb_substr($dayNames[$d], 0, 3) }}</span>
                         @foreach ($blocks as $b => $n)
-                            <span class="week-heat__cell" style="--a: {{ round(0.08 + 0.92 * $n / $weekPeak, 2) }}" title="{{ $dayNames[$d] }} {{ sprintf('%02d:00–%02d:00', $b * 2, $b * 2 + 2) }} · {{ number_format($n) }}"></span>
+                            <span class="week-heat__cell" style="--a: {{ round(0.08 + 0.92 * $n / $weekPeak, 2) }}; --i: {{ $d + $b }}" title="{{ $dayNames[$d] }} {{ sprintf('%02d:00–%02d:00', $b * 2, $b * 2 + 2) }} · {{ number_format($n) }}"></span>
                         @endforeach
                     @endforeach
                     <span></span>
@@ -130,7 +130,7 @@
                                 @endif
                                 <span class="visit-pages__meta">
                                     <a href="{{ url($page['path']) }}" target="_blank" rel="noopener">{{ $page['path'] }} ↗</a>
-                                    @if ($page['read_rate'] !== null) · {{ $page['read_rate'] }}% read to the end @endif
+                                    @if ($page['read_rate'] !== null) · {{ __(':rate% read to the end', ['rate' => $page['read_rate']]) }} @endif
                                 </span>
                                 @if ($page['read_rate'] !== null)
                                     <span class="visit-pages__depth" style="--w: {{ $page['read_rate'] }}%" aria-hidden="true"></span>
@@ -151,7 +151,7 @@
                 <ul class="visit-sources">
                     @foreach ($stats['sources'] as $i => $src)
                         @php $share = (int) round($src['views'] / $sourceTotal * 100); @endphp
-                        <li wire:key="vs-{{ md5($src['source']) }}" style="--w: {{ $share }}%; --tone: var(--{{ ['sky', 'mint', 'sun', 'lilac', 'coral', 'rose', 'sand', 'sky'][$i % 8] }})">
+                        <li wire:key="vs-{{ md5($src['source']) }}" style="--w: {{ $share }}%; --i: {{ $i }}; --tone: var(--{{ ['sky', 'mint', 'sun', 'lilac', 'coral', 'rose', 'sand', 'sky'][$i % 8] }})">
                             <span class="visit-sources__name">{{ $src['source'] === 'Direct' ? __('Direct (typed or bookmarked)') : $src['source'] }}</span>
                             <span class="visit-sources__n">{{ $share }}% · {{ number_format($src['views']) }}</span>
                         </li>

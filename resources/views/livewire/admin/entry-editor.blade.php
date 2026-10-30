@@ -487,7 +487,7 @@
                     </dl>
                     <div class="spark reading__spark" role="img" aria-label="{{ __('Views each day for 30 days: :count in all', ['count' => number_format($reading['views'])]) }}{{ $reading['best'] ? ', '.__('most on :day (:count)', ['day' => \Illuminate\Support\Carbon::parse($reading['best']['day'])->translatedFormat('j F'), 'count' => $reading['best']['views']]) : '' }}">
                         @foreach ($reading['days'] as $day)
-                            <span class="spark__bar" style="--h: {{ max(4, round($day['views'] / $peak * 100)) }}%" title="{{ \Illuminate\Support\Carbon::parse($day['day'])->translatedFormat('D j M') }}: {{ $day['views'] }}"></span>
+                            <span @class(['spark__bar', 'is-zero' => $day['views'] === 0]) style="--h: {{ $day['views'] === 0 ? 0 : max(8, round($day['views'] / $peak * 100)) }}%; --i: {{ $loop->index }}" title="{{ \Illuminate\Support\Carbon::parse($day['day'])->translatedFormat('D j M') }}: {{ $day['views'] }}"></span>
                         @endforeach
                     </div>
                     @if ($reading['sources'] !== [])

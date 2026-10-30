@@ -32,7 +32,7 @@
                             <span @class(['is-up' => $tile['trend'] === 'up', 'is-down' => $tile['trend'] === 'down'])>{{ $tile['delta'] }}</span>
                         </span>
                         <span class="dash-figure__bars" role="img" aria-label="{{ $tile['label'] }}, {{ __('each day:') }} {{ collect($tile['days'])->map(fn ($d) => $d['date'].' '.$d['n'])->implode(', ') }}">
-                            @foreach ($tile['days'] as $day)<span style="--h: {{ max(8, round($day['n'] / $peak * 100)) }}%"></span>@endforeach
+                            @foreach ($tile['days'] as $day)<span @class(['is-zero' => $day['n'] === 0]) style="--h: {{ $day['n'] === 0 ? 0 : max(12, round($day['n'] / $peak * 100)) }}%; --i: {{ $loop->index }}" title="{{ $day['date'] }} · {{ number_format($day['n']) }}"></span>@endforeach
                         </span>
                     </{{ $tile['href'] ? 'a' : 'div' }}>
                 @endforeach

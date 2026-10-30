@@ -6,7 +6,7 @@
     @endforeach
     <path d="{{ $month['area'] }}" class="ink-chart__wash"/>
     <path d="{{ $month['prev'] }}" class="ink-chart__before"/>
-    <path d="{{ $month['line'] }}" class="ink-chart__line"/>
+    <path d="{{ $month['line'] }}" class="ink-chart__line" pathLength="1"/>
     @if ($month['peak'])
         <circle cx="{{ $month['peak']['x'] }}" cy="{{ $month['peak']['y'] }}" r="4.5" class="ink-chart__peak"/>
     @endif
