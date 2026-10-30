@@ -63,7 +63,7 @@ class Upkeep extends Component
     public function optimize(): void
     {
         $this->admin();
-        $result = Jobs::optimize();
+        $result = Jobs::optimize(apart: true); // on its own, never inside this page
         $this->stamp($result['failed'] === []
             ? __('Booklet is prepared for a live server.')
             : __('Mostly prepared. Couldn’t: :what', ['what' => implode('; ', $result['failed'])]));
@@ -198,7 +198,8 @@ class Upkeep extends Component
             'picturesAvailable' => \App\Support\Pictures::available(),
             'preview' => $preview,
             'rules' => Jobs::TIDY_RULES,
-            'cached' => app()->configurationIsCached(),
+            // Is it on disk now (Laravel's own check says whether this request read it).
+            'cached' => is_file(app()->getCachedConfigPath()),
             'parts' => Jobs::PARTS,
             'siteName' => (string) (rescue(fn () => \App\Booklet\Facades\Booklet::globals('site')?->get('site_name'), null, false) ?: 'booklet'),
         ]);

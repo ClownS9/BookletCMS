@@ -103,6 +103,21 @@ class UpkeepTest extends TestCase
         $this->artisan('booklet:cache:clear')->assertSuccessful();
     }
 
+    public function test_preparing_from_the_page_runs_on_its_own_and_the_page_still_answers(): void
+    {
+        \Illuminate\Support\Facades\Process::fake();
+
+        Livewire::actingAs($this->admin)->test(UpkeepPage::class)
+            ->call('optimize')
+            ->assertOk()
+            ->assertSee('Make it quick');
+
+        foreach (['config:cache', 'route:cache', 'event:cache', 'view:cache'] as $command) {
+            \Illuminate\Support\Facades\Process::assertRan(fn ($process) => in_array($command, (array) $process->command, true));
+        }
+        $this->assertArrayHasKey('optimize', Upkeep::last());
+    }
+
     // Tidying -------------------------------------------------------------------
 
     public function test_tidying_text_leaves_code_and_line_breaks_alone(): void

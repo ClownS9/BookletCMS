@@ -49,7 +49,7 @@ class Upkeep
         Booklet::flush();
 
         foreach (['view:clear' => __('Compiled templates cleared.'), 'config:clear' => __('Cached settings cleared.'), 'route:clear' => __('Cached routes cleared.'), 'event:clear' => __('Cached events cleared.')] as $command => $said) {
-            if (rescue(fn () => Artisan::call($command) === 0, false, false)) {
+            if (rescue(fn () => self::inPlace(fn () => Artisan::call($command)) === 0, false, false)) {
                 $done[] = $said;
             }
         }
@@ -76,22 +76,52 @@ class Upkeep
      *
      * @return array{done: list<string>, failed: list<string>}
      */
-    public static function optimize(): array
+    public static function optimize(?bool $apart = null): array
     {
+        // Preparing settings and routes starts a fresh copy of Booklet to read them. In
+        // the terminal that's fine; in the middle of a page it would take over that
+        // page's own workings (its templates lose what they share, like the error list).
+        // So from the book it runs on its own, as the terminal would.
+        $apart ??= ! app()->runningInConsole();
+        $php = $apart ? (new \Symfony\Component\Process\PhpExecutableFinder)->find(false) : false;
+
         $done = [];
         $failed = [];
         foreach (['config:cache' => __('Settings prepared.'), 'route:cache' => __('Routes prepared.'), 'event:cache' => __('Events prepared.'), 'view:cache' => __('Templates prepared.')] as $command => $said) {
             try {
-                Artisan::call($command) === 0 ? $done[] = $said : $failed[] = $command;
+                $ok = $php
+                    ? \Illuminate\Support\Facades\Process::path(base_path())->timeout(180)
+                        ->run([$php, 'artisan', $command, '--no-interaction', '--no-ansi'])->successful()
+                    : self::inPlace(fn () => Artisan::call($command)) === 0;
+                $ok ? $done[] = $said : $failed[] = $command;
             } catch (Throwable $e) {
                 $failed[] = $command.': '.Str::limit($e->getMessage(), 120);
+            }
+            if (! in_array($said, $done, true)) {
                 // A half-made cache is worse than none.
-                rescue(fn () => Artisan::call(str_replace(':cache', ':clear', $command)), null, false);
+                rescue(fn () => self::inPlace(fn () => Artisan::call(str_replace(':cache', ':clear', $command))), null, false);
             }
         }
+        clearstatcache(); // so this very page sees the prepared files
         self::noted('optimize', implode(' ', $done).($failed ? ' '.__('Couldn’t: :what.', ['what' => implode('; ', $failed)]) : ''));
 
         return ['done' => $done, 'failed' => $failed];
+    }
+
+    /**
+     * Run a command here, then make sure this request still answers with its
+     * own Booklet (a command that starts a fresh copy points the facades at it).
+     */
+    protected static function inPlace(callable $run): mixed
+    {
+        $app = app();
+        try {
+            return $run();
+        } finally {
+            \Illuminate\Container\Container::setInstance($app);
+            \Illuminate\Support\Facades\Facade::clearResolvedInstances();
+            \Illuminate\Support\Facades\Facade::setFacadeApplication($app);
+        }
     }
 
     // Pictures ----------------------------------------------------------------
