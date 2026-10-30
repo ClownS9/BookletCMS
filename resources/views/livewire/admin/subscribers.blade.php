@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Subscribers') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Readers who asked for new posts by email. They sign up at the bottom of any post and confirm from their inbox; each email has a one-click way out.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Readers who asked for new posts by email. They sign up at the bottom of any post and confirm from their inbox; each email has a one-click way out.') }}</p>
         </div>
 
         <x-admin.card>

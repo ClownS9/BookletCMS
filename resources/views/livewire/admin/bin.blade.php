@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('The bin') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Torn-out pages wait here for :value days, so nothing is lost by accident. Put anything back exactly as it was.', ['value' => \App\Support\Bin::DAYS]) }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Torn-out pages wait here for :value days, so nothing is lost by accident. Put anything back exactly as it was.', ['value' => \App\Support\Bin::DAYS]) }}</p>
         </div>
 
         <x-admin.card>

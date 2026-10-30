@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('How Stacy behaves') }}</h1>
+                <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('How long she answers, how she sounds, and what she remembers. Changes apply from her next answer.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('How long she answers, how she sounds, and what she remembers. Changes apply from her next answer.') }}</p>
         </div>
 
         <x-admin.card>

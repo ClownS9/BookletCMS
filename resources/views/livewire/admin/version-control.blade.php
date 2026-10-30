@@ -12,8 +12,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Version control') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Every change to the book, committed to git on its own: who changed what, and when. Look back through it, and put the whole book back to any point.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Every change to the book, committed to git on its own: who changed what, and when. Look back through it, and put the whole book back to any point.') }}</p>
         </div>
 
         <x-admin.card>

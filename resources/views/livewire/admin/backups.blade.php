@@ -21,8 +21,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Backups') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('The whole book in one file: every post and page, settings, menus, pictures, people and comments. Keep one somewhere safe, and you can always start again from it.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('The whole book in one file: every post and page, settings, menus, pictures, people and comments. Keep one somewhere safe, and you can always start again from it.') }}</p>
         </div>
 
         <x-admin.card>

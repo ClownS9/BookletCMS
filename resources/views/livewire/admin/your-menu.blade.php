@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ __('Ex libris · just for you') }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Your menu') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.') }}</p>
             @if (\App\Support\YourBook::of(request()->user())['layout'] === 'dashboard')
                 <p class="field__hint" style="margin-top: 8px">{{ __('In the Dashboard layout, stickers are listed under Content in the sidebar, and side tabs under Tools.') }}</p>
             @endif

@@ -13,8 +13,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ __('Ex libris · just for you') }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Make it yours') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('How Booklet looks and opens for you. Everyone else keeps their own.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('How Booklet looks and opens for you. Everyone else keeps their own.') }}</p>
         </div>
 
         <x-admin.card>

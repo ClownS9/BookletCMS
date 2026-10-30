@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ __(':value · Visits', ['value' => \App\Support\AdminNav::chapterLabel()]) }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Visits') }}</h1>
+                <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Who came to the site, what they read and where they came from. Counted without cookies or anything personal.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Who came to the site, what they read and where they came from. Counted without cookies or anything personal.') }}</p>
         </div>
 
         <x-admin.card>

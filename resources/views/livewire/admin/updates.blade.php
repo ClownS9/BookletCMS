@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Updates') }}</h1>
+                <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('This is Booklet :version.', ['version' => $current]) }} {{ __('When a new version is out, it shows here with what changed. Updating makes a backup first, and you can go back.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('This is Booklet :version.', ['version' => $current]) }} {{ __('When a new version is out, it shows here with what changed. Updating makes a backup first, and you can go back.') }}</p>
         </div>
 
         <x-admin.card>

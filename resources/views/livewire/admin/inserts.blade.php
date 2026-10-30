@@ -8,8 +8,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Inserts') }}</h1>
+                <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Extras tucked into the book: a gallery, events, whatever you add. Switch them on and off here.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Extras tucked into the book: a gallery, events, whatever you add. Switch them on and off here.') }}</p>
         </div>
 
         <x-admin.card>

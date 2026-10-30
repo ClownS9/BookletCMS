@@ -10,8 +10,8 @@
         <div class="page-head">
             <x-admin.crumbs />
             <h1 class="display display--page" style="margin-top: 22px">{{ __('Ask Stacy') }}</h1>
+            <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Your helper inside Booklet. Stacy finds things, takes you to the right page, and does small jobs like scheduling a post. She always asks before changing anything.') }}</p>
         </div>
-        <p class="lede" style="margin-top: 12px; font-size: 15px">{{ __('Your helper inside Booklet. Stacy finds things, takes you to the right page, and does small jobs like scheduling a post. She always asks before changing anything.') }}</p>
 
         <div class="brain-card">
             @if ($this->brain)

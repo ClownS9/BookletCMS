@@ -9,8 +9,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Content API') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Your published posts and pages as JSON, so an app or another website can show them. Read-only: nothing sent here can change the site, and drafts never leave.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Your published posts and pages as JSON, so an app or another website can show them. Read-only: nothing sent here can change the site, and drafts never leave.') }}</p>
         </div>
 
         <x-admin.card>

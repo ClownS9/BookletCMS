@@ -7026,3 +7026,144 @@ a.dash-figure:hover { border-color: var(--faint); color: var(--ink); }
 .yours-links__mark--menu i { width: 6px; height: 14px; border-radius: 2px 2px 0 0; background: var(--coral); }
 .yours-links__mark--menu i:nth-child(2) { background: var(--sun); }
 .yours-links__mark--menu i:nth-child(3) { background: var(--mint); }
+
+/* ==========================================================================
+   The Dashboard layout, made plain and professional: no paper, tape, tilt or
+   stamps inside the pages. Every book metaphor gets a neutral, modern
+   counterpart here; the Book layout keeps them all.
+   ========================================================================== */
+
+body.layout-dashboard { --note: var(--d-head); --tilt: 0deg; --tape: 0deg; }
+body.layout-dashboard .book__pages [style*="--tilt"] { --tilt: 0deg !important; }
+body.layout-dashboard .book__pages :is(
+    .status-pick, .empty-note, .photo, .sticky-note, .swatch, .type-sticker, .library-card, .stamp, .day__pill,
+    .draft-note, .chat__links, .picture-field__frame, .tag-sticker, .proof-margin__note, .print-proof__page,
+    .insert-chip, .cutout__name, .cutout__picture, .cutouts__kind, .shelf__spine, .lib-card, .lib-editor__card,
+    .lib-editor__stamp, .sticker, .dot, .first-steps__box, .waiting-tiles a, .nudges__mark
+) { transform: none !important; }
+body.layout-dashboard .book__pages :is(.photo, .picture-field__frame, .sticky-note)::before { display: none; }
+body.layout-dashboard .book__pages :is(.row, .pick, .suggestion):hover :is(.sticker, .dot) { transform: none !important; }
+
+/* No italics or display serif for notes and empty states */
+body.layout-dashboard .book__pages :is(.empty-note, .dog-ear-hint, .margin-note, .saved-note, .page__folio, .serif.muted, .lede) { font-style: normal; }
+body.layout-dashboard .book__pages [style*="font-style: italic"] { font-style: normal !important; }
+body.layout-dashboard .book__pages .display:not(h1) { font-size: 20px; line-height: 1.3; }
+body.layout-dashboard .book__pages h2.display { font-size: 20px; }
+
+/* Empty states and hints: a quiet box, not a sticky note */
+body.layout-dashboard .empty-note {
+    padding: 18px 20px;
+    border: 1px dashed var(--d-field);
+    border-radius: 8px;
+    background: var(--d-head);
+    box-shadow: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 14px;
+    text-align: center;
+}
+body.layout-dashboard .margin-note { margin-left: 0; padding: 10px 12px; border-radius: 8px; background: var(--d-head); color: var(--muted); font-size: 13px; transform: none; box-shadow: none; }
+
+/* Notes for the team and a reader's comment: cards with a coloured edge */
+body.layout-dashboard .sticky-note {
+    padding: 12px 14px;
+    border: 1px solid var(--d-line);
+    border-left: 3px solid var(--tone, var(--sun));
+    border-radius: 8px;
+    background: var(--d-panel);
+    color: var(--ink);
+    box-shadow: none;
+    animation: none;
+}
+body.layout-dashboard .sticky-note__body { font-family: var(--sans); font-size: 14px; }
+body.layout-dashboard .sticky-note__who { color: var(--muted); }
+
+/* Media: clean thumbnails */
+body.layout-dashboard .photo { padding: 0; border: 1px solid var(--d-line); border-radius: 8px; overflow: hidden; background: var(--d-panel); box-shadow: none; transition: border-color .15s ease, box-shadow .15s ease; }
+body.layout-dashboard .photo:hover { border-color: var(--faint); box-shadow: 0 4px 12px rgba(20, 18, 14, .08); }
+body.layout-dashboard .photo[aria-pressed="true"] { border-color: var(--d-accent); box-shadow: 0 0 0 2px var(--d-accent); }
+body.layout-dashboard .photo > :last-child:not(.photo__frame) { padding: 6px 8px; font-family: var(--sans); font-size: 12px; }
+body.layout-dashboard .picture-field__frame { padding: 0; border: 1px solid var(--d-line); border-radius: 8px; overflow: hidden; box-shadow: none; }
+
+/* Activity: a plain log, not a library card */
+body.layout-dashboard .library-card { padding: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink); }
+body.layout-dashboard .library-card__head { padding: 0 0 10px; border-bottom: 1px solid var(--d-line2); }
+body.layout-dashboard .library-card__head h2 { font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+body.layout-dashboard .library-card__head span, body.layout-dashboard .library-card__time { color: var(--muted); }
+body.layout-dashboard .library-card__rows li { border-color: var(--d-line2); }
+body.layout-dashboard .stamp { padding: 0; border: 0; color: var(--muted); font-size: 12px; letter-spacing: 0; }
+
+/* Calendar and drafts on the desk */
+body.layout-dashboard .draft-note { padding: 8px 12px; border: 1px solid var(--d-line); border-left: 3px solid var(--sun); background: var(--d-panel); box-shadow: none; font-family: var(--sans); font-size: 14px; font-weight: 500; }
+body.layout-dashboard .day__pill { border-radius: 4px; }
+
+/* Cards in a list (roles, people's cards, cut-outs, shelves): flat tiles */
+body.layout-dashboard .lib-card { border-color: var(--d-line); border-radius: 8px; background-image: none; background-color: var(--d-panel); }
+body.layout-dashboard .lib-card::before { width: 3px; border-radius: 8px 0 0 8px; }
+body.layout-dashboard .lib-card:hover, body.layout-dashboard .lib-card[aria-pressed="true"] { box-shadow: none; border-color: var(--faint); }
+body.layout-dashboard .lib-card[aria-pressed="true"] { border-color: var(--d-accent); background-color: var(--d-sel); }
+body.layout-dashboard .lib-card__name { font-family: var(--sans); font-size: 15px; font-weight: 600; }
+body.layout-dashboard .lib-editor__card { max-width: none; border: 1px solid var(--d-line); border-radius: 8px; background: var(--d-panel); background-image: none; box-shadow: none; color: var(--ink); }
+body.layout-dashboard .lib-editor__stripe { width: 3px; }
+body.layout-dashboard .lib-editor__title { font-family: var(--sans); font-size: 18px; font-weight: 600; }
+body.layout-dashboard .lib-editor__line { font-family: var(--sans); letter-spacing: .04em; color: var(--muted); }
+body.layout-dashboard :is(.cutouts__kind, .shelf__spine, .type-sticker) { box-shadow: none; }
+
+/* Tags and status stickers: soft badges */
+body.layout-dashboard .book__pages .sticker { padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: none; }
+body.layout-dashboard .book__pages .sticker--lg { padding: 3px 11px; font-size: 12.5px; }
+body.layout-dashboard .tag-sticker { box-shadow: none; border-radius: 999px; }
+
+/* Choices that were pill buttons: a segmented control */
+body.layout-dashboard .filters { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 9px; background: var(--d-line2); align-self: flex-start; }
+body.layout-dashboard .filters .pill { min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 600; box-shadow: none; }
+body.layout-dashboard .filters .pill:hover { color: var(--ink); }
+body.layout-dashboard .filters .pill[aria-pressed="true"], body.layout-dashboard .filters .pill[aria-selected="true"] { background: var(--d-panel); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 18, 14, .12); }
+body.layout-dashboard .status-pick { border-radius: 8px; box-shadow: none; }
+body.layout-dashboard .statuses { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 9px; background: var(--d-line2); }
+body.layout-dashboard .statuses .status-pick { min-height: 32px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-weight: 600; }
+body.layout-dashboard .statuses .status-pick[aria-checked="true"] { background: var(--d-panel); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 18, 14, .12); }
+
+/* Lined paper and notebook fields become ordinary fields */
+body.layout-dashboard .lined { background-image: none !important; }
+
+/* Quieter type scale inside cards */
+body.layout-dashboard .desk-card__body { padding: 18px 20px; gap: 16px; }
+body.layout-dashboard .desk-card__title { padding: 13px 20px; }
+body.layout-dashboard .desk-card__body > :is(h2, h3):first-child,
+body.layout-dashboard .desk-card__body > .section-head:first-child,
+body.layout-dashboard .desk-card__body > .eyebrow.section-label:first-child { margin: -18px -20px 2px !important; padding: 13px 20px; }
+body.layout-dashboard .book__pages .heading { font-size: 16px; font-weight: 600; letter-spacing: 0; }
+body.layout-dashboard .book__pages .lede { font-size: 14px !important; color: var(--muted); }
+body.layout-dashboard .book__pages .eyebrow { color: var(--muted); font-size: 11.5px; letter-spacing: .06em; }
+body.layout-dashboard .book__pages .field__hint { font-size: 12.5px; color: var(--muted); }
+body.layout-dashboard .book__pages .back:not(.page-head__crumbs .back) { font-size: 13.5px; color: var(--d-accent-text); }
+
+/* The description under a page's title, in the header (two lines at most) */
+@media (min-width: 1081px) {
+    body.layout-dashboard .page-head:has(> .lede) { height: auto; min-height: 64px; flex-wrap: wrap; align-content: flex-end; row-gap: 2px; }
+    body.layout-dashboard .page-head > .lede {
+        flex: 0 0 100%;
+        order: 3;
+        max-width: none;
+        margin: 0 !important;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    body.layout-dashboard .book__pages:has(.page-head > .lede) { padding-top: 134px; }
+}
+
+/* No italics anywhere on the desk's pages, except where the words ask for it */
+body.layout-dashboard .book__pages *:not(em, i, cite) { font-style: normal; }
+/* Lists with dotted leaders (an index, a table of contents) read as rows */
+body.layout-dashboard :is(.index-list__lead, .toc__lead) { border-bottom: 0; }
+body.layout-dashboard .index-list > li, body.layout-dashboard .index-list > * { border-bottom: 1px solid var(--d-line2); }
+body.layout-dashboard .index-list button { padding: 10px 12px; border-radius: 0; font-size: 15px; font-weight: 600; }
+body.layout-dashboard .index-list button[aria-pressed="true"] { background: var(--d-sel); box-shadow: inset 3px 0 0 var(--d-accent); }
+body.layout-dashboard .index-list__count { color: var(--muted); font-size: 13px; font-weight: 400; }
+/* Big display lines inside a card read as a section title, not a page title */
+body.layout-dashboard .book__pages .desk-card :is(.display, .display--page, .heading):not(h1) { font-size: 18px !important; font-weight: 600; line-height: 1.3; letter-spacing: -.005em; }
+/* The desk lamp belongs to the Book; the Dashboard has its own night switch */
+body.layout-dashboard .lamp { display: none !important; }

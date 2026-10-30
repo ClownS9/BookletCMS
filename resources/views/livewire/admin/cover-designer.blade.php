@@ -11,8 +11,8 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ \App\Support\AdminNav::spread()['title'] ?? '' }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('The cover') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('How the site looks to readers. Start from a cover, then change anything. The preview shows it at once; the site changes only when you press') }} <b>{{ __('Use this cover') }}</b>.</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('How the site looks to readers. Start from a cover, then change anything. The preview shows it at once; the site changes only when you press') }} <b>{{ __('Use this cover') }}</b>.</p>
         </div>
 
 

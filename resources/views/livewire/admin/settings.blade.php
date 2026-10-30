@@ -6,8 +6,8 @@
                 <x-admin.crumbs />
                 <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Settings') }}</h1>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('The basics about your site.') }}</p>
             </div>
-            <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('The basics about your site.') }}</p>
             @if (request()->user()->isAdmin())
                 <p style="margin-top: 8px; font-size: 14px; color: var(--faint)">{{ __('Keep a copy of everything in') }} <a href="{{ route('admin.backups') }}" wire:navigate>{{ __('Backups') }}</a>{{ __(', or') }} <a href="{{ route('admin.import') }}" wire:navigate>{{ __('move in from WordPress') }}</a>.</p>
             @endif
