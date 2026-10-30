@@ -6563,7 +6563,7 @@ body.night .deskbar__stacy { box-shadow: 0 0 0 1px #4A453C; }
 
 /* Phones and tablets in the Dashboard layout: the pages as plain cards */
 @media (max-width: 1080px) {
-    body.layout-dashboard .book__pages { border-radius: 14px; overflow: hidden; background: var(--d-panel); }
+    body.layout-dashboard .book__pages { border-radius: 14px; overflow-x: hidden; background: var(--d-panel); }
     body.layout-dashboard .book__pages:has(.page--dash) { background: var(--d-bg); }
     body.layout-dashboard .book__pages .page--dash { padding: 16px 14px 24px; background: var(--d-bg); }
     body.layout-dashboard .book__pages:has(.desk-card) { background: var(--d-bg); }
@@ -7167,3 +7167,7 @@ body.layout-dashboard .index-list__count { color: var(--muted); font-size: 13px;
 body.layout-dashboard .book__pages .desk-card :is(.display, .display--page, .heading):not(h1) { font-size: 18px !important; font-weight: 600; line-height: 1.3; letter-spacing: -.005em; }
 /* The desk lamp belongs to the Book; the Dashboard has its own night switch */
 body.layout-dashboard .lamp { display: none !important; }
+/* Phones and portrait tablets: the stacked pages scroll in the space between the bars */
+@media (max-width: 900px) {
+    body.layout-dashboard .book__pages { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+}
