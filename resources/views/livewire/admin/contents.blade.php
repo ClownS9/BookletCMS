@@ -93,7 +93,7 @@
 
         @foreach ([['Waiting for your review', $forReview, 'sky'], ['Sent back to you', $sentBack, 'rose']] as [$label, $list, $tone])
             @if ($list->isNotEmpty())
-                <h2 class="eyebrow section-label section-label--gap">{{ __($label) }} · {{ $list->count() }}</h2>
+                <h2 class="eyebrow section-label section-label--gap" @if ($tone === 'sky') id="for-review" @endif>{{ __($label) }} · {{ $list->count() }}</h2>
                 <ul class="review-list">
                     @foreach ($list->take(5) as $e)
                         @php $info = \App\Support\Reviews::details($e); @endphp
@@ -147,32 +147,105 @@
             </section>
         @endforeach
 
-        <h2 class="eyebrow section-label section-label--gap">{{ __('At a glance') }}</h2>
-        <div class="glance">
-            @foreach ($glance as $tile)
+        {{-- This week in the book: four figures against last week, a bar for each day --}}
+        <h2 class="eyebrow section-label section-label--gap">{{ __('At a glance · this week') }}</h2>
+        <div class="glance glance--week">
+            @foreach ($week as $tile)
+                @php $peak = max(1, max(array_column($tile['days'], 'n'))); @endphp
                 <div>
-                    <p class="glance__n">{{ number_format($tile['n']) }}</p>
-                    <p class="glance__label">
-                        @isset ($tile['spark'])
-                            <a href="{{ route('admin.visits') }}" wire:navigate>{{ __($tile['label']) }} →</a>
-                        @else
-                            {{ __($tile['label']) }}
-                        @endisset
+                    <p class="glance__head">
+                        <span class="glance__n">{{ number_format($tile['n']) }}</span>
+                        <span @class(['glance__delta', 'is-up' => $tile['trend'] === 'up', 'is-down' => $tile['trend'] === 'down'])>{{ $tile['delta'] }}</span>
                     </p>
-                    @isset ($tile['spark'])
-                        @php $peak = max(1, max(array_column($tile['spark'], 'views'))); @endphp
-                        <div class="spark" role="img" aria-label="{{ __('Visits each day:') }} {{ collect($tile['spark'])->map(fn ($d) => $d['day'].' '.$d['views'])->implode(', ') }}">
-                            @foreach ($tile['spark'] as $day)
-                                <span class="spark__bar" style="--h: {{ max(4, round($day['views'] / $peak * 100)) }}%" title="{{ $day['day'] }} · {{ $day['views'] }}"></span>
-                            @endforeach
-                        </div>
-                        <div class="spark__days" aria-hidden="true">
-                            @foreach ($tile['spark'] as $day)<span>{{ mb_substr($day['day'], 0, 2) }}</span>@endforeach
-                        </div>
-                    @endisset
+                    <p class="glance__label">
+                        @if ($tile['href'])
+                            <a href="{{ $tile['href'] }}" wire:navigate>{{ $tile['label'] }} →</a>
+                        @else
+                            {{ $tile['label'] }}
+                        @endif
+                    </p>
+                    <div class="spark" role="img" aria-label="{{ $tile['label'] }}, {{ __('each day:') }} {{ collect($tile['days'])->map(fn ($d) => $d['date'].' '.$d['n'])->implode(', ') }}" style="--spark: var(--{{ $tile['tone'] }})">
+                        @foreach ($tile['days'] as $day)
+                            <span class="spark__bar" style="--h: {{ max(4, round($day['n'] / $peak * 100)) }}%" title="{{ $day['date'] }} · {{ number_format($day['n']) }}"></span>
+                        @endforeach
+                    </div>
+                    <div class="spark__days" aria-hidden="true">
+                        @foreach ($tile['days'] as $day)<span>{{ mb_substr($day['day'], 0, 2) }}</span>@endforeach
+                    </div>
                 </div>
             @endforeach
         </div>
+
+        {{-- The month in ink --}}
+        <div class="section-head">
+            <h2 class="eyebrow section-label">{{ __('Visits · last 30 days') }}</h2>
+            <a href="{{ route('admin.visits', ['days' => 30]) }}" class="muted" style="text-decoration: none; font-size: 14px" wire:navigate>{{ __('All the numbers →') }}</a>
+        </div>
+        @if ($month['total'] === 0 && $month['previous'] === 0)
+            <p class="dog-ear-hint">{{ __('No visits yet. Once people read the site, the month draws itself here.') }}</p>
+        @else
+            <figure class="ink-chart">
+                <svg viewBox="0 0 400 170" role="img" aria-label="{{ __('Visits each day for the last 30 days: :total in all.', ['total' => number_format($month['total'])]) }}@if ($month['peak']) {{ __('Busiest on :date, with :views.', ['date' => $month['peak']['date'], 'views' => number_format($month['peak']['views'])]) }}@endif">
+                    @foreach ($month['grid'] as $line)
+                        <line x1="30" x2="396" y1="{{ $line['y'] }}" y2="{{ $line['y'] }}" class="ink-chart__rule"/>
+                        <text x="24" y="{{ $line['y'] + 3 }}" text-anchor="end" class="ink-chart__tick">{{ $line['label'] }}</text>
+                    @endforeach
+                    <path d="{{ $month['area'] }}" class="ink-chart__wash"/>
+                    <path d="{{ $month['prev'] }}" class="ink-chart__before"/>
+                    <path d="{{ $month['line'] }}" class="ink-chart__line"/>
+                    @if ($month['peak'])
+                        <circle cx="{{ $month['peak']['x'] }}" cy="{{ $month['peak']['y'] }}" r="4.5" class="ink-chart__peak"/>
+                    @endif
+                    <text x="30" y="166" class="ink-chart__tick">{{ $month['first'] }}</text>
+                    <text x="213" y="166" text-anchor="middle" class="ink-chart__tick">{{ $month['middle'] }}</text>
+                    <text x="396" y="166" text-anchor="end" class="ink-chart__tick">{{ __('Today') }}</text>
+                </svg>
+                <figcaption class="ink-chart__key">
+                    <span><i class="ink-chart__swatch"></i>{{ trans_choice(':count visit|:count visits', $month['total'], ['count' => number_format($month['total'])]) }}@if ($month['change'] !== null) <b @class(['is-up' => $month['change'] > 0, 'is-down' => $month['change'] < 0])>{{ $month['change'] > 0 ? '▲' : ($month['change'] < 0 ? '▼' : '') }} {{ abs($month['change']) }}%</b>@endif</span>
+                    <span><i class="ink-chart__swatch ink-chart__swatch--before"></i>{{ __('the 30 days before') }}</span>
+                </figcaption>
+                @if ($month['peak'])
+                    <p class="margin-note">{{ __('Busiest on :date, with :views visits.', ['date' => $month['peak']['date'], 'views' => number_format($month['peak']['views'])]) }}</p>
+                @endif
+            </figure>
+
+            <div class="stat-pair">
+                <section aria-labelledby="from-title">
+                    <h3 id="from-title" class="eyebrow section-label">{{ __('Where they came from') }}</h3>
+                    @if ($sources === [])
+                        <p class="dog-ear-hint">{{ __('Nothing yet.') }}</p>
+                    @else
+                        <div class="share-strip" role="img" aria-label="{{ collect($sources)->map(fn ($s) => $s['name'].' '.$s['share'].'%')->implode(', ') }}">
+                            @foreach ($sources as $s)<span style="flex-basis: {{ $s['share'] }}%; background: var(--{{ $s['tone'] }})"></span>@endforeach
+                        </div>
+                        <ul class="share-key">
+                            @foreach ($sources as $s)
+                                <li><i style="background: var(--{{ $s['tone'] }})"></i><span>{{ $s['name'] }}</span><b>{{ $s['share'] }}%</b></li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </section>
+                <section aria-labelledby="when-title">
+                    <h3 id="when-title" class="eyebrow section-label">{{ __('When they read') }}</h3>
+                    @php $hourPeak = max(1, max($hours['hours'])); @endphp
+                    <div class="hour-bars" role="img" aria-label="{{ $hours['busiest'] !== null ? __('Visits by hour of the day; busiest around :hour.', ['hour' => \Illuminate\Support\Carbon::createFromTime($hours['busiest'])->translatedFormat('g A')]) : __('No visits yet.') }}">
+                        @foreach ($hours['hours'] as $h => $n)
+                            <span @class(['is-busy' => $hours['busiest'] !== null && abs($h - $hours['busiest']) <= 1]) style="--h: {{ max(3, round($n / $hourPeak * 100)) }}%"></span>
+                        @endforeach
+                    </div>
+                    <div class="hour-bars__axis" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+                    @php $deviceTotal = array_sum($devices); @endphp
+                    <p class="dog-ear-hint" style="margin-top: 8px">
+                        @if ($hours['busiest'] !== null)
+                            {{ __('Busiest around :hour.', ['hour' => \Illuminate\Support\Carbon::createFromTime($hours['busiest'])->translatedFormat('g A')]) }}
+                        @endif
+                        @if ($deviceTotal > 0)
+                            {{ __(':percent% on phones.', ['percent' => (int) round($devices['phone'] / $deviceTotal * 100)]) }}
+                        @endif
+                    </p>
+                </section>
+            </div>
+        @endif
 
         <h2 class="eyebrow section-label section-label--gap">{{ __('Dog-eared pages') }}</h2>
         @if ($dogEars->isEmpty())
@@ -260,9 +333,24 @@
         <p class="eyebrow">{{ __('Table of contents') }}</p>
         <h2 class="display display--page" style="margin: 8px 0 18px">{{ __('Contents') }}</h2>
 
+        @if (array_sum(array_column($waiting, 'count')) > 0)
+            {{-- Waiting for you: everything that needs a hand, counted --}}
+            <h3 class="eyebrow section-label">{{ __('Waiting for you') }}</h3>
+            <ul class="waiting-tiles" style="--n: {{ count($waiting) }}">
+                @foreach ($waiting as $item)
+                    <li>
+                        <a href="{{ $item['href'] }}" wire:navigate style="--tone: var(--{{ $item['tone'] }})" @class(['is-none' => $item['count'] === 0])>
+                            <span class="waiting-tiles__n">{{ number_format($item['count']) }}</span>
+                            <span class="waiting-tiles__label">{{ $item['label'] }}</span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
         @php
             $counts = collect($collections)->mapWithKeys(fn ($c) => ['list:'.$c['model']->handle() => trans_choice(':count entry|:count entries', $c['count'])])
-                ->merge(['media' => trans_choice(':count file|:count files', $glance[2]['n']), 'comments' => __(':count waiting', ['count' => $waitingComments]).(in_array($user->level(), ['admin', 'editor'], true) && ($newMessages = \App\Support\Inbox::newCount()) ? ' · '.trans_choice(':count new message|:count new messages', $newMessages) : ''), 'people' => trans_choice(':count person|:count people', $peopleCount)])
+                ->merge(['media' => trans_choice(':count file|:count files', $mediaCount), 'comments' => __(':count waiting', ['count' => $waitingComments]).(in_array($user->level(), ['admin', 'editor'], true) && ($newMessages = \App\Support\Inbox::newCount()) ? ' · '.trans_choice(':count new message|:count new messages', $newMessages) : ''), 'people' => trans_choice(':count person|:count people', $peopleCount)])
                 ->all();
             $toc = collect(\App\Support\AdminNav::tableOfContents());
         @endphp
@@ -295,6 +383,39 @@
         @if ($user->isAdmin())
         <a href="{{ route('admin.collections') }}" class="btn btn--dashed btn--sm" style="align-self: flex-start; margin-top: 8px" wire:navigate>{{ __('+ Bind a new chapter') }}</a>
         @endif
+
+        <div class="stat-pair">
+            <section aria-labelledby="most-title">
+                <h3 id="most-title" class="eyebrow section-label">{{ __('Most read · this week') }}</h3>
+                @if ($mostRead === [])
+                    <p class="dog-ear-hint">{{ __('Nothing read yet this week.') }}</p>
+                @else
+                    <ol class="most-read">
+                        @foreach ($mostRead as $page)
+                            <li>
+                                @if ($page['href'])
+                                    <a href="{{ $page['href'] }}" wire:navigate class="most-read__title"><span class="most-read__ink" style="width: {{ $page['share'] }}%" aria-hidden="true"></span><span>{{ $page['title'] }}</span></a>
+                                @else
+                                    <span class="most-read__title"><span class="most-read__ink" style="width: {{ $page['share'] }}%" aria-hidden="true"></span><span>{{ $page['title'] }}</span></span>
+                                @endif
+                                <span class="most-read__n">{{ number_format($page['views']) }}</span>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </section>
+            <section aria-labelledby="out-title">
+                <h3 id="out-title" class="eyebrow section-label">{{ __('Published · these 4 weeks') }}</h3>
+                <div class="pub-grid" role="img" aria-label="{{ trans_choice('Something went out on :count day of the last four weeks.|Something went out on :count days of the last four weeks.', $publishing['active']) }}">
+                    @foreach ($publishing['days'] as $day)
+                        <span @class(['pub-grid__day', 'is-future' => $day['future']]) data-level="{{ $day['level'] }}" title="{{ $day['date'] }} · {{ trans_choice(':count post|:count posts', $day['n']) }}"></span>
+                    @endforeach
+                </div>
+                <p class="dog-ear-hint" style="margin-top: 8px">
+                    {{ trans_choice(':count day with something out|:count days with something out', $publishing['active']) }}@if ($publishing['streak'] > 1) · {{ trans_choice('a :count-day streak|a :count-day streak', $publishing['streak']) }}@endif
+                </p>
+            </section>
+        </div>
 
         <div class="section-head">
             <h3 class="eyebrow section-label">{{ __('Top contributors · this month') }}</h3>

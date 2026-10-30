@@ -41,6 +41,7 @@
         <x-admin.flags />
 
         <div class="book" data-position="{{ \App\Support\AdminNav::position() }}">
+            <x-admin.thumbs />
             <main class="book__pages" id="main" tabindex="-1">
                 {{ $slot }}
             </main>

@@ -9,7 +9,7 @@
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('People') }}</h1>
                 <x-admin.insert-links chapter="People" />
                 @if (in_array(request()->user()->level(), ['admin', 'editor'], true))
-                    <div class="chapter-links">
+                    <div class="chapter-links has-handheld-twin">
                         <a href="{{ route('admin.subscribers') }}" class="back" wire:navigate><x-admin.icon name="mail" size="16" /> {{ __('Subscribers →') }}</a>
                         <a href="{{ route('admin.readers') }}" class="back" wire:navigate><x-admin.icon name="people" size="16" /> {{ __('Readers & groups →') }}</a>
                     </div>

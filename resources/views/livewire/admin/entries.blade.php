@@ -6,7 +6,7 @@
                 <p class="eyebrow">{{ \App\Support\AdminNav::chapterLabel() }} · {{ $structured ? trans_choice(':count page|:count pages', $total) : trans_choice(':count entry|:count entries', $total) }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __($model->title()) }}</h1>
             </div>
-            <a href="{{ route('admin.entries.create', $model->handle()) }}" class="btn btn--ink" wire:navigate>
+            <a href="{{ route('admin.entries.create', $model->handle()) }}" class="btn btn--ink has-handheld-twin" wire:navigate>
                 <x-admin.icon name="plus" size="16" /> {{ __('New') }}
             </a>
         </div>
@@ -17,7 +17,7 @@
                 @if ($canArrange) <a href="{{ route('admin.menus') }}" wire:navigate>{{ __('Edit site menus →') }}</a> @endif
             </p>
         @else
-            <div style="margin-top: 10px; display: flex; gap: 18px; flex-wrap: wrap">
+            <div class="has-handheld-twin" style="margin-top: 10px; display: flex; gap: 18px; flex-wrap: wrap">
                 @if ($hasTaxonomies)
                     <a href="{{ route('admin.taxonomies') }}" class="back" wire:navigate>{{ __('Categories & tags →') }}</a>
                 @endif
@@ -35,7 +35,7 @@
             <input id="entry-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ __('Search this chapter') }}">
         </div>
 
-        <div class="filters" role="group" aria-label="{{ __('Filter by status') }}" style="margin: 16px 0 12px">
+        <div class="filters has-handheld-twin" role="group" aria-label="{{ __('Filter by status') }}" style="margin: 16px 0 12px">
             @foreach ($statuses as $value => $label)
                 <button type="button" class="pill" wire:click="$set('status', '{{ $value }}')" aria-pressed="{{ $status === $value ? 'true' : 'false' }}">
                     {{ __($label) }}@if ($value !== 'all') · {{ $counts[$value] ?? 0 }}@endif

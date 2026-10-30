@@ -50,6 +50,46 @@
             <span>{{ __('Today') }}</span>
         </div>
 
+        {{-- When people read: the week, two hours to a square, in the site's own time --}}
+        @php
+            $weekPeak = max(1, max(array_map('max', $hours['week'])));
+            $dayNames = collect(range(0, 6))->map(fn ($i) => \Illuminate\Support\Carbon::now()->startOfWeek(\Carbon\CarbonInterface::MONDAY)->addDays($i)->translatedFormat('D'))->all();
+            $deviceTotal = array_sum($devices);
+        @endphp
+        <h2 class="heading heading--sub" style="margin-top: 8px">{{ __('When people read') }}</h2>
+        @if ($hours['busiest'] === null)
+            <p class="empty-note">{{ __('Nothing yet.') }}</p>
+        @else
+            <p class="field__hint" style="margin: -6px 0 0">{{ __('Busiest around :hour. Darker squares, more reading.', ['hour' => \Illuminate\Support\Carbon::createFromTime($hours['busiest'])->translatedFormat('g A')]) }}</p>
+            <div class="week-heat" role="img" aria-label="{{ __('Visits by day of the week and time of day; busiest around :hour.', ['hour' => \Illuminate\Support\Carbon::createFromTime($hours['busiest'])->translatedFormat('g A')]) }}">
+                @foreach ($hours['week'] as $d => $blocks)
+                    <span class="week-heat__day">{{ mb_substr($dayNames[$d], 0, 3) }}</span>
+                    @foreach ($blocks as $b => $n)
+                        <span class="week-heat__cell" style="--a: {{ round(0.08 + 0.92 * $n / $weekPeak, 2) }}" title="{{ $dayNames[$d] }} {{ sprintf('%02d:00–%02d:00', $b * 2, $b * 2 + 2) }} · {{ number_format($n) }}"></span>
+                    @endforeach
+                @endforeach
+                <span></span>
+                @foreach (['00', '', '04', '', '08', '', '12', '', '16', '', '20', ''] as $label)<span class="week-heat__hour">{{ $label }}</span>@endforeach
+            </div>
+        @endif
+
+        <h2 class="heading heading--sub">{{ __('On what') }}</h2>
+        @if ($deviceTotal === 0)
+            <p class="empty-note">{{ __('Nothing yet.') }}</p>
+        @else
+            @php $shares = collect(['phone' => 'coral', 'computer' => 'sky', 'tablet' => 'lilac'])->map(fn ($tone, $kind) => ['tone' => $tone, 'share' => (int) round($devices[$kind] / $deviceTotal * 100)]); @endphp
+            <div class="device-strip" role="img" aria-label="{{ __('Phones :p%, computers :c%, tablets :t%', ['p' => $shares['phone']['share'], 'c' => $shares['computer']['share'], 't' => $shares['tablet']['share']]) }}">
+                @foreach ($shares as $kind => $d)
+                    @if ($d['share'] > 0)<span style="flex-basis: {{ $d['share'] }}%; background: var(--{{ $d['tone'] }})"></span>@endif
+                @endforeach
+            </div>
+            <ul class="share-key share-key--row">
+                @foreach (['phone' => __('Phones'), 'computer' => __('Computers'), 'tablet' => __('Tablets')] as $kind => $label)
+                    <li><i style="background: var(--{{ $shares[$kind]['tone'] }})"></i><span>{{ $label }}</span><b>{{ $shares[$kind]['share'] }}%</b></li>
+                @endforeach
+            </ul>
+        @endif
+
         <p class="field__hint" style="margin-top: auto">
             {{ __('Signed-in people, previews and bots aren’t counted. Readers whose browser asks not to be tracked are only counted in the daily total. Each reader is told apart for one day by a scrambled code that’s deleted after two days, so nobody is followed over time.') }}
         </p>

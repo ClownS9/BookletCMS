@@ -108,6 +108,7 @@ class AdminNav
 
         return match (true) {
             $r->routeIs('admin.stacy') => 'Ask Stacy',
+            $r->routeIs('admin.visits') => 'Visits',
             $r->routeIs('admin.entries.*') => 'Writing',
             default => 'Booklet',
         };
@@ -415,5 +416,199 @@ class AdminNav
         }
 
         return $lines;
+    }
+
+    // The sticky notes, the thumb index and what's waiting --------------------
+
+    /** @var array<string, int>|null */
+    protected static ?array $statusCounts = null;
+
+    /**
+     * How many entries a collection has in each state (draft, scheduled,
+     * published, review), counted once per request.
+     *
+     * @return array<string, int>
+     */
+    protected static function statusCounts(string $collection): array
+    {
+        if (static::$statusCounts === null || (static::$statusCounts['@request'] ?? null) !== spl_object_id(request())) {
+            static::$statusCounts = ['@request' => spl_object_id(request())];
+            try {
+                foreach (\App\Booklet\Facades\Booklet::entries()->all() as $entry) {
+                    $handle = $entry->collectionHandle();
+                    static::$statusCounts[$handle.':all'] = (static::$statusCounts[$handle.':all'] ?? 0) + 1;
+                    static::$statusCounts[$handle.':'.$entry->status()] = (static::$statusCounts[$handle.':'.$entry->status()] ?? 0) + 1;
+                    if (\App\Support\Reviews::state($entry) === 'waiting') {
+                        static::$statusCounts[$handle.':review'] = (static::$statusCounts[$handle.':review'] ?? 0) + 1;
+                    }
+                }
+            } catch (Throwable) {
+                // An unreadable content folder: the notes show no counts.
+            }
+        }
+
+        $counts = [];
+        foreach (['all', 'draft', 'scheduled', 'published', 'review'] as $state) {
+            $counts[$state] = (int) (static::$statusCounts[$collection.':'.$state] ?? 0);
+        }
+
+        return $counts;
+    }
+
+    /**
+     * What each chapter sticker opens into: a sticky note on a computer, a
+     * row of tabs on a phone. Only chapters with pages of their own have one,
+     * and only pages this person may open are on it.
+     *
+     * @return array<string, array{title: string, chapter: string, items: array<int, array{label: string, href: string, count: ?int, active: bool}>, more: array<int, array{label: string, href: string, active: bool}>, new: ?array{label: string, href: string}}>
+     */
+    public static function notes(): array
+    {
+        $r = static::page();
+        $user = request()->user();
+        if (! $user) {
+            return [];
+        }
+        $byKey = collect(static::chapters())->keyBy('key');
+        $link = fn (string $key) => $byKey->has($key) ? ['label' => $byKey[$key]['label'], 'href' => $byKey[$key]['href'], 'active' => (bool) $byKey[$key]['active']] : null;
+        $status = (string) ($r->query('status') ?: 'all');
+        $notes = [];
+
+        foreach (['posts' => 'sun', 'pages' => 'mint'] as $handle => $tone) {
+            if (! $byKey->has($handle)) {
+                continue;
+            }
+            $collection = rescue(fn () => \App\Booklet\Facades\Booklet::collections()->find($handle), null, false);
+            if (! $collection) {
+                continue;
+            }
+            $counts = static::statusCounts($handle);
+            $here = $r->routeIs('admin.entries') && $r->route('collection') === $handle;
+            $item = fn (string $state, string $label) => [
+                'label' => $label,
+                'href' => route('admin.entries', $state === 'all' ? [$handle] : [$handle, 'status' => $state]),
+                'count' => $counts[$state],
+                'active' => $here && $status === $state,
+            ];
+
+            $items = [$item('all', $handle === 'posts' ? __('All posts') : __('All pages')), $item('draft', __('Drafts'))];
+            if ($counts['review'] > 0) {
+                $items[] = $item('review', __('In review'));
+            }
+            if ($collection->dated()) {
+                $items[] = $item('scheduled', __('Scheduled'));
+            }
+            $items[] = $item('published', __('Published'));
+
+            $more = $handle === 'posts'
+                ? array_values(array_filter([$link('calendar'), $link('taxonomies'), $link('print')]))
+                : array_values(array_filter([$link('menus'), $link('redirects')]));
+
+            $notes[$handle] = [
+                'title' => __($collection->title()),
+                'chapter' => $handle,
+                'tone' => $tone,
+                'items' => $items,
+                'more' => $more,
+                'new' => ['label' => $handle === 'posts' ? __('New post') : __('New page'), 'href' => route('admin.entries.create', $handle)],
+            ];
+        }
+
+        $people = array_values(array_filter([
+            $byKey->has('people') ? ['label' => __('Who writes here'), 'href' => route('admin.people'), 'count' => rescue(fn () => \App\Models\User::count(), null, false), 'active' => $r->routeIs('admin.people')] : null,
+            $byKey->has('readers') ? ['label' => __('Readers & groups'), 'href' => $byKey['readers']['href'], 'count' => rescue(fn () => \App\Models\Reader::count(), null, false), 'active' => (bool) $byKey['readers']['active']] : null,
+            $byKey->has('subscribers') ? ['label' => __('Subscribers'), 'href' => $byKey['subscribers']['href'], 'count' => rescue(fn () => \App\Models\Subscriber::count(), null, false), 'active' => (bool) $byKey['subscribers']['active']] : null,
+        ]));
+        if (count($people) > 1) {
+            $notes['people'] = [
+                'title' => __('People'),
+                'chapter' => 'people',
+                'tone' => 'lilac',
+                'items' => $people,
+                'more' => [],
+                'new' => $user->isAdmin() ? ['label' => __('Invite someone'), 'href' => route('admin.people', ['invite' => 1])] : null,
+            ];
+        }
+
+        return $notes;
+    }
+
+    /** The note (or row of tabs) for the chapter being looked at, if it has one. */
+    public static function currentNote(): ?array
+    {
+        $r = static::page();
+        $notes = static::notes();
+
+        foreach ($notes as $key => $note) {
+            $inside = collect($note['items'])->contains('active', true) || collect($note['more'])->contains('active', true)
+                || ($key !== 'people' && $r->routeIs('admin.entries') && $r->route('collection') === $key);
+            if ($inside) {
+                return $note;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The gear's note: the back of the book, everything under Settings and
+     * the person's own account.
+     *
+     * @return array<int, array{key: string, label: string, hint: string, href: string, active: bool}>
+     */
+    public static function backOfTheBook(): array
+    {
+        return collect(static::chapters())->where('group', 'you')
+            ->map(fn ($c) => ['key' => $c['key'], 'label' => $c['label'], 'hint' => $c['hint'], 'href' => $c['href'], 'active' => (bool) $c['active']])
+            ->values()->all();
+    }
+
+    /**
+     * The thumb index: the tools, as tabs cut into the edge of the pages.
+     *
+     * @return array<int, array{key: string, label: string, href: string, tone: string, active: bool, badge: ?int}>
+     */
+    public static function thumbIndex(): array
+    {
+        $r = static::page();
+        $byKey = collect(static::chapters())->keyBy('key');
+        $tabs = [['key' => 'visits', 'label' => __('Visits'), 'href' => route('admin.visits'), 'tone' => 'sky', 'active' => $r->routeIs('admin.visits'), 'badge' => null]];
+
+        foreach (['calendar', 'inbox', 'forms', 'menus', 'activity', 'bin'] as $key) {
+            if ($byKey->has($key)) {
+                $c = $byKey[$key];
+                $tabs[] = ['key' => $key, 'label' => $key === 'menus' ? __('Menus') : ($key === 'bin' ? __('Bin') : $c['label']), 'href' => $c['href'], 'tone' => $c['tone'], 'active' => (bool) $c['active'], 'badge' => $c['badge']];
+            }
+        }
+
+        return $tabs;
+    }
+
+    /**
+     * Everything that needs a hand, counted: comments to read, new messages,
+     * posts sent for review and readers asking to join. Only what this person
+     * may look after.
+     *
+     * @return array<int, array{key: string, label: string, count: int, href: string, tone: string}>
+     */
+    public static function waiting(): array
+    {
+        $user = request()->user();
+        if (! $user) {
+            return [];
+        }
+        $arranges = in_array($user->level(), ['admin', 'editor'], true);
+
+        $comments = (int) rescue(fn () => Comment::where('status', 'waiting')->count(), 0, false);
+        $review = \App\Support\Reviews::reviews($user)
+            ? (int) rescue(fn () => \App\Support\Reviews::waiting()->filter(fn ($e) => $user->canPublishIn($e->collectionHandle()))->count(), 0, false)
+            : 0;
+
+        return array_values(array_filter([
+            ['key' => 'comments', 'label' => trans_choice('comment to read|comments to read', $comments), 'count' => $comments, 'href' => route('admin.comments'), 'tone' => 'rose'],
+            $arranges ? ['key' => 'inbox', 'label' => trans_choice('new message|new messages', $n = \App\Support\Inbox::newCount()), 'count' => $n, 'href' => route('admin.inbox'), 'tone' => 'rose'] : null,
+            \App\Support\Reviews::reviews($user) ? ['key' => 'review', 'label' => trans_choice('post for review|posts for review', $review), 'count' => $review, 'href' => route('admin.contents').'#for-review', 'tone' => 'sun'] : null,
+            $arranges ? ['key' => 'readers', 'label' => trans_choice('reader to let in|readers to let in', $n = \App\Support\ReaderAccounts::waitingCount()), 'count' => $n, 'href' => route('admin.readers'), 'tone' => 'lilac'] : null,
+        ]));
     }
 }

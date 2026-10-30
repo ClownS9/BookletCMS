@@ -54,6 +54,8 @@ class People extends Component
     {
         $this->selected ??= request()->user()?->id;
         $this->role = (string) $this->chosen?->role;
+        // "Invite someone" on the People sticky note opens the form straight away.
+        $this->inviting = request()->boolean('invite') && $this->canManage;
     }
 
     #[Computed]

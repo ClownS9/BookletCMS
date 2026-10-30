@@ -7,9 +7,6 @@ use App\Booklet\Facades\Booklet;
 use App\Models\ActivityLog;
 use App\Models\Comment;
 use App\Models\User;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Throwable;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
@@ -91,27 +88,6 @@ class Contents extends Component
         $this->redirectRoute('admin.contents', navigate: true);
     }
 
-    /**
-     * Page views for the last seven days, oldest first.
-     *
-     * @return array<int, array{day: string, views: int}>
-     */
-    protected function visits(): array
-    {
-        $days = collect(range(6, 0))->map(fn ($ago) => now()->subDays($ago)->toDateString());
-
-        try {
-            $counts = DB::table('site_visits')->whereIn('day', $days)->pluck('views', 'day');
-        } catch (Throwable) {
-            $counts = collect();
-        }
-
-        return $days->map(fn ($day) => [
-            'day' => Carbon::parse($day)->translatedFormat('D'),
-            'views' => (int) ($counts[$day] ?? 0),
-        ])->all();
-    }
-
     /** Unfold a dog-eared page from the list. */
     public function unfold(int $id): void
     {
@@ -171,12 +147,16 @@ class Contents extends Component
                 'model' => $c,
                 'count' => $counts[$c->handle()] ?? 0,
             ]),
-            'glance' => [
-                ['n' => $entries->count(), 'label' => 'Entries'],
-                ['n' => $drafts->count(), 'label' => 'Drafts'],
-                ['n' => Booklet::assets()->count(), 'label' => 'Files in Media'],
-                ['n' => array_sum(array_column($visits = $this->visits(), 'views')), 'label' => 'Visits this week', 'spark' => $visits],
-            ],
+            'mediaCount' => Booklet::assets()->count(),
+            // The numbers: this week against last, the month in ink, where from and when.
+            'week' => \App\Support\BookStats::week($entries),
+            'month' => \App\Support\BookStats::month(),
+            'sources' => \App\Support\BookStats::sources(),
+            'hours' => \App\Support\VisitStats::hours(30),
+            'devices' => \App\Support\VisitStats::devices(30),
+            'mostRead' => \App\Support\BookStats::mostRead(),
+            'publishing' => \App\Support\BookStats::publishing($entries),
+            'waiting' => \App\Support\AdminNav::waiting(),
             'drafts' => $drafts->count(),
             'checklist' => \App\Support\Checklist::wanted($user) ? \App\Support\Checklist::for($user) : [],
             'forReview' => \App\Support\Reviews::reviews($user) ? \App\Support\Reviews::waiting()->filter(fn ($e) => $user->canPublishIn($e->collectionHandle()))->values() : collect(),

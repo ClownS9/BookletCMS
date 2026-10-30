@@ -58,6 +58,8 @@ class Visits extends Component
             'peak' => max(1, ...array_column($stats['days'] ?: [['views' => 1]], 'views')),
             'sourceTotal' => max(1, array_sum(array_column($stats['sources'], 'views'))),
             'periods' => self::PERIODS,
+            'hours' => VisitStats::hours($this->days),
+            'devices' => VisitStats::devices($this->days),
         ]);
     }
 }

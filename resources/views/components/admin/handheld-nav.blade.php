@@ -1,112 +1,182 @@
-{{-- Phones and tablets: a top bar and a "table of contents" drawer instead of
-     the sticker flags; phones also get a tab bar along the bottom. --}}
+{{-- Phones and tablets: a top bar saying where you are, the chapter's own pages
+     as tabs under it, and a dock along the bottom with Ask Stacy in the middle.
+     Waiting and the Index open as sheets from the bottom. --}}
 @php
-    $chapters = \App\Support\AdminNav::chapters();
+    $chapters = collect(\App\Support\AdminNav::chapters());
     $current = \App\Support\AdminNav::current();
-    $tabs = collect($chapters)->whereIn('key', ['contents', 'posts', 'pages', 'media'])->values();
-    $moreActive = ! $tabs->contains('active', true) && ! request()->routeIs('admin.stacy');
-    $groups = ['main' => __('Chapters'), 'tools' => __('Tools'), 'you' => __('You & the site')];
+    $note = \App\Support\AdminNav::currentNote();
+    $waiting = \App\Support\AdminNav::waiting();
+    $waitingTotal = array_sum(array_column($waiting, 'count'));
+    $contents = $chapters->firstWhere('key', 'contents');
+    $second = $chapters->firstWhere('key', 'posts') ?? $chapters->firstWhere('key', 'pages') ?? $chapters->firstWhere('key', 'media');
+    $onStacy = request()->routeIs('admin.stacy');
+    $indexActive = ! ($contents['active'] ?? false) && ! ($second['active'] ?? false) && ! $onStacy;
+    $groups = ['main' => __('Chapters'), 'tools' => __('The thumb index'), 'you' => __('The back of the book')];
     $user = request()->user();
 @endphp
 
-<div class="handheld" x-data="{ open: false }"
-     x-on:keydown.escape.window="open = false"
-     x-on:livewire:navigating.window="open = false"
-     x-effect="document.documentElement.classList.toggle('drawer-open', open)">
+<div class="handheld" x-data="{ sheet: null }"
+     x-on:keydown.escape.window="sheet = null"
+     x-on:livewire:navigating.window="sheet = null"
+     x-effect="document.documentElement.classList.toggle('drawer-open', sheet !== null)">
 
     <header class="topbar">
-        <button type="button" class="topbar__btn" x-on:click="open = true" :aria-expanded="open.toString()" aria-controls="toc-drawer">
-            <x-admin.icon name="menu" size="20" /><span class="sr-only">{{ __('Open the table of contents') }}</span>
-        </button>
-
         <a href="{{ route('admin.contents') }}" class="topbar__brand" wire:navigate aria-label="{{ __('Booklet, Contents') }}">
             <x-admin.logo size="22" />
-            <span class="topbar__name">{{ __('booklet') }}</span>
         </a>
-
-        <span class="topbar__title" aria-hidden="true">{{ $current }}</span>
-
-        <span class="topbar__tools">
-            <a href="#search" class="topbar__btn" x-on:click.prevent="$dispatch('open-search')" aria-label="{{ __('Search everything') }}">
-                <x-admin.icon name="search" size="19" />
-            </a>
-            <a href="{{ route('admin.stacy') }}" class="topbar__stacy" aria-label="{{ __('Ask Stacy') }}" wire:navigate @if (request()->routeIs('admin.stacy')) aria-current="page" @endif>
-                <x-admin.icon name="stacy" size="16" /><span>{{ __('Ask Stacy') }}</span>
-            </a>
+        <span class="topbar__title">
+            <span class="topbar__book">{{ rescue(fn () => \App\Booklet\Facades\Booklet::globals('site')?->get('site_name'), null, false) ?: __('booklet') }}</span>
+            <span class="topbar__here">{{ __($current) }}</span>
         </span>
+        <a href="#search" class="topbar__btn" x-on:click.prevent="$dispatch('open-search')" aria-label="{{ __('Search everything') }}">
+            <x-admin.icon name="search" size="20" />
+        </a>
+        @if ($note && $note['new'] && $note['chapter'] !== 'people') {{-- People keeps its own Invite button --}}
+            <a href="{{ $note['new']['href'] }}" class="topbar__new" style="--tone: var(--{{ $note['tone'] }})" wire:navigate>
+                <x-admin.icon name="plus" size="16" /><span>{{ __('New') }}</span>
+            </a>
+        @endif
     </header>
 
-    {{-- The table of contents --}}
-    <div class="toc-drawer" id="toc-drawer" x-show="open" x-cloak role="dialog" aria-modal="true" aria-label="{{ __('Table of contents') }}">
-        <div class="toc-drawer__backdrop" x-show="open" x-transition.opacity x-on:click="open = false"></div>
-
-        <div class="toc-drawer__panel" x-show="open"
-             x-transition:enter="drawer-in" x-transition:enter-start="drawer-in--from"
-             x-transition:leave="drawer-out" x-transition:leave-end="drawer-in--from"
-             x-trap.noscroll="open">
-            <span class="toc-drawer__grip" aria-hidden="true"></span>
-
-            <div class="toc-drawer__head">
-                <a href="{{ route('admin.account') }}" class="toc-drawer__plate" wire:navigate>
-                    <x-admin.avatar :user="$user" size="44" presence />
-                    <span style="min-width: 0">
-                        <span class="eyebrow" style="display: block; font-size: 10px">{{ __('This book belongs to') }}</span>
-                        <span class="serif" style="display: block; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ $user->name }}</span>
-                    </span>
+    @if ($note)
+        {{-- The chapter's own pages: what its sticky note holds on a computer --}}
+        <nav class="chapter-tabs" aria-label="{{ __('Inside :chapter', ['chapter' => $note['title']]) }}" style="--tone: var(--{{ $note['tone'] }})"
+             x-init="const on = $el.querySelector('[aria-current]'); if (on) $el.scrollLeft = on.offsetLeft - ($el.clientWidth - on.offsetWidth) / 2">
+            @foreach (array_merge($note['items'], array_map(fn ($m) => $m + ['count' => null], $note['more'])) as $tab)
+                <a href="{{ $tab['href'] }}" class="chapter-tabs__tab" wire:navigate @if ($tab['active']) aria-current="page" @endif>
+                    {{ $tab['label'] }}@if ($tab['count'] !== null)<span class="chapter-tabs__n">{{ number_format($tab['count']) }}</span>@endif
                 </a>
-                <button type="button" class="topbar__btn" x-on:click="open = false"><x-admin.icon name="close" size="20" /><span class="sr-only">{{ __('Close') }}</span></button>
-            </div>
-
-            <a href="{{ route('admin.stacy') }}" class="toc-drawer__stacy" wire:navigate>
-                <span class="toc-drawer__stacy-mark"><x-admin.icon name="stacy" size="18" /></span>
-                <span><strong>{{ __('Ask Stacy') }}</strong><small>{{ __('Find things, or have her do small jobs') }}</small></span>
-                <span aria-hidden="true">→</span>
-            </a>
-
-            @foreach ($groups as $group => $heading)
-                <p class="toc-drawer__group">{{ __($heading) }}</p>
-                <ul class="toc-drawer__list">
-                    @foreach (collect($chapters)->where('group', $group) as $i => $chapter)
-                        <li>
-                            <a href="{{ $chapter['href'] }}" wire:navigate @if ($chapter['active']) aria-current="page" @endif style="--tone: var(--{{ $chapter['tone'] }})">
-                                <span class="toc-drawer__sticker" style="--tilt: {{ $loop->odd ? '-5deg' : '4deg' }}"><x-admin.icon :name="$chapter['icon']" size="16" /></span>
-                                <span class="toc-drawer__label">
-                                    <span>{{ __($chapter['label']) }}</span>
-                                    <small>{{ __($chapter['hint']) }}</small>
-                                </span>
-                                @if ($chapter['badge'])
-                                    <span class="toc-drawer__badge">{{ $chapter['badge'] }}</span>
-                                @endif
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
             @endforeach
+        </nav>
+    @endif
 
-            <form method="POST" action="{{ route('logout') }}" class="toc-drawer__foot">
-                @csrf
-                <span class="muted" style="font-size: 13px">{{ __('Signed in as :name', ['name' => $user->email]) }}</span>
-                <button type="submit" class="btn btn--quiet" style="min-height: 40px"><x-admin.icon name="logout" size="16" /> {{ __('Sign out') }}</button>
-            </form>
+    {{-- The dock --}}
+    <nav class="dock" aria-label="{{ __('Chapters') }}">
+        @foreach ([$contents, $second] as $tab)
+            @if ($tab)
+                <a href="{{ $tab['href'] }}" wire:navigate class="dock__tab" style="--tone: var(--{{ $tab['tone'] }})" @if ($tab['active']) aria-current="page" @endif>
+                    <span class="dock__sticker"><x-admin.icon :name="$tab['icon']" size="20" /></span>
+                    <span class="dock__label">{{ $tab['label'] }}</span>
+                </a>
+            @endif
+        @endforeach
+
+        <a href="{{ route('admin.stacy') }}" wire:navigate class="dock__stacy" @if ($onStacy) aria-current="page" @endif>
+            <span class="dock__star"><x-admin.icon name="stacy" size="24" /></span>
+            <span class="dock__label">{{ __('Ask Stacy') }}</span>
+        </a>
+
+        <button type="button" class="dock__tab" style="--tone: var(--rose)" x-on:click="sheet = sheet === 'waiting' ? null : 'waiting'"
+                :aria-expanded="(sheet === 'waiting').toString()" aria-expanded="false" aria-controls="sheet-waiting"
+                :class="sheet === 'waiting' && 'is-open'">
+            <span class="dock__sticker">
+                <x-admin.icon name="comment" size="20" />
+                @if ($waitingTotal > 0)
+                    <span class="dock__badge">{{ $waitingTotal > 99 ? '99+' : $waitingTotal }}</span>
+                @endif
+            </span>
+            <span class="dock__label">{{ __('Waiting') }}@if ($waitingTotal > 0)<span class="sr-only">, {{ $waitingTotal }}</span>@endif</span>
+        </button>
+
+        <button type="button" class="dock__tab" style="--tone: var(--sand)" x-on:click="sheet = sheet === 'index' ? null : 'index'"
+                :aria-expanded="(sheet === 'index').toString()" aria-expanded="false" aria-controls="sheet-index"
+                :class="(sheet === 'index' || ({{ $indexActive ? 'true' : 'false' }} && sheet === null)) && 'is-open'">
+            <span class="dock__sticker"><x-admin.icon name="list" size="20" /></span>
+            <span class="dock__label">{{ __('Index') }}</span>
+        </button>
+    </nav>
+
+    {{-- Waiting: everything that needs a hand --}}
+    <div class="sheet" id="sheet-waiting" x-show="sheet === 'waiting'" x-cloak role="dialog" aria-modal="true" aria-labelledby="sheet-waiting-title">
+        <div class="sheet__backdrop" x-show="sheet === 'waiting'" x-transition.opacity x-on:click="sheet = null"></div>
+        <div class="sheet__panel" x-show="sheet === 'waiting'" x-trap.noscroll="sheet === 'waiting'"
+             x-transition:enter="sheet-in" x-transition:enter-start="sheet-in--from" x-transition:leave="sheet-out" x-transition:leave-end="sheet-in--from">
+            <span class="sheet__grip" aria-hidden="true"></span>
+            <div class="sheet__head">
+                <h2 id="sheet-waiting-title" class="sheet__title">{{ __('Waiting for you') }}</h2>
+                <button type="button" class="sheet__close" x-on:click="sheet = null"><x-admin.icon name="close" size="20" /><span class="sr-only">{{ __('Close') }}</span></button>
+            </div>
+            @if ($waitingTotal === 0)
+                <p class="sheet__empty">{{ __('Nothing is waiting. Enjoy the quiet.') }}</p>
+            @endif
+            <ul class="waiting-list">
+                @foreach ($waiting as $item)
+                    <li>
+                        <a href="{{ $item['href'] }}" wire:navigate style="--tone: var(--{{ $item['tone'] }})" @class(['is-none' => $item['count'] === 0])>
+                            <span class="waiting-list__mark" aria-hidden="true"></span>
+                            <span class="waiting-list__n">{{ number_format($item['count']) }}</span>
+                            <span class="waiting-list__label">{{ $item['label'] }}</span>
+                            <x-admin.icon name="back" size="16" class="waiting-list__go" style="transform: rotate(180deg)" />
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
         </div>
     </div>
 
-    {{-- Phones: the tab bar --}}
-    <nav class="tabbar" aria-label="{{ __('Chapters') }}">
-        @foreach ($tabs as $tab)
-            <a href="{{ $tab['href'] }}" wire:navigate class="tabbar__tab" style="--tone: var(--{{ $tab['tone'] }})" @if ($tab['active']) aria-current="page" @endif>
-                <span class="tabbar__icon"><x-admin.icon :name="$tab['icon']" size="20" /></span>
-                <span>{{ __($tab['label']) }}</span>
-            </a>
-        @endforeach
-        <button type="button" class="tabbar__tab" style="--tone: var(--sand)" x-on:click="open = true" @if ($moreActive) aria-current="page" @endif>
-            <span class="tabbar__icon">
-                <x-admin.icon name="more" size="20" />
-                @if ($waiting = collect($chapters)->firstWhere('key', 'comments')['badge'] ?? null)
-                    <span class="tabbar__dot" aria-label="{{ $waiting }} comments waiting"></span>
+    {{-- The Index: everything in the book --}}
+    <div class="sheet sheet--tall" id="sheet-index" x-show="sheet === 'index'" x-cloak role="dialog" aria-modal="true" aria-labelledby="sheet-index-title">
+        <div class="sheet__backdrop" x-show="sheet === 'index'" x-transition.opacity x-on:click="sheet = null"></div>
+        <div class="sheet__panel" x-show="sheet === 'index'" x-trap.noscroll="sheet === 'index'"
+             x-transition:enter="sheet-in" x-transition:enter-start="sheet-in--from" x-transition:leave="sheet-out" x-transition:leave-end="sheet-in--from">
+            <span class="sheet__grip" aria-hidden="true"></span>
+            <div class="sheet__head">
+                <div>
+                    <p class="eyebrow" style="margin: 0; font-size: 10.5px">{{ __('Everything in the book') }}</p>
+                    <h2 id="sheet-index-title" class="sheet__title">{{ __('The index') }}</h2>
+                </div>
+                <button type="button" class="sheet__close" x-on:click="sheet = null"><x-admin.icon name="close" size="20" /><span class="sr-only">{{ __('Close') }}</span></button>
+            </div>
+
+            <button type="button" class="sheet__search" x-on:click="sheet = null; $nextTick(() => $dispatch('open-search'))">
+                <x-admin.icon name="search" size="18" /><span>{{ __('Turn to…') }}</span>
+            </button>
+
+            @foreach ($groups as $group => $heading)
+                @php $list = $chapters->where('group', $group)->values(); @endphp
+                @continue($list->isEmpty())
+                @if ($group === 'you')
+                    <details class="index-back" @if ($list->contains('active', true)) open @endif>
+                        <summary><span>{{ $heading }}</span><small>{{ __('Settings & more') }}</small></summary>
+                        <ul class="index-tools">
+                            @foreach ($list as $chapter)
+                                <li><a href="{{ $chapter['href'] }}" wire:navigate style="--tone: var(--{{ $chapter['tone'] }})" @if ($chapter['active']) aria-current="page" @endif><span class="index-tools__tab" aria-hidden="true"></span><span>{{ $chapter['label'] }}</span></a></li>
+                            @endforeach
+                        </ul>
+                    </details>
+                @else
+                    <p class="sheet__group">{{ $heading }}</p>
+                    <ul @class(['index-chapters' => $group === 'main', 'index-tools' => $group !== 'main'])>
+                        @foreach ($list as $chapter)
+                            <li>
+                                <a href="{{ $chapter['href'] }}" wire:navigate style="--tone: var(--{{ $chapter['tone'] }}); --tilt: {{ $loop->odd ? '-.8deg' : '.7deg' }}" @if ($chapter['active']) aria-current="page" @endif>
+                                    @if ($group === 'main')
+                                        <x-admin.icon :name="$chapter['icon']" size="18" />
+                                    @else
+                                        <span class="index-tools__tab" aria-hidden="true"></span>
+                                    @endif
+                                    <span class="index-chapters__label">{{ $chapter['label'] }}</span>
+                                    @if ($chapter['badge'])
+                                        <span class="index-badge">{{ $chapter['badge'] }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 @endif
-            </span>
-            <span>{{ __('More') }}</span>
-        </button>
-    </nav>
+            @endforeach
+
+            <form method="POST" action="{{ route('logout') }}" class="sheet__foot">
+                @csrf
+                <a href="{{ route('admin.account') }}" class="sheet__plate" wire:navigate>
+                    <x-admin.avatar :user="$user" size="40" presence />
+                    <span style="min-width: 0">
+                        <span class="sheet__name">{{ $user->name }}</span>
+                        <span class="sheet__mail">{{ $user->email }}</span>
+                    </span>
+                </a>
+                <button type="submit" class="sheet__out"><x-admin.icon name="logout" size="16" /> {{ __('Sign out') }}</button>
+            </form>
+        </div>
+    </div>
 </div>

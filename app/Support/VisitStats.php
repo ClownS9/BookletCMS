@@ -39,6 +39,14 @@ class VisitStats
         DB::table('referrer_stats')->insertOrIgnore(['day' => $day, 'source' => $source, 'views' => 0]);
         DB::table('referrer_stats')->where('day', $day)->where('source', $source)->increment('views');
 
+        // When (the hour, in the site's own time) and on what: plain counts, nothing about who.
+        $hour = (int) now()->format('G');
+        DB::table('visit_hours')->insertOrIgnore(['day' => $day, 'hour' => $hour, 'views' => 0]);
+        DB::table('visit_hours')->where('day', $day)->where('hour', $hour)->increment('views');
+        $device = static::device((string) $request->userAgent());
+        DB::table('device_stats')->insertOrIgnore(['day' => $day, 'device' => $device, 'views' => 0]);
+        DB::table('device_stats')->where('day', $day)->where('device', $device)->increment('views');
+
         // A fingerprint that changes every day: the same reader today counts once,
         // and tomorrow they're a stranger again. Only the scrambled 16 characters are kept.
         $hash = substr(hash_hmac('sha256', $day.'|'.$request->ip().'|'.$request->userAgent(), (string) config('app.key')), 0, 16);
@@ -99,6 +107,55 @@ class VisitStats
         }
 
         return Str::limit($host, 60, '');
+    }
+
+    /** "phone", "tablet" or "computer", from the browser's own description of itself. */
+    public static function device(string $agent): string
+    {
+        return match (true) {
+            (bool) preg_match('/ipad|tablet|kindle|silk|playbook|(android(?!.*mobile))/i', $agent) => 'tablet',
+            (bool) preg_match('/mobi|iphone|ipod|android|windows phone|opera mini/i', $agent) => 'phone',
+            default => 'computer',
+        };
+    }
+
+    /**
+     * When people read, over the last N days, in the site's own time.
+     *
+     * @return array{hours: int[], week: array<int, int[]>, busiest: ?int}
+     *   hours: views in each hour of the day (0–23); week: Monday to Sunday,
+     *   each split into twelve two-hour blocks; busiest: the busiest hour.
+     */
+    public static function hours(int $days): array
+    {
+        $hours = array_fill(0, 24, 0);
+        $week = array_fill(0, 7, array_fill(0, 12, 0));
+
+        $rows = rescue(fn () => DB::table('visit_hours')->where('day', '>=', now()->subDays($days - 1)->toDateString())->get(['day', 'hour', 'views']), collect(), false);
+        foreach ($rows as $row) {
+            $hour = max(0, min(23, (int) $row->hour));
+            $hours[$hour] += (int) $row->views;
+            $week[Carbon::parse($row->day)->dayOfWeekIso - 1][intdiv($hour, 2)] += (int) $row->views;
+        }
+
+        return ['hours' => $hours, 'week' => $week, 'busiest' => max($hours) > 0 ? (int) array_search(max($hours), $hours, true) : null];
+    }
+
+    /**
+     * On what people read, over the last N days: views per kind of device.
+     *
+     * @return array{phone: int, computer: int, tablet: int}
+     */
+    public static function devices(int $days): array
+    {
+        $counts = rescue(fn () => DB::table('device_stats')->where('day', '>=', now()->subDays($days - 1)->toDateString())
+            ->selectRaw('device, sum(views) as views')->groupBy('device')->pluck('views', 'device')->all(), [], false);
+
+        return [
+            'phone' => (int) ($counts['phone'] ?? 0),
+            'computer' => (int) ($counts['computer'] ?? 0),
+            'tablet' => (int) ($counts['tablet'] ?? 0),
+        ];
     }
 
     /** Fingerprints are only needed for the day they're made. */
