@@ -1,0 +1,206 @@
+<div style="display: contents">
+    {{-- A chapter in the Dashboard layout: one table, with status tabs, search,
+         sorting, ticks for doing many at once, and a menu on each row. --}}
+    @php
+        $me = (string) request()->user()?->id;
+        $dated = $model->dated();
+        $sortMark = fn (string $col) => ltrim($sort, '-') === $col ? (str_starts_with($sort, '-') ? '↓' : '↑') : '↕';
+        $ariaSort = fn (string $col) => ltrim($sort, '-') === $col ? (str_starts_with($sort, '-') ? 'descending' : 'ascending') : 'none';
+        $from = $shown === 0 ? 0 : ($page - 1) * \App\Livewire\Admin\Entries::PER_PAGE + 1;
+        $to = min($shown, $page * \App\Livewire\Admin\Entries::PER_PAGE);
+        $pageNumbers = collect([1, $page - 1, $page, $page + 1, $lastPage])->filter(fn ($n) => $n >= 1 && $n <= $lastPage)->unique()->sort()->values();
+    @endphp
+    <section class="page page--single page--dash" aria-labelledby="chapter-title">
+        <div class="dash">
+            <div class="dash-head">
+                <div class="dash-head__title">
+                    <p class="dash-crumbs"><a href="{{ route('admin.contents') }}" wire:navigate>{{ __('Dashboard') }}</a> <span aria-hidden="true">/</span> {{ __($model->title()) }}</p>
+                    <h1 id="chapter-title">{{ __($model->title()) }}</h1>
+                </div>
+                @if ($hasTaxonomies)
+                    <a href="{{ route('admin.taxonomies') }}" class="btn has-handheld-twin" wire:navigate>{{ __('Categories & tags') }}</a>
+                @endif
+                @if ($dated)
+                    <a href="{{ route('admin.calendar') }}" class="btn has-handheld-twin" wire:navigate>{{ __('Calendar') }}</a>
+                @endif
+                <a href="{{ route('admin.entries.create', $model->handle()) }}" class="btn btn--ink has-handheld-twin" wire:navigate>
+                    <x-admin.icon name="plus" size="16" /> {{ __('New') }}
+                </a>
+            </div>
+            <x-admin.insert-links :chapter="$model->title()" />
+
+            <section class="dash-card" aria-label="{{ __('Everything in :what', ['what' => __($model->title())]) }}">
+                <div class="dash-tabs has-handheld-twin" role="group" aria-label="{{ __('Filter by status') }}">
+                    @foreach ($statuses as $value => $label)
+                        <button type="button" wire:click="$set('status', '{{ $value }}')" aria-pressed="{{ $status === $value ? 'true' : 'false' }}">
+                            {{ __($label) }} <b>{{ number_format($value === 'all' ? $total : ($counts[$value] ?? 0)) }}</b>
+                        </button>
+                    @endforeach
+                </div>
+
+                @if ($ticked === [])
+                    <div class="dash-tools">
+                        <div class="search">
+                            <x-admin.icon name="search" size="16" />
+                            <label for="entry-search" class="sr-only">{{ __('Search :what', ['what' => __($model->title())]) }}</label>
+                            <input id="entry-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ __('Search this chapter') }}">
+                        </div>
+                        <span class="dash-tools__links has-handheld-twin">
+                            <a href="{{ route('admin.print', ['collection' => $model->handle()]) }}" wire:navigate>{{ __('Print as a book') }}</a>
+                        </span>
+                    </div>
+                @else
+                    <div class="dash-tools dash-bulk" role="region" aria-label="{{ __('Do to the chosen ones') }}" wire:key="ticks">
+                        <strong>{{ trans_choice(':count chosen|:count chosen', count($ticked)) }}</strong>
+                        @if ($canArrange)
+                            <button type="button" class="btn btn--sm" wire:click="publishTicked">{{ __('Publish') }}</button>
+                            <button type="button" class="btn btn--sm" wire:click="draftTicked">{{ __('Make drafts') }}</button>
+                        @endif
+                        <button type="button" class="btn btn--danger btn--sm" wire:click="binTicked" wire:confirm="{{ trans_choice('Move :count to the bin? It waits there for 30 days.|Move :count to the bin? They wait there for 30 days.', count($ticked)) }}">{{ __('Move to the bin') }}</button>
+                        <button type="button" class="btn btn--quiet btn--sm" wire:click="untickAll">{{ __('Clear') }}</button>
+                        @if ($termFields !== [])
+                            <form wire:submit="termTicked">
+                                @if (count($termFields) > 1)
+                                    <label for="bulk-field" class="sr-only">{{ __('Add to') }}</label>
+                                    <select id="bulk-field" class="input" wire:model.live="bulkField">
+                                        @foreach ($termFields as $handle => $f)
+                                            <option value="{{ $handle }}">{{ __($f['label']) }}</option>
+                                        @endforeach
+                                    </select>
+                                @endif
+                                <label for="bulk-words" class="sr-only">{{ __($termFields[$bulkField]['label'] ?? 'Tags') }}</label>
+                                <input id="bulk-words" class="input" type="text" wire:model="bulkWords" list="bulk-terms" maxlength="80" autocomplete="off" placeholder="{{ __('Add a category or tag…') }}">
+                                <datalist id="bulk-terms">
+                                    @foreach ($termTitles as $t)
+                                        <option value="{{ $t }}"></option>
+                                    @endforeach
+                                </datalist>
+                                <button type="submit" class="btn btn--sm">{{ __('Add') }}</button>
+                            </form>
+                        @endif
+                    </div>
+                    @error('bulkWords') <p class="field__error" style="margin: 0 18px 10px">{{ $message }}</p> @enderror
+                @endif
+
+                @if ($rows === [])
+                    <p class="dash-empty">
+                        @if ($search !== '' || $status !== 'all')
+                            {{ __('Nothing matches. Try another filter.') }}
+                        @else
+                            {{ __('Nothing in :what yet.', ['what' => __($model->title())]) }} <a href="{{ route('admin.entries.create', $model->handle()) }}" wire:navigate>{{ __('Write the first one →') }}</a>
+                        @endif
+                    </p>
+                @else
+                    <div class="dash-table-wrap">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="dash-table__tick">
+                                        <input type="checkbox" wire:click="tickAll(@js($pageIds))" @checked(array_diff($pageIds, $ticked) === [])
+                                               aria-label="{{ $lastPage > 1 ? __('Choose all on this page') : __('Choose all') }}">
+                                    </th>
+                                    <th scope="col" aria-sort="{{ $ariaSort('title') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('title')">{{ __('Title') }}<span aria-hidden="true">{{ $sortMark('title') }}</span></button></th>
+                                    <th scope="col" class="is-wide">{{ __('Author') }}</th>
+                                    @if ($termFields !== [])
+                                        <th scope="col" class="is-wide">{{ __('Categories & tags') }}</th>
+                                    @endif
+                                    @if ($dated)
+                                        <th scope="col" aria-sort="{{ $ariaSort('date') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('date')">{{ __('Date') }}<span aria-hidden="true">{{ $sortMark('date') }}</span></button></th>
+                                    @endif
+                                    <th scope="col" aria-sort="{{ $ariaSort('edited') }}" class="is-wide"><button type="button" class="dash-table__sort" wire:click="sortBy('edited')">{{ __('Edited') }}<span aria-hidden="true">{{ $sortMark('edited') }}</span></button></th>
+                                    <th scope="col">{{ __('Status') }}</th>
+                                    <th scope="col"><span class="sr-only">{{ __('More') }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($rows as $row)
+                                    @php
+                                        $entry = $row['entry'];
+                                        $name = $entry->title() ?: __('Untitled');
+                                        $mine = $canArrange || (string) $entry->get('author') === $me;
+                                        $writer = $authors[$entry->get('author')] ?? null;
+                                        $words = collect((array) $entry->get('categories', []))->merge((array) $entry->get('tags', []))->filter(fn ($w) => is_string($w) && $w !== '')->unique()->values();
+                                        $review = $reviewStates[$entry->id()] ?? null;
+                                        $ticks = in_array($entry->id(), $ticked, true);
+                                    @endphp
+                                    <tr wire:key="row-{{ $entry->id() }}" @class(['is-ticked' => $ticks])>
+                                        <td class="dash-table__tick">
+                                            <input type="checkbox" wire:model.live="ticked" value="{{ $entry->id() }}" aria-label="{{ __('Choose “:name”', ['name' => $name]) }}">
+                                        </td>
+                                        <td class="dash-table__main">
+                                            <a class="dash-table__title" href="{{ $mine ? route('admin.entries.edit', [$model->handle(), $entry->id()]) : route('preview', $entry->id()) }}" @if ($mine) wire:navigate @else target="_blank" rel="noopener" @endif>{{ $name }}</a>
+                                            @if ($entry->get('translation_of'))<span class="pick__lang" title="{{ __('Translation') }}">{{ strtoupper((string) $entry->get('lang')) }}</span>@endif
+                                            @if ($n = $noteCounts[$entry->id()] ?? 0)<span class="pick__notes" title="{{ trans_choice(':count sticky note|:count sticky notes', $n) }}">{{ $n }}</span>@endif
+                                            <span class="dash-table__sub">{{ $entry->uri() ?? '—' }}</span>
+                                        </td>
+                                        <td class="is-wide">
+                                            @if ($writer)
+                                                <span class="dash-person"><x-admin.avatar :user="$writer" size="24" />{{ $writer->name }}</span>
+                                            @else
+                                                <span class="is-quiet">—</span>
+                                            @endif
+                                        </td>
+                                        @if ($termFields !== [])
+                                            <td class="is-wide">
+                                                @forelse ($words->take(2) as $w)
+                                                    <span class="dash-tag">{{ $w }}</span>
+                                                @empty
+                                                    <span class="is-quiet">—</span>
+                                                @endforelse
+                                                @if ($words->count() > 2)<span class="is-quiet">+{{ $words->count() - 2 }}</span>@endif
+                                            </td>
+                                        @endif
+                                        @if ($dated)
+                                            <td class="is-quiet">{{ $entry->date()?->translatedFormat('j M Y') ?? '—' }}</td>
+                                        @endif
+                                        <td class="is-quiet is-wide">{{ $entry->lastModified() ? \Illuminate\Support\Carbon::parse($entry->lastModified())->diffForHumans() : '—' }}</td>
+                                        <td>
+                                            @if ($review === 'waiting')
+                                                <span class="dash-status dash-status--review"><i aria-hidden="true"></i>{{ __('In review') }}</span>
+                                            @else
+                                                <span class="dash-status dash-status--{{ $entry->status() }}"><i aria-hidden="true"></i>{{ __(ucfirst($entry->status())) }}@if ($review && $review !== 'waiting') · {{ __('sent back') }}@endif</span>
+                                            @endif
+                                        </td>
+                                        <td style="width: 1%">
+                                            <div class="dash-more" x-data="{ open: false }" x-on:keydown.escape="open = false" x-on:click.outside="open = false">
+                                                <button type="button" class="icon-btn" x-on:click="open = ! open" :aria-expanded="open.toString()" aria-expanded="false" aria-label="{{ __('More for “:name”', ['name' => $name]) }}">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+                                                </button>
+                                                <div class="dash-more__menu" x-show="open" x-cloak x-transition.opacity.duration.120ms>
+                                                    @if ($mine)
+                                                        <a href="{{ route('admin.entries.edit', [$model->handle(), $entry->id()]) }}" wire:navigate>{{ __('Edit') }}</a>
+                                                    @endif
+                                                    <a href="{{ route('preview', $entry->id()) }}" target="_blank" rel="noopener">{{ __('Preview') }}</a>
+                                                    @if ($entry->uri() && $entry->status() === 'published')
+                                                        <a href="{{ url($entry->uri()) }}" target="_blank" rel="noopener">{{ __('View on site ↗') }}</a>
+                                                    @endif
+                                                    @if ($mine)
+                                                        <button type="button" class="is-danger" x-on:click="open = false" wire:click="binOne('{{ $entry->id() }}')" wire:confirm="{{ __('Move “:name” to the bin? It waits there for 30 days.', ['name' => $name]) }}">{{ __('Move to the bin') }}</button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="dash-foot">
+                        <span>{{ __('Showing :from–:to of :count', ['from' => number_format($from), 'to' => number_format($to), 'count' => number_format($shown)]) }}</span>
+                        @if ($lastPage > 1)
+                            <nav class="dash-pages" aria-label="{{ __('Pages of :what', ['what' => __($model->title())]) }}">
+                                <button type="button" wire:click="turnTo({{ $page - 1 }})" @disabled($page <= 1) aria-label="{{ __('Previous page') }}">‹</button>
+                                @foreach ($pageNumbers as $i => $n)
+                                    @if ($i > 0 && $n - $pageNumbers[$i - 1] > 1)<span aria-hidden="true">…</span>@endif
+                                    <button type="button" wire:click="turnTo({{ $n }})" @if ($n === $page) aria-current="page" @endif aria-label="{{ __('Page :n', ['n' => $n]) }}">{{ $n }}</button>
+                                @endforeach
+                                <button type="button" wire:click="turnTo({{ $page + 1 }})" @disabled($page >= $lastPage) aria-label="{{ __('Next page') }}">›</button>
+                            </nav>
+                        @endif
+                    </div>
+                @endif
+            </section>
+        </div>
+    </section>
+</div>

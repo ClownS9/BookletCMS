@@ -29,123 +29,13 @@
             @endif
         </p>
 
-        @if ($update)
-            <div class="update-notice" role="status">
-                <span class="sticker sticker--sun" style="--tilt: -4deg">{{ __('New') }}</span>
-                <span style="min-width: 0">
-                    <a href="{{ route('admin.settings.updates') }}" wire:navigate class="update-notice__title">{{ __('Booklet :version is out', ['version' => $update['version']]) }}</a>
-                    @if ($update['line'] !== '') <small>{{ __($update['line']) }}</small> @endif
-                </span>
-                <span class="update-notice__do">
-                    <a href="{{ route('admin.settings.updates') }}" wire:navigate class="btn btn--sm">{{ __('See what changed') }}</a>
-                    <button type="button" class="link-button" wire:click="notNowUpdate">{{ __('Not now') }}</button>
-                </span>
-            </div>
-        @endif
+        @include('livewire.admin.partials.contents-update')
 
-        @if ($checklist !== [])
-            @php
-                $todo = array_values(array_filter($checklist, fn ($i) => ! $i['done']));
-                $doneItems = array_values(array_filter($checklist, fn ($i) => $i['done']));
-            @endphp
-            <section class="first-steps" aria-labelledby="first-steps-title" x-data="{ showDone: false }">
-                <div class="first-steps__head">
-                    <h2 id="first-steps-title" class="eyebrow">{{ __('First steps') }}</h2>
-                    <span class="first-steps__count">{{ __(':done of :all', ['done' => count($doneItems), 'all' => count($checklist)]) }}</span>
-                    <button type="button" class="link-button first-steps__away" wire:click="hideChecklist">{{ __('Put away') }}</button>
-                </div>
-                <div class="first-steps__bar" role="progressbar" aria-label="{{ __('First steps done') }}" aria-valuemin="0" aria-valuemax="{{ count($checklist) }}" aria-valuenow="{{ count($doneItems) }}">
-                    <span style="width: {{ round(count($doneItems) / max(1, count($checklist)) * 100) }}%"></span>
-                </div>
+        @include('livewire.admin.partials.contents-first-steps')
 
-                @if ($todo === [])
-                    <p class="first-steps__all"><span class="sticker sticker--mint" style="--tilt: -4deg">{{ __('All set') }}</span> {{ __('Everything’s in place. The rest is writing.') }}</p>
-                @else
-                    <ul class="first-steps__list">
-                        @foreach ($todo as $item)
-                            <li wire:key="step-{{ $item['key'] }}">
-                                <span class="first-steps__box" aria-hidden="true"></span>
-                                <span style="min-width: 0">
-                                    @if ($item['href'])
-                                        <a href="{{ $item['href'] }}" @unless (str_contains($item['href'], '#')) wire:navigate @endunless>{{ __($item['label']) }}</a>
-                                    @else
-                                        <span>{{ __($item['label']) }}</span>
-                                    @endif
-                                    <small>{{ __($item['hint']) }}</small>
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
+        @include('livewire.admin.partials.contents-reviews')
 
-                @if ($doneItems !== [] && $todo !== [])
-                    <button type="button" class="link-button first-steps__toggle" x-on:click="showDone = ! showDone" :aria-expanded="showDone">
-                        <span x-text="showDone ? @js(__('Hide what’s done')) : @js(__('Show what’s done (:count)', ['count' => count($doneItems)]))">{{ __('Show what’s done (:count)', ['count' => count($doneItems)]) }}</span>
-                    </button>
-                    <ul class="first-steps__list first-steps__list--done" x-show="showDone" x-cloak>
-                        @foreach ($doneItems as $item)
-                            <li wire:key="done-{{ $item['key'] }}"><span class="first-steps__box first-steps__box--done" aria-hidden="true"></span><span><span class="sr-only">{{ __('Done:') }} </span>{{ __($item['label']) }}</span></li>
-                        @endforeach
-                    </ul>
-                @endif
-            </section>
-        @endif
-
-        @foreach ([['Waiting for your review', $forReview, 'sky'], ['Sent back to you', $sentBack, 'rose']] as [$label, $list, $tone])
-            @if ($list->isNotEmpty())
-                <h2 class="eyebrow section-label section-label--gap" @if ($tone === 'sky') id="for-review" @endif>{{ __($label) }} · {{ $list->count() }}</h2>
-                <ul class="review-list">
-                    @foreach ($list->take(5) as $e)
-                        @php $info = \App\Support\Reviews::details($e); @endphp
-                        <li wire:key="rv-{{ $e->id() }}">
-                            <a href="{{ route('admin.entries.edit', [$e->collectionHandle(), $e->id()]) }}" wire:navigate>
-                                <span class="dot" style="--dot: var(--{{ $tone }})" aria-hidden="true"></span>
-                                <span style="min-width: 0">
-                                    <span class="review-list__title">{{ $e->title() ?: __('Untitled') }}</span>
-                                    <span class="review-list__meta">{{ $info['by']?->name ?? __('Someone') }}{{ $info['at'] ? ' · '.$info['at']->diffForHumans() : '' }}@if ($info['note'] !== '') · “{{ \Illuminate\Support\Str::limit($info['note'], 70) }}”@endif</span>
-                                </span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-                @if ($list->count() > 5)
-                    <a href="{{ route('admin.entries', ['collection' => 'posts', 'status' => 'review']) }}" class="review-list__more" wire:navigate>{{ __('All :count →', ['count' => $list->count()]) }}</a>
-                @endif
-            @endif
-        @endforeach
-
-        {{-- What switched-on inserts have to say today --}}
-        @foreach ($insertCards as $card)
-            <section class="insert-card" aria-labelledby="card-{{ $card['key'] }}" wire:key="card-{{ $card['key'] }}" style="--tone: var(--{{ $card['insert']->sticker() }})">
-                <h2 class="eyebrow section-label section-label--gap" id="card-{{ $card['key'] }}">
-                    <span class="insert-chip insert-chip--small" aria-hidden="true"></span>
-                    {{ $card['title'].($card['count'] !== null ? ' · '.number_format($card['count']) : '') }}
-                </h2>
-                @if ($card['text']) <p class="insert-card__text">{{ __($card['text']) }}</p> @endif
-                @if ($card['items'] !== [])
-                    <ul class="review-list">
-                        @foreach ($card['items'] as $item)
-                            <li>
-                                @if ($item['href'])
-                                    <a href="{{ $item['href'] }}" @if (str_starts_with($item['href'], '/') || str_starts_with($item['href'], url('/'))) wire:navigate @endif>
-                                @else
-                                    <span class="review-list__row">
-                                @endif
-                                    <span class="dot" style="--dot: var(--tone)" aria-hidden="true"></span>
-                                    <span style="min-width: 0">
-                                        <span class="review-list__title">{{ __($item['label']) }}</span>
-                                        @if ($item['meta'] !== '') <span class="review-list__meta">{{ $item['meta'] }}</span> @endif
-                                    </span>
-                                @if ($item['href']) </a> @else </span> @endif
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-                @if ($card['link'])
-                    <a href="{{ $card['link']['href'] }}" class="review-list__more" @if (str_starts_with($card['link']['href'], '/') || str_starts_with($card['link']['href'], url('/'))) wire:navigate @endif>{{ $card['link']['label'] }} →</a>
-                @endif
-            </section>
-        @endforeach
+        @include('livewire.admin.partials.contents-insert-cards')
 
         {{-- This week in the book: four figures against last week, a bar for each day --}}
         <h2 class="eyebrow section-label section-label--gap">{{ __('At a glance · this week') }}</h2>
@@ -185,21 +75,7 @@
             <p class="dog-ear-hint">{{ __('No visits yet. Once people read the site, the month draws itself here.') }}</p>
         @else
             <figure class="ink-chart">
-                <svg viewBox="0 0 400 170" role="img" aria-label="{{ __('Visits each day for the last 30 days: :total in all.', ['total' => number_format($month['total'])]) }}@if ($month['peak']) {{ __('Busiest on :date, with :views.', ['date' => $month['peak']['date'], 'views' => number_format($month['peak']['views'])]) }}@endif">
-                    @foreach ($month['grid'] as $line)
-                        <line x1="30" x2="396" y1="{{ $line['y'] }}" y2="{{ $line['y'] }}" class="ink-chart__rule"/>
-                        <text x="24" y="{{ $line['y'] + 3 }}" text-anchor="end" class="ink-chart__tick">{{ $line['label'] }}</text>
-                    @endforeach
-                    <path d="{{ $month['area'] }}" class="ink-chart__wash"/>
-                    <path d="{{ $month['prev'] }}" class="ink-chart__before"/>
-                    <path d="{{ $month['line'] }}" class="ink-chart__line"/>
-                    @if ($month['peak'])
-                        <circle cx="{{ $month['peak']['x'] }}" cy="{{ $month['peak']['y'] }}" r="4.5" class="ink-chart__peak"/>
-                    @endif
-                    <text x="30" y="166" class="ink-chart__tick">{{ $month['first'] }}</text>
-                    <text x="213" y="166" text-anchor="middle" class="ink-chart__tick">{{ $month['middle'] }}</text>
-                    <text x="396" y="166" text-anchor="end" class="ink-chart__tick">{{ __('Today') }}</text>
-                </svg>
+                @include('livewire.admin.partials.contents-month-chart')
                 <figcaption class="ink-chart__key">
                     <span><i class="ink-chart__swatch"></i>{{ trans_choice(':count visit|:count visits', $month['total'], ['count' => number_format($month['total'])]) }}@if ($month['change'] !== null) <b @class(['is-up' => $month['change'] > 0, 'is-down' => $month['change'] < 0])>{{ $month['change'] > 0 ? '▲' : ($month['change'] < 0 ? '▼' : '') }} {{ abs($month['change']) }}%</b>@endif</span>
                     <span><i class="ink-chart__swatch ink-chart__swatch--before"></i>{{ __('the 30 days before') }}</span>
@@ -268,21 +144,7 @@
             <p class="dog-ear-hint" style="margin-top: 10px">{{ trans_choice(':count note waiting in the margins of your entries.|:count notes waiting in the margins of your entries.', $openNotes) }}</p>
         @endif
 
-        @if ($nudges)
-            <h2 class="eyebrow section-label section-label--gap">{{ __('Stacy noticed') }}</h2>
-            <ul class="nudges">
-                @foreach ($nudges as $nudge)
-                    <li wire:key="nudge-{{ md5($nudge['key']) }}">
-                        <span class="nudges__mark" aria-hidden="true"><x-admin.icon name="stacy" size="14" /></span>
-                        <span class="nudges__text">{{ __($nudge['text']) }}</span>
-                        <span class="nudges__do">
-                            <a href="{{ $nudge['href'] }}" class="btn btn--sm" wire:navigate>{{ __($nudge['label']) }}</a>
-                            <button type="button" class="link-button nudges__later" wire:click="notNow(@js($nudge['key']))">{{ __('Not now') }}</button>
-                        </span>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
+        @include('livewire.admin.partials.contents-nudges')
 
         @if ($stickers)
             @php
@@ -453,25 +315,5 @@
 
         <x-admin.folio side="right" />
     </section>
-    {{-- A new sticker: slapped onto the page once, then kept in the sticker book --}}
-    @if ($celebrate)
-        <div class="sticker-pop" x-data="bookletStickerPop()" x-show="open" x-cloak
-             x-on:keydown.escape.window="close()" x-on:click.self="close()"
-             role="dialog" aria-modal="true" aria-labelledby="sticker-pop-title">
-            <div class="sticker-pop__card" x-trap.noscroll="open">
-                <div class="sticker-pop__spot" aria-hidden="true">
-                    <span class="sticker-pop__burst"></span>
-                    <x-admin.milestone :s="$celebrate" size="lg" class="sticker-pop__sticker" />
-                </div>
-                <p class="eyebrow">{{ __('New sticker') }} @if ($alsoEarned) · {{ __('and :count more', ['count' => $alsoEarned]) }} @endif</p>
-                <h2 id="sticker-pop-title" class="serif sticker-pop__title">{{ $celebrate['title'] }}</h2>
-                <p class="sticker-pop__line">{{ __($celebrate['line']) }}</p>
-                <p class="sticker-pop__when mono">{{ $celebrate['scope'] === 'book' ? __('For the whole book') : __('Yours') }} · {{ $celebrate['at'] }}</p>
-                <div class="sticker-pop__do">
-                    <button type="button" class="btn btn--ink" x-on:click="close()">{{ __('Stick it in the book') }}</button>
-                    <a href="{{ route('admin.account') }}#stickers" class="btn btn--quiet" wire:navigate>{{ __('See them all') }}</a>
-                </div>
-            </div>
-        </div>
-    @endif
+    @include('livewire.admin.partials.contents-sticker-pop')
 </div>

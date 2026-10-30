@@ -49,6 +49,7 @@
 
     <div class="desk">
         @if ($yours['layout'] === 'dashboard')
+            <x-admin.deskbar />
             <x-admin.sidebar />
         @else
             <x-admin.flags />
