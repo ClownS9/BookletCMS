@@ -61,7 +61,7 @@
             @endif
         @endforeach
 
-        <a href="{{ route('admin.stacy') }}" wire:navigate class="dock__stacy" @if ($onStacy) aria-current="page" @endif>
+        <a href="{{ route('admin.stacy') }}" wire:navigate class="dock__stacy" data-stacy-dock aria-controls="orb-card" @if ($onStacy) aria-current="page" @endif>
             <span class="dock__star"><x-admin.icon name="stacy" size="24" /></span>
             <span class="dock__label">{{ __('Ask Stacy') }}</span>
         </a>

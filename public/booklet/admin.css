@@ -7330,3 +7330,45 @@ body.desk-narrow .deskbar__fold-arrow { transform: scaleX(-1); }
 body.night .rail-tip { background: #EDE6D6; color: #1E1C18; }
 @keyframes rail-tip-in { from { opacity: 0; margin-left: -4px; } }
 @media (prefers-reduced-motion: reduce) { .rail-tip { animation: none; } }
+
+/* ==========================================================================
+   Stacy docked (bookletStacyDock): her card and greeting hang from the Ask
+   Stacy button, under it, or above the phone's bar. No orb over the page.
+   ========================================================================== */
+html.stacy-docked .orb {
+    top: var(--dock-top);
+    bottom: auto;
+    left: var(--dock-left);
+    right: var(--dock-right);
+    align-items: var(--dock-align);
+    flex-direction: column;
+    gap: 10px;
+}
+html.stacy-docked.stacy-up .orb { top: auto; bottom: var(--dock-bottom); flex-direction: column-reverse; }
+html.stacy-docked .orb__button { display: none; }
+html.stacy-docked .orb__card { max-height: min(560px, calc(100dvh - var(--dock-top, 80px) - 16px)); transform-origin: top right; box-shadow: 0 18px 48px rgba(20, 18, 14, .22), 0 0 0 1px var(--rule); }
+html.stacy-docked.stacy-up .orb__card { width: 100%; max-height: min(560px, calc(100dvh - var(--dock-bottom, 100px) - 70px)); transform-origin: bottom center; }
+html.stacy-docked.stacy-up .orb__greet { width: 100%; box-sizing: border-box; }
+html.stacy-docked .orb__greet { border-radius: 14px; }
+html.stacy-docked .orb__greet::after { display: none; }
+body.layout-dashboard .orb__card { border: 1px solid var(--d-line); border-radius: 12px; background: var(--d-panel); }
+
+/* The Ask Stacy button tells you she's open, listening or thinking */
+[data-stacy-dock] { position: relative; }
+[data-stacy-dock][aria-expanded="true"]:not(.dock__stacy) { box-shadow: 0 0 0 2px var(--paper, #fff), 0 0 0 4px var(--sky); }
+body.layout-dashboard [data-stacy-dock][aria-expanded="true"]:not(.dock__stacy) { box-shadow: 0 0 0 2px var(--d-top), 0 0 0 4px var(--d-accent); }
+[data-stacy-dock][data-stacy-state]::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--paper, #fff);
+    background: var(--coral);
+    animation: stacy-dot 1.1s ease-in-out infinite;
+}
+[data-stacy-dock][data-stacy-state="thinking"]::after { background: var(--sky); }
+@keyframes stacy-dot { 50% { transform: scale(1.35); opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { [data-stacy-dock][data-stacy-state]::after { animation: none; } }

@@ -26,7 +26,7 @@
 
     <span class="deskbar__gap"></span>
 
-    <a href="{{ route('admin.stacy') }}" class="deskbar__stacy" wire:navigate @if (request()->routeIs('admin.stacy')) aria-current="page" @endif>
+    <a href="{{ route('admin.stacy') }}" class="deskbar__stacy" data-stacy-dock aria-controls="orb-card" wire:navigate @if (request()->routeIs('admin.stacy')) aria-current="page" @endif>
         <x-admin.icon name="stacy" size="15" />{{ __('Ask Stacy') }}
     </a>
     <a href="{{ url('/') }}" class="deskbar__link" target="_blank" rel="noopener">

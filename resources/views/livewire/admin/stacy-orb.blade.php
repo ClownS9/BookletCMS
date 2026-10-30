@@ -1,7 +1,10 @@
-<div class="orb" x-data="stacyVoice(@js($this->voice + ['greets' => true]))" :data-state="state" :data-awake="handsFree ? 'yes' : null" :class="{ 'orb--open': $wire.open, 'orb--hands-free': handsFree }">
+<div class="orb" x-data="stacyVoice(@js($this->voice + ['greets' => true]))" :data-state="state" :data-awake="handsFree ? 'yes' : null" :class="{ 'orb--open': $wire.open, 'orb--hands-free': handsFree }"
+     x-on:stacy-toggle.window="$wire.open = ! $wire.open; $wire.open && $nextTick(() => document.getElementById('orb-ask')?.focus())"
+     x-on:click.outside="if ($wire.open && ! $event.target.closest('[data-stacy-dock], .rail-tip')) { $wire.open = false }"
+     x-effect="window.bookletStacyDock?.state($wire.open, state)">
     @if ($this->enabled && $this->brain)
         {{-- The little card --}}
-        <section class="orb__card" x-show="$wire.open" x-cloak
+        <section class="orb__card" id="orb-card" x-show="$wire.open" x-cloak
                  x-transition:enter="orb-in" x-transition:enter-start="orb-in--from" x-transition:leave="orb-out" x-transition:leave-end="orb-in--from"
                  aria-label="{{ __('Stacy') }}" @keydown.escape.stop="$wire.open = false; stopAll()">
             <header class="orb__head">

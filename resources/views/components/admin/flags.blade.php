@@ -15,7 +15,7 @@
     <a class="flag flag--paper" href="#search" x-on:click.prevent="$dispatch('open-search')" aria-label="{{ __('Search everything') }}">
         <x-admin.icon name="search" size="16" /><span class="kbd-hint">⌘K</span>
     </a>
-    <a class="flag flag--ink flag--push" href="{{ route('admin.stacy') }}" wire:navigate @if(request()->routeIs('admin.stacy')) aria-current="page" @endif>
+    <a class="flag flag--ink flag--push" href="{{ route('admin.stacy') }}" data-stacy-dock aria-controls="orb-card" wire:navigate @if(request()->routeIs('admin.stacy')) aria-current="page" @endif>
         <x-admin.icon name="stacy" size="16" />{{ __('Ask Stacy') }}
     </a>
     @foreach ($flags as $flag)

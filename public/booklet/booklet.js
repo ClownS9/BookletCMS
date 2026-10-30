@@ -1920,3 +1920,74 @@ window.bookletSidebarFold = (narrow, url) => ({
     window.addEventListener('scroll', hide, true);
     document.addEventListener('livewire:navigating', hide);
 })();
+
+/*
+ * Stacy, docked: no orb floating over the page. Her quick card opens from the
+ * Ask Stacy button that's already on screen (the Dashboard's top bar, the
+ * Book's sticker, the phone's bottom bar), as a drop-down under it, or as a
+ * sheet above the bar on a phone. Her greeting appears there too. The button
+ * shows when she's listening or thinking. If no Ask Stacy button is on screen,
+ * the orb comes back as it was. On the Ask Stacy page itself (no card), the
+ * button simply goes to the page.
+ */
+window.bookletStacyDock = (() => {
+    const root = document.documentElement;
+    let anchor = null;
+    const visible = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && getComputedStyle(el).visibility !== 'hidden'; };
+    const triggers = () => [...document.querySelectorAll('[data-stacy-dock]')];
+    const place = (el) => {
+        anchor = el && document.body.contains(el) ? el : triggers().find(visible) || null;
+        if (!anchor || !document.querySelector('.orb .orb__card, .orb .orb__greet')) {
+            root.classList.remove('stacy-docked', 'stacy-up');
+            return;
+        }
+        const r = anchor.getBoundingClientRect(), edge = 8;
+        const up = r.top > innerHeight / 2;
+        root.classList.add('stacy-docked');
+        root.classList.toggle('stacy-up', up);
+        if (up) {
+            root.style.setProperty('--dock-bottom', Math.round(innerHeight - r.top + 10) + 'px');
+            root.style.setProperty('--dock-left', edge + 'px');
+            root.style.setProperty('--dock-right', edge + 'px');
+            root.style.setProperty('--dock-align', 'stretch');
+        } else {
+            root.style.setProperty('--dock-top', Math.round(r.bottom + 8) + 'px');
+            const rightHalf = r.left + r.width / 2 > innerWidth / 2;
+            root.style.setProperty('--dock-left', rightHalf ? 'auto' : Math.max(edge, Math.round(r.left)) + 'px');
+            root.style.setProperty('--dock-right', rightHalf ? Math.max(edge, Math.round(innerWidth - r.right)) + 'px' : 'auto');
+            root.style.setProperty('--dock-align', rightHalf ? 'flex-end' : 'flex-start');
+        }
+    };
+    const ours = (e) => {
+        const t = e.target instanceof Element ? e.target.closest('[data-stacy-dock]') : null;
+        if (!t || e.metaKey || e.ctrlKey || e.shiftKey || (e.button !== undefined && e.button !== 0)) return null;
+        return document.querySelector('.orb .orb__card') ? t : null; // her page, or Stacy is off: just go
+    };
+    // Page links start on press and release (wire:navigate), so keep those from the link too.
+    ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchstart', 'touchend'].forEach((type) =>
+        document.addEventListener(type, (e) => { if (ours(e)) e.stopPropagation(); }, true));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && ours(e)) e.stopPropagation(); }, true);
+    document.addEventListener('click', (e) => {
+        const t = ours(e);
+        if (!t) return;
+        e.preventDefault();
+        e.stopPropagation();
+        place(t);
+        window.dispatchEvent(new CustomEvent('stacy-toggle'));
+    }, true);
+    const settle = () => requestAnimationFrame(() => place(anchor && visible(anchor) ? anchor : null));
+    window.addEventListener('resize', settle);
+    document.addEventListener('livewire:navigated', () => { anchor = null; settle(); });
+    document.addEventListener('DOMContentLoaded', settle);
+    if (document.readyState !== 'loading') settle();
+    return {
+        // From the orb: reflect open, listening and thinking on the buttons
+        state(open, state) {
+            if (open) settle();
+            triggers().forEach((t) => {
+                t.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (state && state !== 'idle') t.dataset.stacyState = state; else delete t.dataset.stacyState;
+            });
+        },
+    };
+})();
