@@ -74,7 +74,7 @@ class Tools
         'backups' => ['backup', 'back up', 'export', 'download everything', 'restore a backup', 'snapshot'],
         'settings' => ['setting', 'site settings', 'preferences'],
         'inserts' => ['inserts', 'addons', 'add-ons', 'plugins', 'extras', 'extensions'],
-        'upkeep' => ['upkeep', 'clear cache', 'clear the cache', 'clear caches', 'cache', 'optimize', 'optimise', 'make it faster', 'tidy the writing', 'tidy posts', 'maintenance', 'maintenance mode', 'back soon', 'take the site down', 'remake pictures', 'rebuild pictures'],
+        'upkeep' => ['upkeep', 'start again', 'start over', 'factory reset', 'system reset', 'reset the site', 'reset everything', 'reset the book', 'clear cache', 'clear the cache', 'clear caches', 'cache', 'optimize', 'optimise', 'make it faster', 'tidy the writing', 'tidy posts', 'maintenance', 'maintenance mode', 'back soon', 'take the site down', 'remake pictures', 'rebuild pictures'],
         'health' => ['check-up', 'checkup', 'health check', 'site health', 'server check', 'doctor', 'is everything working', 'cron', 'scheduler'],
         'email_settings' => ['email', 'smtp', 'mail settings', 'mail server', 'email settings', 'outgoing mail', 'gmail', 'emails not arriving'],
         'account' => ['my account', 'profile', 'my profile', 'password'],

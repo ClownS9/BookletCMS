@@ -256,7 +256,7 @@
                     <span class="stacy-badge" style="width: 40px; height: 40px; background: var(--{{ $away ? 'sun' : 'sand' }}); color: #1E1C18" aria-hidden="true"><x-admin.icon name="settings" size="18" /></span>
                     <span style="min-width: 0">
                         <span style="display: block; font-size: 15px; font-weight: 500">{{ __('Upkeep') }}</span>
-                        <span style="display: block; font-size: 13px; color: var(--faint)">{{ $away ? __('Readers are seeing “back soon”.') : __('Clear caches, make it quick, remake pictures, tidy the writing') }}</span>
+                        <span style="display: block; font-size: 13px; color: var(--faint)">{{ $away ? __('Readers are seeing “back soon”.') : __('Clear caches, make it quick, remake pictures, tidy the writing, start again') }}</span>
                     </span>
                     <span aria-hidden="true" class="muted" style="margin-left: auto">→</span>
                 </a>

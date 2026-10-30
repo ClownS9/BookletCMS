@@ -19,8 +19,8 @@ class BookletList extends Command
 
     /** Where each command is listed. Any booklet: command not here goes under "More". */
     public const GROUPS = [
-        'Upkeep' => ['doctor', 'cache:clear', 'optimize', 'down', 'up'],
-        'Content' => ['tidy', 'links', 'export', 'import', 'import-wordpress', 'git-commit', 'tidy-duplicates', 'builder-import', 'reset'],
+        'Upkeep' => ['doctor', 'cache:clear', 'optimize', 'down', 'up', 'reset'],
+        'Content' => ['tidy', 'links', 'export', 'import', 'import-wordpress', 'git-commit', 'tidy-duplicates', 'builder-import'],
         'Pictures' => ['pictures', 'pictures:rebuild'],
         'Site' => ['publish-static', 'pages-clear', 'send-posts', 'weekly-letter'],
         'Backups' => ['backup', 'restore'],

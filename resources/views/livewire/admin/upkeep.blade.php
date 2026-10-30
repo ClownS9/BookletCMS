@@ -11,7 +11,7 @@
     };
 @endphp
 <div style="display: contents" @if ($picturesBusy) wire:poll.4s @endif>
-    {{-- Left page: keeping it quick and tidy --}}
+    {{-- Left page: keeping it quick and tidy, and starting again --}}
     <section class="page page--left page--stack" style="flex-basis: 440px">
         <div>
             <div class="page-head">
@@ -20,7 +20,7 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ \App\Support\AdminNav::chapterLabel() }} · {{ __('Upkeep') }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Upkeep') }}</h1>
-                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Looking after the book: clear what’s safe to clear, make it quick, remake pictures and tidy how things are written. Each one is also a command:') }} <code>php booklet</code></p>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Looking after the book: clear what’s safe to clear, make it quick, remake pictures, tidy how things are written, or start again. Each one is also a command:') }} <code>php booklet</code></p>
             </div>
         </div>
 
@@ -115,6 +115,64 @@
             @endif
         </x-admin.card>
 
+        <x-admin.card>
+            <h2 class="heading upkeep-title" id="start-again">{{ __('Start again') }}</h2>
+            <p class="field__hint" style="margin: 0">{{ __('Clear the parts you choose, or everything for a fresh start, as a new install. A backup is made first, so you can bring the book back from Backups.') }}</p>
+            <fieldset class="upkeep-tidy upkeep-reset" aria-describedby="start-again">
+                <legend>{{ __('What should go') }}</legend>
+                <ul role="list">
+                    @foreach ($parts as $key => $part)
+                        <li wire:key="part-{{ $key }}">
+                            <label class="check">
+                                <input type="checkbox" value="{{ $key }}" wire:model.live="resetParts" @disabled($resetEverything)>
+                                <span>
+                                    <strong>{{ __($part['label']) }} @unless ($part['backup'])<span class="upkeep-reset__lost">{{ __('Not in backups') }}</span>@endunless</strong>
+                                    <small>{{ __($part['about']) }}</small>
+                                </span>
+                            </label>
+                        </li>
+                    @endforeach
+                    <li class="upkeep-reset__all">
+                        <label class="check">
+                            <input type="checkbox" wire:model.live="resetEverything">
+                            <span>
+                                <strong>{{ __('Everything, like a new install') }}</strong>
+                                <small>{{ __('Every part above, how the book is arranged, and everyone, you too. You go to First setup to begin again.') }}</small>
+                            </span>
+                        </label>
+                    </li>
+                </ul>
+                @error('resetParts') <p class="field__error">{{ $message }}</p> @enderror
+            </fieldset>
+
+            @if ($resetEverything || $resetParts !== [])
+                <form wire:submit="startAgain" class="upkeep-reset__confirm">
+                    <p class="field__hint" style="margin: 0">
+                        @if ($resetEverything)
+                            {{ __('Everything goes, and you’re signed out. Theme and insert files, and backups, stay.') }}
+                        @else
+                            {{ __('Your own account stays. Theme and insert files, and backups, stay.') }}
+                        @endif
+                    </p>
+                    <div class="field">
+                        <label for="reset-name">{{ __('Type the site’s name, :name, to go ahead', ['name' => $siteName]) }}</label>
+                        <input id="reset-name" type="text" wire:model="resetName" autocomplete="off" spellcheck="false">
+                        @error('resetName') <p class="field__error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="field">
+                        <label for="reset-password">{{ __('Your password') }}</label>
+                        <input id="reset-password" type="password" wire:model="resetPassword" autocomplete="current-password">
+                        @error('resetPassword') <p class="field__error">{{ $message }}</p> @enderror
+                    </div>
+                    <button type="submit" class="btn btn--danger" style="align-self: flex-start" wire:loading.attr="disabled" wire:target="startAgain">
+                        <span wire:loading.remove wire:target="startAgain">{{ $resetEverything ? __('Back up and empty everything') : __('Back up and start again') }}</span>
+                        <span wire:loading wire:target="startAgain">{{ __('Backing up, then clearing…') }}</span>
+                    </button>
+                </form>
+            @endif
+            <p class="field__hint" style="margin: 0"><code>php booklet reset</code> · <code>php booklet reset --everything</code></p>
+        </x-admin.card>
+
         <x-admin.folio side="left" />
     </section>
 
@@ -165,7 +223,7 @@
                 <div><dt><code>php booklet backup</code></dt><dd>{{ __('Back up the whole book') }}</dd></div>
                 <div><dt><code>php booklet tidy --apply</code></dt><dd>{{ __('Tidy without looking first') }}</dd></div>
                 <div><dt><code>php booklet links</code></dt><dd>{{ __('Check every link') }}</dd></div>
-                <div><dt><code>php booklet reset</code></dt><dd>{{ __('Start again from the starter book. Only in the terminal: it backs up first and asks you to type the site’s name.') }}</dd></div>
+                <div><dt><code>php booklet restore</code></dt><dd>{{ __('Bring a backup back') }}</dd></div>
             </dl>
         </x-admin.card>
 

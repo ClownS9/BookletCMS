@@ -243,7 +243,7 @@ class SearchIndex
             ->when(request()->user()?->isAdmin(), fn ($c) => $c->push(
                 ['label' => __('Email'), 'meta' => __('The mail server the book sends through (SMTP)'), 'href' => route('admin.settings.email'), 'tone' => 'var(--sand)', 'icon' => 'mail'],
                 ['label' => __('Check-up'), 'meta' => __('Is the server giving the book everything it needs?'), 'href' => route('admin.settings.health'), 'tone' => 'var(--mint)', 'icon' => 'pulse'],
-                ['label' => __('Upkeep'), 'meta' => __('Clear caches, make it quick, remake pictures, tidy the writing, readers away'), 'href' => route('admin.settings.upkeep'), 'tone' => 'var(--sand)', 'icon' => 'pulse'],
+                ['label' => __('Upkeep'), 'meta' => __('Clear caches, make it quick, remake pictures, tidy the writing, readers away, start again'), 'href' => route('admin.settings.upkeep'), 'tone' => 'var(--sand)', 'icon' => 'pulse'],
                 ['label' => __('How Stacy behaves'), 'meta' => __('Answer length, tone, limits'), 'href' => route('admin.settings.stacy.behaviour'), 'tone' => 'var(--ink)', 'icon' => 'stacy'],
                 ['label' => __('Backups'), 'meta' => __('Download the whole book, or restore it'), 'href' => route('admin.backups'), 'tone' => 'var(--sand)', 'icon' => 'book'],
                 ['label' => __('Move in from WordPress'), 'meta' => __('Import posts, pages, pictures and comments'), 'href' => route('admin.import'), 'tone' => 'var(--sand)', 'icon' => 'upload'],

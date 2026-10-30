@@ -7490,6 +7490,12 @@ body.is-drag-sorting, body.is-drag-sorting * { cursor: grabbing !important; user
 .upkeep-away { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--sun) 28%, var(--paper-3)); color: var(--ink); }
 .upkeep-away small { color: var(--muted); }
 .upkeep-away p { margin: 4px 0 0; }
+.upkeep-reset ul { max-height: none; }
+.upkeep-reset strong { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-weight: 600; font-size: 14px; }
+.upkeep-reset__lost { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 500; background: color-mix(in srgb, var(--coral) 22%, transparent); color: var(--ink); }
+.upkeep-reset__all { background: color-mix(in srgb, var(--coral) 9%, transparent); }
+.upkeep-reset input:disabled + span { opacity: .75; }
+.upkeep-reset__confirm { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--coral) 45%, var(--rule)); }
 .upkeep-cli { margin: 0; display: flex; flex-direction: column; }
 .upkeep-cli > div { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr); gap: 4px 14px; padding: 8px 0; border-top: 1px solid var(--rule); }
 .upkeep-cli dt { margin: 0; }

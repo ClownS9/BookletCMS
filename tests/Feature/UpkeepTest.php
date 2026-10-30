@@ -11,6 +11,7 @@ use App\Support\Upkeep;
 use Database\Seeders\BookletStarterSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -209,21 +210,163 @@ class UpkeepTest extends TestCase
 
     // Starting again ------------------------------------------------------------
 
-    public function test_starting_again_backs_up_first_and_only_with_the_sites_name(): void
+    protected function siteName(): string
+    {
+        return (string) (Booklet::globals('site')?->get('site_name') ?: 'booklet');
+    }
+
+    protected function backups(): \Illuminate\Support\Collection
+    {
+        return \App\Support\Backups::list()->where('kind', 'before-reset');
+    }
+
+    public function test_starting_again_from_the_terminal_needs_the_sites_name(): void
     {
         Storage::fake('local');
         $this->messy('Something of mine');
 
-        $this->artisan('booklet:reset')
-            ->expectsQuestion('Type the site’s name ('.(Booklet::globals('site')?->get('site_name') ?: 'booklet').') to go ahead', 'wrong')
+        $this->artisan('booklet:reset', ['--only' => 'content'])
+            ->expectsQuestion('Type the site’s name ('.$this->siteName().') to go ahead', 'wrong')
             ->assertFailed();
         $this->assertTrue(Booklet::entries()->all()->contains(fn ($e) => $e->get('content') === 'Something of mine'));
+        $this->assertCount(0, $this->backups());
 
-        $this->artisan('booklet:reset', ['--force' => true])->assertSuccessful();
+        $this->artisan('booklet:reset', ['--only' => 'nonsense'])->assertFailed();
+    }
+
+    public function test_starting_again_with_only_the_writing_keeps_everything_else(): void
+    {
+        Storage::fake('local');
+        $this->messy('Something of mine');
+        $other = User::factory()->create(['role' => 'editor']);
+        Booklet::globals('site')->merge(['site_name' => 'Kopi & Kuih'])->save();
+
+        $this->artisan('booklet:reset', ['--force' => true])->assertSuccessful(); // the writing, as before
 
         Booklet::flush();
         $this->assertFalse(Booklet::entries()->all()->contains(fn ($e) => $e->get('content') === 'Something of mine'));
         $this->assertNotEmpty(Booklet::entries()->all()); // the starter book is back
-        $this->assertTrue(\App\Support\Backups::list()->contains(fn ($b) => str_contains($b['name'], 'before-reset')));
+        $this->assertNotNull($other->fresh());
+        $this->assertSame('Kopi & Kuih', $this->siteName());
+        $this->assertCount(1, $this->backups());
+        $this->assertArrayHasKey('reset', Upkeep::last());
+    }
+
+    public function test_choosing_what_goes(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+        Storage::disk('public')->put('covers/kuih.jpg', 'picture');
+        Storage::disk('public')->put('avatars/me.jpg', 'me'); // Booklet's own folder: not Media
+        $other = User::factory()->create(['role' => 'editor', 'email' => 'hana@example.com']);
+        \App\Models\Redirect::create(['from_path' => '/old', 'to_path' => '/new', 'status' => 301]);
+        Booklet::globals('site')->merge(['site_name' => 'Kopi & Kuih', 'look' => ['theme' => 'harbour'], 'backups_nightly' => false])->save();
+        DB::table('ai_providers')->insert(['service' => 'openai', 'enabled' => true, 'api_key' => 'x', 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->artisan('booklet:reset', ['--only' => 'media,people,settings', '--keep' => $this->admin->email, '--force' => true])->assertSuccessful();
+
+        Booklet::flush();
+        $this->assertFalse(Storage::disk('public')->exists('covers/kuih.jpg'));
+        $this->assertTrue(Storage::disk('public')->exists('avatars/me.jpg'));
+        $this->assertNull($other->fresh());
+        $this->assertNotNull($this->admin->fresh());
+        $this->assertSame(0, \App\Models\Redirect::count());
+        $this->assertSame('Kopi & Kuih', $this->siteName()); // the name stays
+        $this->assertNull(Booklet::globals('site')->get('look'));
+        $this->assertNull(Booklet::globals('site')->get('backups_nightly'));
+        $this->assertSame(1, DB::table('ai_providers')->count()); // connected services weren't chosen
+        $this->assertNotEmpty(Booklet::entries()->all()); // neither was the writing
+
+        // The backup brings them back.
+        $this->artisan('booklet:restore', ['file' => $this->backups()->first()['name'], '--force' => true])->assertSuccessful();
+        $this->assertNotNull(User::where('email', 'hana@example.com')->first());
+        $this->assertSame(1, \App\Models\Redirect::count());
+    }
+
+    public function test_people_needs_an_admin_to_stay(): void
+    {
+        $this->artisan('booklet:reset', ['--only' => 'people', '--keep' => 'nobody@example.com', '--force' => true])->assertFailed();
+        $this->assertNotNull($this->admin->fresh());
+    }
+
+    public function test_everything_goes_back_to_first_setup(): void
+    {
+        Storage::fake('local');
+        $this->messy('Something of mine');
+        \App\Models\ActivityLog::record('edited', 'edits', 'entry', 'x', 'Something');
+
+        $this->artisan('booklet:reset', ['--everything' => true, '--force' => true])->assertSuccessful();
+
+        Booklet::flush();
+        $this->assertSame(0, User::count());
+        $this->assertTrue(Booklet::collections()->all()->isEmpty());
+        $this->assertTrue(Booklet::entries()->all()->isEmpty());
+        $this->assertSame(0, DB::table('activity_log')->count());
+        $this->get('/')->assertRedirect(route('setup'));
+        $this->assertCount(1, $this->backups()); // kept: backups are never cleared
+
+        $this->artisan('booklet:restore', ['file' => $this->backups()->first()['name'], '--force' => true])->assertSuccessful();
+        Booklet::flush();
+        $this->assertNotNull(User::where('email', $this->admin->email)->first());
+        $this->assertTrue(Booklet::entries()->all()->contains(fn ($e) => $e->get('content') === 'Something of mine'));
+    }
+
+    public function test_starting_again_from_the_page_needs_the_name_and_your_password(): void
+    {
+        Storage::fake('local');
+        $this->messy('Something of mine');
+        $other = User::factory()->create(['role' => 'editor']);
+
+        $page = Livewire::actingAs($this->admin)->test(UpkeepPage::class)
+            ->assertSee('Start again')->assertSee('Not in backups')
+            ->call('startAgain')->assertHasErrors('resetParts')
+            ->set('resetParts', ['content', 'people'])
+            ->set('resetName', 'wrong')->set('resetPassword', 'password')
+            ->call('startAgain')->assertHasErrors('resetName')
+            ->set('resetName', strtoupper($this->siteName()))->set('resetPassword', 'nope')
+            ->call('startAgain')->assertHasErrors('resetPassword');
+        $this->assertNotNull($other->fresh());
+        $this->assertCount(0, $this->backups());
+
+        $page->set('resetPassword', 'password')->call('startAgain')->assertHasNoErrors()->assertRedirect(route('admin.settings.upkeep'));
+
+        Booklet::flush();
+        $this->assertNull($other->fresh());
+        $this->assertNotNull($this->admin->fresh());
+        $this->assertFalse(Booklet::entries()->all()->contains(fn ($e) => $e->get('content') === 'Something of mine'));
+        $this->assertSame($this->admin->id, Booklet::entries()->all()->first(fn ($e) => $e->collectionHandle() === 'posts')?->get('author'));
+        $this->assertCount(1, $this->backups());
+    }
+
+    public function test_everything_from_the_page_signs_you_out_to_first_setup(): void
+    {
+        Storage::fake('local');
+
+        Livewire::actingAs($this->admin)->test(UpkeepPage::class)
+            ->set('resetEverything', true)
+            ->assertSet('resetParts', array_keys(Upkeep::PARTS))
+            ->set('resetName', $this->siteName())->set('resetPassword', 'password')
+            ->call('startAgain')
+            ->assertRedirect(route('setup'));
+
+        $this->assertSame(0, User::count());
+        $this->assertGuest();
+    }
+
+    public function test_only_admins_start_again(): void
+    {
+        $editor = User::factory()->create(['role' => 'editor']);
+        Livewire::actingAs($editor)->test(UpkeepPage::class)->assertForbidden();
+    }
+
+    public function test_backups_carry_what_a_reset_can_clear(): void
+    {
+        foreach (['roles', 'page_builds', 'page_build_versions', 'shared_sections', 'page_layouts', 'proofs', 'proof_notes', 'inserts', 'readers', 'subscribers'] as $table) {
+            $this->assertArrayHasKey($table, \App\Support\Backups::TABLES);
+        }
+        Storage::fake('local');
+        DB::table('inserts')->insert(['key' => 'recipes', 'enabled' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $this->actingAs($this->admin);
+        $this->assertNotEmpty(\App\Support\Backups::create()['name']); // inserts are known by key, not id
     }
 }

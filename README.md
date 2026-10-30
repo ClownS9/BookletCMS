@@ -109,7 +109,7 @@ See [Security](#security) for how Booklet protects your data, sign-ins and uploa
 - **Backups:** the whole book in one file, nightly if you like, and restored with a look inside first.
 - **Version control:** with content kept as files, every change is committed to git on its own, credited to whoever made it. You can browse the history and put the whole book back to any point. **Send it to GitHub in three steps** from the same page, no commands needed. Booklet won't commit files with unfinished merge marks, and it offers to take private files out of git if any were committed before.
 - **Check-up:** a page (and `php booklet doctor`) that tells you what the server is missing and how to fix it.
-- **Upkeep:** clear caches, prepare the site for speed, remake every picture, tidy how posts and pages are written (you see each change first), and show readers a "back soon" page while you work. All of it is in Settings › Upkeep and on the command line, `php booklet`.
+- **Upkeep:** clear caches, prepare the site for speed, remake every picture, tidy how posts and pages are written (you see each change first), show readers a "back soon" page while you work, and **start again**: clear the parts you choose (posts and pages, media, people, readers, settings, connected services, records) or everything, as a new install. A backup is always made first. All of it is in Settings › Upkeep and on the command line, `php booklet`.
 - A bin that keeps deleted things for 30 days.
 
 ![Version control: the three steps to GitHub on the left, every change as a stitch in the binding on the right](docs/screenshots/version-control.png)
@@ -225,7 +225,7 @@ Booklet has its own command line, `php booklet`. Run it on its own to see every 
 | `php booklet share` | Pack a theme or insert into a .zip to share, checked as Booklet checks one being added |
 | `php booklet make-theme` | Make a theme in `themes/` to change (`--templates` to start from Booklet's templates) |
 | `php booklet publish-static` | Make the site as plain files (`--send` to GitHub Pages, `--address=` for where they'll live) |
-| `php booklet reset` | Start again from the starter book. Backs up first and asks you to type the site's name |
+| `php booklet reset` | Start again: choose what goes (`--only=content,media,people,readers,settings,connections,records`), or `--everything` to empty the book for First setup, like a new install. Always backs up first and asks you to type the site's name |
 
 Most of these are also in **Settings › Upkeep**, which shows when each last ran.
 

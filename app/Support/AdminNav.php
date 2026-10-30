@@ -76,7 +76,7 @@ class AdminNav
             ['bin', __('The bin'), __('Put back what was deleted'), route('admin.bin'), 'bin', 'sand', $r->routeIs('admin.bin'), null, 'tools'],
             ['collections', __('Collections'), __('Chapters & blueprints'), route('admin.collections'), 'layers', 'sand', $r->routeIs('admin.collections'), null, 'tools'],
             ['settings', __('Settings'), __('Site, look & Stacy'), route('admin.settings'), 'settings', 'sand', $r->routeIs('admin.settings', 'admin.settings.*'), null, 'you'],
-            $user?->isAdmin() ? ['upkeep', __('Upkeep'), __('Clear caches, tidy, readers away'), route('admin.settings.upkeep'), 'pulse', 'sand', $r->routeIs('admin.settings.upkeep'), \App\Support\Upkeep::readersAway() ? '!' : null, 'you'] : null,
+            $user?->isAdmin() ? ['upkeep', __('Upkeep'), __('Clear caches, tidy, readers away, start again'), route('admin.settings.upkeep'), 'pulse', 'sand', $r->routeIs('admin.settings.upkeep'), \App\Support\Upkeep::readersAway() ? '!' : null, 'you'] : null,
             $user?->isAdmin() ? ['backups', __('Backups'), __('The whole book in one file'), route('admin.backups'), 'book', 'sand', $r->routeIs('admin.backups'), null, 'you'] : null,
             $user?->isAdmin() ? ['version-control', __('Version control'), __('Every change kept in git'), route('admin.settings.version-control'), 'history', 'sand', $r->routeIs('admin.settings.version-control'), null, 'you'] : null,
             $user?->isAdmin() ? ['look', __('The cover'), __('Themes, fonts & colours'), route('admin.settings.look'), 'book', 'sand', $r->routeIs('admin.settings.look'), null, 'you'] : null,

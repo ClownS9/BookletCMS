@@ -136,6 +136,7 @@ class Backups extends Component
                 'manual' => ['Made by hand', 'sand'],
                 'nightly' => ['Nightly', 'sky'],
                 'before-restore' => ['Before a restore', 'coral'],
+                'before-reset' => ['Before starting again', 'coral'],
                 'uploaded' => ['Uploaded', 'lilac'],
             ],
         ]);

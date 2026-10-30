@@ -25,8 +25,9 @@ use ZipArchive;
  *   tables/{name}.json    people, comments, redirects, sticky notes, dog-ears
  *   files/{disk}/{path}   the media files themselves, and people's pictures
  *
- * Left out on purpose: AI service keys (they stay on this server), Stacy's
- * conversations, visit stats, the activity log and the bin.
+ * Left out on purpose: AI service keys, the email server, webhooks and Content
+ * API keys (their secrets stay on this server), Stacy's conversations, visit
+ * stats, the activity log and the bin.
  *
  * Kept in storage/app/private/backups. Nightly ones keep the newest 7.
  */
@@ -54,6 +55,13 @@ class Backups
         'post_emails' => [],
         'inserts' => [],          // which inserts are on, and their settings (their code is in inserts/)
         'insert_records' => [],   // what inserts keep: albums, events…
+        'roles' => [],            // the roles you made
+        'page_builds' => ['edited_by'],          // pages built of sections
+        'page_build_versions' => ['user_id'],
+        'shared_sections' => [],
+        'page_layouts' => ['created_by'],
+        'proofs' => ['created_by'],              // proof copies, and the notes left on them
+        'proof_notes' => ['resolved_by'],
     ];
 
     protected static function disk(): \Illuminate\Filesystem\FilesystemAdapter
@@ -69,7 +77,7 @@ class Backups
     // Making one ------------------------------------------------------------------
 
     /**
-     * @param  string  $kind  manual · nightly · before-restore
+     * @param  string  $kind  manual · nightly · before-restore · before-reset
      * @return array{name: string, size: int}
      */
     public static function create(string $kind = 'manual', ?User $by = null): array
@@ -105,7 +113,9 @@ class Backups
             if (! Schema::hasTable($table)) {
                 continue;
             }
-            $rows = DB::table($table)->orderBy('id')->get()->map(fn ($r) => (array) $r)->all();
+            // In the order they were made (inserts are known by their key, not a number).
+            $order = Schema::hasColumn($table, 'id') ? 'id' : 'key';
+            $rows = DB::table($table)->orderBy($order)->get()->map(fn ($r) => (array) $r)->all();
             if ($table === 'users') {
                 $rows = array_map(fn ($r) => array_diff_key($r, ['remember_token' => 1]), $rows);
             }
@@ -186,7 +196,7 @@ class Backups
                 'at' => preg_match('/^(\d{4}-\d{2}-\d{2}-\d{6})-/', basename($f), $d)
                     ? (Carbon::createFromFormat('Y-m-d-His', $d[1]) ?: Carbon::createFromTimestamp(self::disk()->lastModified($f)))
                     : Carbon::createFromTimestamp(self::disk()->lastModified($f)),
-                'kind' => preg_match('/-(manual|nightly|before-restore|uploaded)\.zip$/', $f, $m) ? $m[1] : 'manual',
+                'kind' => preg_match('/-(manual|nightly|before-restore|before-reset|uploaded)\.zip$/', $f, $m) ? $m[1] : 'manual',
             ])
             ->sortByDesc('at')
             ->values();
