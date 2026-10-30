@@ -143,11 +143,68 @@ class DashboardDeskTest extends TestCase
         $list->set('status', 'draft')->assertSet('page', 1)->assertDontSee('dash-pages', false);
     }
 
-    public function test_pages_keep_their_tree_in_the_dashboard_layout(): void
+    public function test_pages_are_a_tree_table_with_their_own_row_actions(): void
     {
+        $about = Booklet::entries()->make(['collection' => 'pages', 'slug' => 'about-us', 'published' => true], ['title' => 'About us'])->save();
+        $team = Booklet::entries()->make(['collection' => 'pages', 'slug' => 'our-people', 'published' => true], ['title' => 'Our people'])->save();
+        \App\Booklet\Support\PageTree::for('pages')->place($about->id())->save();
+        \App\Booklet\Support\PageTree::for('pages')->place($team->id())->save();
+
         $this->actingAs($this->admin)->get(route('admin.entries', 'pages'))->assertOk()
-            ->assertSee('role="tree"', false)
-            ->assertDontSee('class="dash-table"', false);
+            ->assertSee('class="dash-table"', false)
+            ->assertSee('In the menu')
+            ->assertDontSee('role="tree"', false);
+
+        $list = Livewire::actingAs($this->admin)->test(Entries::class, ['collection' => 'pages']);
+
+        $list->call('menuFor', $team->id());
+        $this->assertTrue(\App\Booklet\Support\Menus::has('header', $team->id()));
+
+        $list->call('templateFor', $team->id(), 'landing');
+        $this->assertSame('landing', Booklet::entries()->find($team->id())->get('template'));
+
+        // Put "Our people" under "About us": the picker opens, then the page moves and shows indented.
+        $list->call('startMove', $team->id())->assertSet('moving', $team->id())->assertSee('move-parent', false)
+            ->call('moveTo', $about->id())->assertSet('moving', null)->assertSee('dash-table__indent', false);
+        $this->assertContains($team->id(), \App\Booklet\Support\PageTree::for('pages')->descendantsOf($about->id()));
+
+        $list->call('templateFor', $team->id(), 'poster')->assertStatus(422);
+    }
+
+    public function test_a_writer_cannot_rearrange_the_page_tree(): void
+    {
+        $page = Booklet::entries()->make(['collection' => 'pages', 'published' => true], ['title' => 'Somewhere'])->save();
+        $writer = User::factory()->create(['role' => 'writer']);
+        YourBook::save($writer, ['layout' => 'dashboard']);
+
+        Livewire::actingAs($writer->fresh())->test(Entries::class, ['collection' => 'pages'])
+            ->call('startMove', $page->id())->assertStatus(403);
+        Livewire::actingAs($writer->fresh())->test(Entries::class, ['collection' => 'pages'])
+            ->call('menuFor', $page->id())->assertStatus(403);
+    }
+
+    public function test_every_page_gets_a_header_with_breadcrumbs_and_the_book_keeps_its_own(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.backups'))->assertOk()
+            ->assertSee('class="page-head"', false)
+            ->assertSee('page-head__crumbs', false);
+
+        $person = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($person)->get(route('admin.backups'))->assertOk()
+            ->assertSee('class="page-head"', false)
+            ->assertDontSee('page-head__crumbs', false)
+            ->assertSee('class="back"', false);
+    }
+
+    public function test_the_editor_has_its_title_status_and_buttons_on_top(): void
+    {
+        $post = $this->write('Teh tarik at home', '2026-10-01 09:00:00', published: false);
+
+        $this->actingAs($this->admin)->get(route('admin.entries.edit', ['posts', $post->id()]))->assertOk()
+            ->assertSee('page-head--editor', false)
+            ->assertSee('Teh tarik at home')
+            ->assertSee('Save draft')
+            ->assertSee('editor-save is-desk', false);
     }
 
     public function test_the_sidebar_groups_content_tools_and_settings(): void
