@@ -7616,3 +7616,20 @@ body.is-drag-sorting, body.is-drag-sorting * { cursor: grabbing !important; user
 .dash-chip:hover i { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); }
 .dash-chips__clear { margin-left: auto; min-height: 28px; padding: 0; font-size: 13px; color: var(--muted); text-decoration: underline; }
 @media (max-width: 640px) { .dash-filters { grid-template-columns: 1fr 1fr; } .dash-filter--within { grid-column: 1 / -1; } }
+
+/* The same filters in the Book layout: on the page's paper, no table lines */
+.entry-find { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.entry-find .search { flex: 1 1 auto; margin: 0; }
+.entry-find .dash-filter-toggle { flex: none; min-height: 44px; }
+.entry-find__filters .dash-filters { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); margin-top: 12px; padding: 14px; border: 1px solid var(--rule); border-radius: 12px; background: color-mix(in srgb, var(--paper-3) 70%, transparent); }
+.entry-find__filters .dash-chips { margin-top: 10px; padding: 0; border: 0; }
+.entry-find__filters .dash-chip { background: var(--paper); }
+.entry-find__filters .dash-seg { background: var(--edge-1, var(--rule)); }
+.entry-find__filters .dash-seg input:checked + span { background: var(--paper); }
+.entry-find__filters .dash-filter-toggle__n, .entry-find .dash-filter-toggle__n { background: var(--coral); color: #1E1C18; }
+.entry-find .search { min-width: 0; }
+.entry-find .search input { min-width: 0; width: 100%; }
+@media (max-width: 640px) {
+    .entry-find__filters .dash-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
+    .entry-find .dash-filter-toggle { padding-inline: 12px; }
+}

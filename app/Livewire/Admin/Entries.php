@@ -56,7 +56,7 @@ class Entries extends Component
 
     public const SORTS = ['title', '-title', 'date', '-date', 'edited', '-edited'];
 
-    // Filters (the Dashboard's table) -----------------------------------------
+    // Filters (both layouts) -------------------------------------------------
 
     /** Who wrote it: a person's id, "me", or "nobody". */
     #[Url(except: '')]
@@ -578,19 +578,13 @@ class Entries extends Component
         $reviewStates = $all->mapWithKeys(fn (Entry $e) => [$e->id() => \App\Support\Reviews::state($e)])->filter();
         $counts->put('review', $reviewStates->filter(fn ($s) => $s === 'waiting')->count());
 
-        // The Dashboard layout shows the chapter as a table, which can be sorted and filtered.
+        // The Dashboard layout shows the chapter as a table, which can be sorted; both can be filtered.
         $desk = \App\Support\YourBook::of(request()->user())['layout'] === 'dashboard';
         $termTitles = [];
         foreach ($termFields as $f) {
             $termTitles[$f['taxonomy']] ??= Booklet::terms()->all()
                 ->filter(fn ($t) => $t->attribute('taxonomy') === $f['taxonomy'])
                 ->mapWithKeys(fn ($t) => [(string) $t->attribute('slug') => (string) $t->title()])->all();
-        }
-        if (! $desk) {
-            // The Book layout has only its search box: titles and addresses.
-            $this->by = $this->when = $this->edited = '';
-            $this->in = [];
-            $this->within = 'titles';
         }
         if (! isset(self::WHEN[$this->when]) || ! $collection->dated()) {
             $this->when = '';
@@ -674,41 +668,39 @@ class Entries extends Component
         // What the filters can choose from: only what's in this chapter.
         $filterChoices = [];
         $activeFilters = [];
-        if ($desk) {
-            $writers = $all->map(fn (Entry $e) => (string) $e->get('author'))->filter()->countBy();
-            $people = User::query()->whereIn('id', $writers->keys())->orderBy('name')->get();
-            $filterChoices['by'] = ['' => __('Anyone'), 'me' => __('Me')]
-                + $people->reject(fn ($u) => (string) $u->id === (string) request()->user()?->id)
-                    ->mapWithKeys(fn ($u) => [(string) $u->id => $u->name.' ('.$writers[(string) $u->id].')'])->all()
-                + ($all->contains(fn (Entry $e) => ! $e->get('author')) ? ['nobody' => __('Nobody yet')] : []);
-            $filterChoices['in'] = [];
-            foreach ($termFields as $handle => $f) {
-                $used = $all->flatMap(fn (Entry $e) => array_filter((array) $e->get($handle, []), 'is_string'))->countBy();
-                $filterChoices['in'][$handle] = ['label' => __($f['label']), 'options' => ['' => __('Any')]
-                    + $used->sortKeys()->mapWithKeys(fn ($n, $slug) => [$slug => ($termTitles[$f['taxonomy']][$slug] ?? $slug).' ('.$n.')'])
-                        ->sortBy(fn ($label) => Str::lower($label))->all()
-                    + ['-' => __('None')]];
-            }
-            $filterChoices['when'] = $collection->dated() ? ['' => __('Any time')] + array_map(fn ($l) => __($l), self::WHEN) : [];
-            $filterChoices['edited'] = ['' => __('Any time')] + array_map(fn ($l) => __($l), self::EDITED);
-
-            if ($this->by !== '') {
-                $activeFilters[] = ['key' => 'by', 'label' => __('By'), 'value' => $filterChoices['by'][$this->by] ?? $this->by];
-            }
-            foreach ($this->in as $handle => $slug) {
-                $activeFilters[] = ['key' => 'in.'.$handle, 'label' => __($termFields[$handle]['label']), 'value' => $slug === '-' ? __('None') : ($termTitles[$termFields[$handle]['taxonomy']][$slug] ?? $slug)];
-            }
-            if ($this->when !== '') {
-                $activeFilters[] = ['key' => 'when', 'label' => __('Date'), 'value' => __(self::WHEN[$this->when])];
-            }
-            if ($this->edited !== '') {
-                $activeFilters[] = ['key' => 'edited', 'label' => __('Edited'), 'value' => __(self::EDITED[$this->edited])];
-            }
-            if ($this->within !== 'titles') {
-                $activeFilters[] = ['key' => 'within', 'label' => __('Search in'), 'value' => __('everything, the writing too')];
-            }
-            $activeFilters = array_map(fn ($f) => ['value' => preg_replace('/ \(\d+\)$/', '', (string) $f['value'])] + $f, $activeFilters);
+        $writers = $all->map(fn (Entry $e) => (string) $e->get('author'))->filter()->countBy();
+        $people = User::query()->whereIn('id', $writers->keys())->orderBy('name')->get();
+        $filterChoices['by'] = ['' => __('Anyone'), 'me' => __('Me')]
+            + $people->reject(fn ($u) => (string) $u->id === (string) request()->user()?->id)
+                ->mapWithKeys(fn ($u) => [(string) $u->id => $u->name.' ('.$writers[(string) $u->id].')'])->all()
+            + ($all->contains(fn (Entry $e) => ! $e->get('author')) ? ['nobody' => __('Nobody yet')] : []);
+        $filterChoices['in'] = [];
+        foreach ($termFields as $handle => $f) {
+            $used = $all->flatMap(fn (Entry $e) => array_filter((array) $e->get($handle, []), 'is_string'))->countBy();
+            $filterChoices['in'][$handle] = ['label' => __($f['label']), 'options' => ['' => __('Any')]
+                + $used->sortKeys()->mapWithKeys(fn ($n, $slug) => [$slug => ($termTitles[$f['taxonomy']][$slug] ?? $slug).' ('.$n.')'])
+                    ->sortBy(fn ($label) => Str::lower($label))->all()
+                + ['-' => __('None')]];
         }
+        $filterChoices['when'] = $collection->dated() ? ['' => __('Any time')] + array_map(fn ($l) => __($l), self::WHEN) : [];
+        $filterChoices['edited'] = ['' => __('Any time')] + array_map(fn ($l) => __($l), self::EDITED);
+
+        if ($this->by !== '') {
+            $activeFilters[] = ['key' => 'by', 'label' => __('By'), 'value' => $filterChoices['by'][$this->by] ?? $this->by];
+        }
+        foreach ($this->in as $handle => $slug) {
+            $activeFilters[] = ['key' => 'in.'.$handle, 'label' => __($termFields[$handle]['label']), 'value' => $slug === '-' ? __('None') : ($termTitles[$termFields[$handle]['taxonomy']][$slug] ?? $slug)];
+        }
+        if ($this->when !== '') {
+            $activeFilters[] = ['key' => 'when', 'label' => __('Date'), 'value' => __(self::WHEN[$this->when])];
+        }
+        if ($this->edited !== '') {
+            $activeFilters[] = ['key' => 'edited', 'label' => __('Edited'), 'value' => __(self::EDITED[$this->edited])];
+        }
+        if ($this->within !== 'titles') {
+            $activeFilters[] = ['key' => 'within', 'label' => __('Search in'), 'value' => __('everything, the writing too')];
+        }
+        $activeFilters = array_map(fn ($f) => ['value' => preg_replace('/ \(\d+\)$/', '', (string) $f['value'])] + $f, $activeFilters);
 
         return $this->titled(view($desk ? 'livewire.admin.entries-table' : 'livewire.admin.entries', [
             'filterChoices' => $filterChoices,
