@@ -2,13 +2,13 @@
      as tabs under it, and a dock along the bottom with Ask Stacy in the middle.
      Waiting and the Index open as sheets from the bottom. --}}
 @php
-    $chapters = collect(\App\Support\AdminNav::chapters());
+    // This person's menu (Your menu): their names and colours, without what they've hidden.
+    $chapters = collect(\App\Support\AdminNav::menu())->reject(fn ($i) => $i['where'] === 'hidden');
     $current = \App\Support\AdminNav::current();
     $note = \App\Support\AdminNav::currentNote();
     $waiting = \App\Support\AdminNav::waiting();
     $waitingTotal = array_sum(array_column($waiting, 'count'));
-    $contents = $chapters->firstWhere('key', 'contents');
-    $second = $chapters->firstWhere('key', 'posts') ?? $chapters->firstWhere('key', 'pages') ?? $chapters->firstWhere('key', 'media');
+    [$contents, $second] = array_pad(\App\Support\AdminNav::dock(), 2, null);
     $onStacy = request()->routeIs('admin.stacy');
     $indexActive = ! ($contents['active'] ?? false) && ! ($second['active'] ?? false) && ! $onStacy;
     $groups = ['main' => __('Chapters'), 'tools' => __('The thumb index'), 'you' => __('The back of the book')];

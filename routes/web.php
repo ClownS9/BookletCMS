@@ -185,6 +185,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::get('/settings/stacy', Admin\StacySettings::class)->name('settings.stacy');
     Route::get('/settings/stacy/behaviour', Admin\StacyBehaviour::class)->name('settings.stacy.behaviour');
     Route::get('/account', Admin\Account::class)->name('account');
+    Route::get('/account/yours', Admin\MakeItYours::class)->name('account.yours');
+    Route::get('/account/menu', Admin\YourMenu::class)->name('account.menu');
+    // Night reading on or off, from anywhere (the Dashboard's own menu).
+    Route::post('/night', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $user->forceFill(['preferences' => array_merge((array) $user->preferences, ['night' => ! ($user->preferences['night'] ?? false)])])->save();
+
+        return back();
+    })->name('night');
     Route::get('/activity', Admin\Activity::class)->name('activity');
     Route::get('/visits', Admin\Visits::class)->name('visits');
     Route::get('/bin', Admin\Bin::class)->name('bin');

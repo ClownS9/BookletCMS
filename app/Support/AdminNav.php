@@ -84,7 +84,7 @@ class AdminNav
             $user?->isAdmin() ? ['webhooks', __('Webhooks'), __('Tell other services what happened'), route('admin.settings.webhooks'), 'redirect', 'sand', $r->routeIs('admin.settings.webhooks'), null, 'you'] : null,
             $user?->isAdmin() ? ['updates', __('Updates'), __('New versions of Booklet'), route('admin.settings.updates'), 'history', 'sand', $r->routeIs('admin.settings.updates'), \App\Support\Updates::available() ? '1' : null, 'you'] : null,
             $user?->isAdmin() ? ['import', __('Move in from WordPress'), __('Bring an old site across'), route('admin.import'), 'upload', 'sand', $r->routeIs('admin.import'), null, 'you'] : null,
-            ['account', __('Your account'), __('Profile & password'), route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account'), null, 'you'],
+            ['account', __('Your account'), __('Profile & password'), route('admin.account'), 'user', 'lilac', $r->routeIs('admin.account', 'admin.account.*'), null, 'you'],
         ];
 
         return array_values(array_map(fn ($i) => [
@@ -564,27 +564,6 @@ class AdminNav
     }
 
     /**
-     * The thumb index: the tools, as tabs cut into the edge of the pages.
-     *
-     * @return array<int, array{key: string, label: string, href: string, tone: string, active: bool, badge: ?int}>
-     */
-    public static function thumbIndex(): array
-    {
-        $r = static::page();
-        $byKey = collect(static::chapters())->keyBy('key');
-        $tabs = [['key' => 'visits', 'label' => __('Visits'), 'href' => route('admin.visits'), 'tone' => 'sky', 'active' => $r->routeIs('admin.visits'), 'badge' => null]];
-
-        foreach (['calendar', 'inbox', 'forms', 'menus', 'activity', 'bin'] as $key) {
-            if ($byKey->has($key)) {
-                $c = $byKey[$key];
-                $tabs[] = ['key' => $key, 'label' => $key === 'menus' ? __('Menus') : ($key === 'bin' ? __('Bin') : $c['label']), 'href' => $c['href'], 'tone' => $c['tone'], 'active' => (bool) $c['active'], 'badge' => $c['badge']];
-            }
-        }
-
-        return $tabs;
-    }
-
-    /**
      * Everything that needs a hand, counted: comments to read, new messages,
      * posts sent for review and readers asking to join. Only what this person
      * may look after.
@@ -610,5 +589,156 @@ class AdminNav
             \App\Support\Reviews::reviews($user) ? ['key' => 'review', 'label' => trans_choice('post for review|posts for review', $review), 'count' => $review, 'href' => route('admin.contents').'#for-review', 'tone' => 'sun'] : null,
             $arranges ? ['key' => 'readers', 'label' => trans_choice('reader to let in|readers to let in', $n = \App\Support\ReaderAccounts::waitingCount()), 'count' => $n, 'href' => route('admin.readers'), 'tone' => 'lilac'] : null,
         ]));
+    }
+
+    // Your menu: each person's own arrangement -------------------------------
+
+    /** Where things live until someone moves them. */
+    public const MENU_STICKERS = ['contents', 'posts', 'pages', 'media', 'people', 'comments'];
+
+    public const MENU_THUMBS = ['visits', 'calendar', 'inbox', 'forms', 'menus', 'activity', 'bin'];
+
+    public const MENU_PLACES = ['sticker', 'thumb', 'index', 'hidden'];
+
+    public const TONES = ['coral', 'sun', 'mint', 'sky', 'lilac', 'rose', 'sand'];
+
+    /** Always on the phone's bar, so nothing can get lost. */
+    public const DOCK_FIXED = ['stacy', 'waiting', 'index'];
+
+    /**
+     * Everything this person may open, in their order, each with where it
+     * lives (a sticker, a side tab, only the Index, or hidden), its name and
+     * its colour. Renaming and recolouring are theirs alone.
+     *
+     * @return array<int, array{key: string, label: string, original: string, hint: string, href: string, icon: string, tone: string, where: string, active: bool, badge: ?int, group: string}>
+     */
+    public static function menu(?\App\Models\User $user = null): array
+    {
+        $user ??= request()->user();
+        $memo = spl_object_id(request()).':'.($user?->id ?? 0).':'.md5((string) json_encode($user?->preferences['menu'] ?? null));
+        if (isset(static::$menuMemo[$memo])) {
+            return static::$menuMemo[$memo];
+        }
+        $r = static::page();
+        $chapters = collect(static::chapters())->keyBy('key');
+        // Visits lives under Activity in the book, but is a tool of its own here.
+        $chapters->put('visits', ['key' => 'visits', 'label' => __('Visits'), 'hint' => __('Who read what'), 'href' => route('admin.visits'), 'icon' => 'pulse', 'tone' => 'sky', 'active' => $r->routeIs('admin.visits'), 'badge' => null, 'group' => 'tools']);
+
+        // The six chapter stickers light up for their whole chapter, as they always have.
+        $insertChapter = $r->routeIs('admin.insert') ? mb_strtolower((string) (static::spread()['chapterTitle'] ?? '')) : '';
+        $wide = [
+            'contents' => $r->routeIs('admin.contents', 'admin.activity', 'admin.collections', 'admin.bin'),
+            'posts' => $r->route('collection') === 'posts' || $r->routeIs('admin.calendar', 'admin.taxonomies', 'admin.print') || $insertChapter === 'posts',
+            'pages' => $r->route('collection') === 'pages' || $r->routeIs('admin.menus', 'admin.redirects') || $insertChapter === 'pages',
+            'media' => $r->routeIs('admin.media') || $insertChapter === 'media',
+            'people' => $r->routeIs('admin.people', 'admin.account', 'admin.account.*', 'admin.subscribers', 'admin.readers', 'admin.readers.*') || $insertChapter === 'people',
+            'comments' => $r->routeIs('admin.comments', 'admin.inbox') || $insertChapter === 'comments',
+        ];
+
+        $saved = static::savedMenu($user);
+        $keys = array_values(array_unique(array_merge(
+            array_values(array_filter($saved['order'], fn ($k) => $chapters->has($k))),
+            array_values(array_filter(array_merge(self::MENU_STICKERS, self::MENU_THUMBS), fn ($k) => $chapters->has($k))),
+            $chapters->keys()->all(),
+        )));
+
+        $items = [];
+        foreach ($keys as $key) {
+            $c = $chapters[$key];
+            $mine = $saved['items'][$key] ?? [];
+            $default = in_array($key, self::MENU_STICKERS, true) ? 'sticker' : (in_array($key, self::MENU_THUMBS, true) ? 'thumb' : 'index');
+            $items[] = [
+                'key' => $key,
+                'label' => $mine['label'] ?? $c['label'],
+                'original' => $c['label'],
+                'hint' => $c['hint'],
+                'href' => $c['href'],
+                'icon' => $c['icon'],
+                'tone' => $mine['tone'] ?? $c['tone'],
+                'where' => $mine['where'] ?? $default,
+                'active' => (bool) ($wide[$key] ?? $c['active']),
+                'badge' => $c['badge'],
+                'group' => $c['group'],
+            ];
+        }
+
+        static::$menuMemo = [$memo => $items];
+
+        return $items;
+    }
+
+    /** @var array<string, array<int, array<string, mixed>>> */
+    protected static array $menuMemo = [];
+
+    /** @return array<int, array<string, mixed>> */
+    public static function menuIn(string $where): array
+    {
+        return array_values(array_filter(static::menu(), fn ($i) => $i['where'] === $where));
+    }
+
+    /**
+     * The two chapters on the phone's bar (beside Ask Stacy, Waiting and the Index).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function dock(): array
+    {
+        $menu = collect(static::menu())->keyBy('key');
+        $wanted = static::savedMenu(request()->user())['dock'];
+        $picked = array_values(array_filter($wanted, fn ($k) => $menu->has($k) && $menu[$k]['where'] !== 'hidden'));
+        foreach (['contents', 'posts', 'pages', 'media'] as $fallback) {
+            if (count($picked) >= 2) {
+                break;
+            }
+            if ($menu->has($fallback) && ! in_array($fallback, $picked, true)) {
+                $picked[] = $fallback;
+            }
+        }
+
+        return array_map(fn ($k) => $menu[$k], array_slice($picked, 0, 2));
+    }
+
+    /**
+     * What this person saved: their order, each item's changes, and the phone bar.
+     *
+     * @return array{order: string[], items: array<string, array{label?: string, tone?: string, where?: string}>, dock: string[]}
+     */
+    public static function savedMenu(?\App\Models\User $user): array
+    {
+        return static::cleanMenu((array) ($user?->preferences['menu'] ?? []));
+    }
+
+    /**
+     * @param  array<string, mixed>  $in
+     * @return array{order: string[], items: array<string, array{label?: string, tone?: string, where?: string}>, dock: string[]}
+     */
+    public static function cleanMenu(array $in): array
+    {
+        $key = fn ($k) => is_string($k) && preg_match('/^[a-z][a-z0-9-]{0,40}$/', $k);
+        $items = [];
+        foreach ((array) ($in['items'] ?? []) as $k => $item) {
+            if (! $key($k) || ! is_array($item)) {
+                continue;
+            }
+            $clean = [];
+            if (is_string($item['label'] ?? null) && trim($item['label']) !== '') {
+                $clean['label'] = mb_substr(trim(strip_tags($item['label'])), 0, 40);
+            }
+            if (in_array($item['tone'] ?? null, self::TONES, true)) {
+                $clean['tone'] = $item['tone'];
+            }
+            if (in_array($item['where'] ?? null, self::MENU_PLACES, true)) {
+                $clean['where'] = $item['where'];
+            }
+            if ($clean !== []) {
+                $items[$k] = $clean;
+            }
+        }
+
+        return [
+            'order' => array_values(array_unique(array_filter((array) ($in['order'] ?? []), $key))),
+            'items' => $items,
+            'dock' => array_slice(array_values(array_unique(array_filter((array) ($in['dock'] ?? []), $key))), 0, 2),
+        ];
     }
 }

@@ -1,15 +1,6 @@
 @php
-    // An insert's page lights the flag of the chapter it's tucked into.
-    $insertChapter = request()->routeIs('admin.insert') ? mb_strtolower((string) (\App\Support\AdminNav::spread()['chapterTitle'] ?? '')) : '';
-    $flags = [
-        ['key' => 'contents', 'label' => 'Contents', 'route' => route('admin.contents'), 'tone' => 'coral', 'active' => request()->routeIs('admin.contents', 'admin.activity', 'admin.collections', 'admin.visits', 'admin.bin')],
-        request()->user()?->canOpen('posts') === false ? null : ['key' => 'posts', 'label' => 'Posts', 'route' => route('admin.entries', 'posts'), 'tone' => 'sun', 'active' => request()->route('collection') === 'posts' || request()->routeIs('admin.calendar', 'admin.taxonomies', 'admin.print') || $insertChapter === 'posts'],
-        request()->user()?->canOpen('pages') === false ? null : ['key' => 'pages', 'label' => 'Pages', 'route' => route('admin.entries', 'pages'), 'tone' => 'mint', 'active' => request()->route('collection') === 'pages' || request()->routeIs('admin.menus', 'admin.redirects') || $insertChapter === 'pages'],
-        ['key' => 'media', 'label' => 'Media', 'route' => route('admin.media'), 'tone' => 'sky', 'active' => request()->routeIs('admin.media') || $insertChapter === 'media'],
-        ['key' => 'people', 'label' => 'People', 'route' => route('admin.people'), 'tone' => 'lilac', 'active' => request()->routeIs('admin.people', 'admin.account', 'admin.subscribers', 'admin.readers', 'admin.readers.*') || $insertChapter === 'people'],
-        ['key' => 'comments', 'label' => 'Comments', 'route' => route('admin.comments'), 'tone' => 'rose', 'active' => request()->routeIs('admin.comments', 'admin.inbox') || $insertChapter === 'comments'],
-    ];
-    $flags = array_values(array_filter($flags));
+    // The stickers: this person's own (Your menu), in their order, names and colours.
+    $flags = array_map(fn ($i) => ['key' => $i['key'], 'label' => $i['label'], 'route' => $i['href'], 'tone' => $i['tone'], 'active' => $i['active']], \App\Support\AdminNav::menuIn('sticker'));
     $notes = \App\Support\AdminNav::notes();
     $back = \App\Support\AdminNav::backOfTheBook();
     $waitingComments = collect(\App\Support\AdminNav::waiting())->firstWhere('key', 'comments')['count'] ?? 0;
@@ -31,11 +22,11 @@
         @php $note = $notes[$flag['key']] ?? null; @endphp
         @if ($note)
             <span class="flag-pair flag--{{ $flag['tone'] }}" :class="open === '{{ $flag['key'] }}' && 'is-open'" @if ($flag['active']) data-current @endif>
-                <a class="flag flag--{{ $flag['tone'] }} flag-pair__go" href="{{ $flag['route'] }}" wire:navigate @if($flag['active']) aria-current="page" @endif>{{ __($flag['label']) }}</a>
+                <a class="flag flag--{{ $flag['tone'] }} flag-pair__go" href="{{ $flag['route'] }}" wire:navigate @if($flag['active']) aria-current="page" @endif>{{ $flag['label'] }}</a>
                 <button type="button" class="flag flag--{{ $flag['tone'] }} flag-pair__more" x-ref="more-{{ $flag['key'] }}"
                         x-on:click="open = open === '{{ $flag['key'] }}' ? null : '{{ $flag['key'] }}'"
                         :aria-expanded="(open === '{{ $flag['key'] }}').toString()" aria-expanded="false" aria-controls="flag-note-{{ $flag['key'] }}"
-                        aria-label="{{ __('What’s in :chapter', ['chapter' => __($flag['label'])]) }}">
+                        aria-label="{{ __('What’s in :chapter', ['chapter' => $flag['label']]) }}">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 </button>
                 <div class="flag-note" id="flag-note-{{ $flag['key'] }}" x-show="open === '{{ $flag['key'] }}'" x-cloak
@@ -60,7 +51,7 @@
             </span>
         @else
             <a class="flag flag--{{ $flag['tone'] }}" href="{{ $flag['route'] }}" wire:navigate @if($flag['active']) aria-current="page" @endif>
-                {{ __($flag['label']) }}
+                {{ $flag['label'] }}
                 @if ($flag['key'] === 'comments' && $waitingComments > 0)
                     <span class="flag__badge" aria-label="{{ trans_choice(':count waiting|:count waiting', $waitingComments) }}">{{ $waitingComments }}</span>
                 @endif

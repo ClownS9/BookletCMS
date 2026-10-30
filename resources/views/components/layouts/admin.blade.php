@@ -3,12 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#23211D">
+    @php $you = request()->user(); $yours = \App\Support\YourBook::of($you); @endphp
+    <meta name="theme-color" content="{{ \App\Support\YourBook::deskColour($you) }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? __($title).' · ' : '' }}Booklet</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+    @if ($fontLink = \App\Support\YourBook::fontLink($you))
+        <link rel="stylesheet" href="{{ $fontLink }}">
+    @endif
     <link rel="stylesheet" href="{{ asset('booklet/admin.css') }}?v={{ filemtime(public_path('booklet/admin.css')) }}">
     <script src="{{ asset('booklet/password-words.js') }}?v={{ filemtime(public_path('booklet/password-words.js')) }}" data-navigate-once></script>
     <script src="{{ asset('booklet/booklet.js') }}?v={{ filemtime(public_path('booklet/booklet.js')) }}" data-navigate-once></script>
@@ -16,7 +20,13 @@
     <script src="{{ asset('booklet/stacy-holo.js') }}?v={{ filemtime(public_path('booklet/stacy-holo.js')) }}" data-navigate-once></script>
     <script src="{{ asset('booklet/vendor/qrcode.js') }}" defer data-navigate-once></script>
 </head>
-<body @class(['night' => (request()->user()?->preferences['night'] ?? false)])
+@php
+    // The focus ring takes the colour of the chapter you're in.
+    $focusTone = collect(\App\Support\AdminNav::menu())->firstWhere('active', true)['tone'] ?? 'sky';
+@endphp
+<body @class(['night' => ($you?->preferences['night'] ?? false), ...\App\Support\YourBook::bodyClasses($you)])
+      style="--focus: var(--{{ $focusTone }})"
+      data-night-auto="{{ $yours['night_auto'] ? 'on' : 'off' }}"
       data-page-sound="{{ (request()->user()?->preferences['page_sound'] ?? true) ? 'on' : 'off' }}"
       x-data
 >
@@ -38,10 +48,16 @@
     @endif
 
     <div class="desk">
-        <x-admin.flags />
+        @if ($yours['layout'] === 'dashboard')
+            <x-admin.sidebar />
+        @else
+            <x-admin.flags />
+        @endif
 
         <div class="book" data-position="{{ \App\Support\AdminNav::position() }}">
-            <x-admin.thumbs />
+            @if ($yours['layout'] === 'book')
+                <x-admin.thumbs />
+            @endif
             <main class="book__pages" id="main" tabindex="-1">
                 {{ $slot }}
             </main>

@@ -60,6 +60,16 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 ![Content API: keys for an app and a website on the left, addresses to try on the right](docs/screenshots/content-api.png)
 
+### Make it yours
+
+Everyone who writes in Booklet can set it up their own way, from Your account › Make it yours. Nobody else is affected.
+
+- **How it opens:** the Book (two pages, stickers, page turning) or a plain Dashboard with a sidebar.
+- **Theme:** Paper, Linen, Mist or Rose, plus Night reading (on, off, or following the device).
+- **Fonts:** six pairs, including Easy reading (Atkinson Hyperlegible).
+- **Spacing and text size**, and whether pages turn between chapters.
+- **Your menu:** move each chapter and tool onto the stickers, the side tabs, only the Index, or hide it; rename and recolour them; pick the two chapters on the phone's bar. Only what someone may open is ever listed.
+
 ### Collections and blueprints
 - Make your own chapters (collections) with their own fields, described in blueprints: simple YAML files you can read and edit by hand.
 - Field types: text, rich text, long text, number, date, image, toggle, select, tags, link, blocks, linked entries and rows.

@@ -364,7 +364,9 @@
  * is still settling in. Nothing is resized or laid out during the turn.
  */
 (() => {
-    const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // No turning for people who'd rather not (Make it yours) or in the Dashboard layout.
+    const calm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        || document.body.classList.contains('no-turn') || document.body.classList.contains('layout-dashboard');
     const wide = () => window.matchMedia('(min-width: 901px)').matches;
     const TURN = 1050; // the whole turn, from the corner lifting to the page lying flat
 
@@ -1812,3 +1814,19 @@ window.bookletTerms = ({ input, model, value = '', choices = [], max = 0, words 
         this.box.dispatchEvent(new Event('input', { bubbles: true })); // the saved list, and "Unsaved changes"
     },
 });
+
+/**
+ * Night reading with the device (Make it yours): follow the phone's or
+ * computer's own dark mode, and change along with it.
+ */
+(() => {
+    const dark = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const follow = () => {
+        if (document.body?.dataset.nightAuto === 'on' && dark) {
+            document.body.classList.toggle('night', dark.matches);
+        }
+    };
+    document.addEventListener('DOMContentLoaded', follow);
+    document.addEventListener('livewire:navigated', follow);
+    dark?.addEventListener?.('change', follow);
+})();
