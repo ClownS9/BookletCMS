@@ -6436,7 +6436,7 @@ body.layout-dashboard .book__pages > .page, body.layout-dashboard .book__pages >
     body.layout-dashboard .page-head__actions { margin-left: auto; flex: none; display: flex; gap: 8px; align-items: center; }
     body.layout-dashboard .page-head .eyebrow { display: none; }
     body.layout-dashboard .page-head__crumbs { position: absolute; top: 0; left: 0; }
-    body.layout-dashboard .editor-save.is-desk { display: none; }
+    body.layout-dashboard .editor-save.is-desk { display: none !important; }
     /* A wrapper left holding only the lifted header takes no room */
     body.layout-dashboard .book__pages .page > div:has(> .page-head:first-child) { display: contents; }
 
@@ -7372,3 +7372,32 @@ body.layout-dashboard [data-stacy-dock][aria-expanded="true"]:not(.dock__stacy) 
 [data-stacy-dock][data-stacy-state="thinking"]::after { background: var(--sky); }
 @keyframes stacy-dot { 50% { transform: scale(1.35); opacity: .6; } }
 @media (prefers-reduced-motion: reduce) { [data-stacy-dock][data-stacy-state]::after { animation: none; } }
+
+/* Phones and portrait tablets: the last of every page scrolls clear of the bottom bar */
+@media (max-width: 900px) {
+    html body .desk .book__pages { padding-bottom: calc(108px + env(safe-area-inset-bottom)) !important; scroll-padding-bottom: calc(108px + env(safe-area-inset-bottom)); }
+}
+
+/* The editor's Delete on the desk: a full-width button like the ones above it,
+   quiet until you point at it */
+body.layout-dashboard .editor-delete.is-desk {
+    align-self: stretch !important;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--d-line));
+    border-radius: 8px;
+    background: var(--d-panel);
+    color: var(--danger);
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: none;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+body.layout-dashboard .editor-delete.is-desk:hover { border-color: var(--danger); background: var(--danger); color: #FFFFFF; }
+body.layout-dashboard.night .editor-delete.is-desk:hover { color: #1E1C18; }
+body.layout-dashboard .editor-delete.is-desk:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+/* And every other danger button on the desk keeps the same size as its neighbours */
+body.layout-dashboard .btn--danger:not(.btn--sm) { min-height: 40px; font-size: 14px; }
+/* On a computer the header carries Save and Preview, so Delete starts the side column's foot */
+@media (min-width: 1081px) { body.layout-dashboard .editor-delete.is-desk { margin-top: 4px; } }

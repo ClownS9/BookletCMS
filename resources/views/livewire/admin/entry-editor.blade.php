@@ -540,8 +540,8 @@
         </div>
 
         @if ($entryId)
-            <button type="button" class="btn btn--danger" style="align-self: flex-start"
-                    wire:click="delete" wire:confirm="{{ $this->linkedFrom->isNotEmpty() ? trans_choice(':count page links here, and the link will stop showing.|:count pages link here, and the links will stop showing.', $this->linkedFrom->count()).' ' : '' }}{{ __('Tear this entry out of the book? It waits in the bin for 30 days, so you can put it back.') }}">{{ __('Delete') }}</button>
+            <button type="button" @class(['btn btn--danger editor-delete', 'is-desk' => $desk]) style="align-self: flex-start"
+                    wire:click="delete" wire:confirm="{{ $this->linkedFrom->isNotEmpty() ? trans_choice(':count page links here, and the link will stop showing.|:count pages link here, and the links will stop showing.', $this->linkedFrom->count()).' ' : '' }}{{ __('Tear this entry out of the book? It waits in the bin for 30 days, so you can put it back.') }}">@if ($desk)<x-admin.icon name="bin" size="16" />@endif{{ __('Delete') }}</button>
         @endif
 
         <x-admin.folio side="right" style="padding-top: 0" />
