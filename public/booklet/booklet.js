@@ -2026,3 +2026,70 @@ window.bookletSideSub = (key, here) => ({
     },
     land() { clearTimeout(this.timer); this.timer = setTimeout(() => { this.flying = false; }, 120); },
 });
+
+/*
+ * Drag rows into a new order (Your menu). Press the grip and move: the row
+ * follows the pointer (mouse, pen or finger) and the others make room; let go
+ * and the new order is saved with $wire.reorder(keys). Escape puts it back.
+ * The up and down buttons stay for the keyboard.
+ */
+window.bookletDragList = ($wire) => ({
+    dragging: null,
+    grab(e, row) {
+        if (!row || (e.button !== undefined && e.button !== 0)) return;
+        e.preventDefault();
+        const list = this.$root;
+        const start = [...list.querySelectorAll('[data-key]')].map((r) => r.dataset.key);
+        const from = row.getBoundingClientRect();
+        const offset = e.clientY - from.top;
+        const ghost = row.cloneNode(true);
+        ghost.classList.add('menu-edit__ghost');
+        ghost.style.width = from.width + 'px';
+        ghost.style.left = from.left + 'px';
+        ghost.style.top = from.top + 'px';
+        document.body.appendChild(ghost);
+        row.classList.add('is-dragging');
+        document.body.classList.add('is-drag-sorting');
+        this.dragging = row;
+
+        const scroller = list.closest('.book__pages') || document.scrollingElement;
+        let raf = null, lastY = e.clientY;
+        const place = () => {
+            raf = null;
+            ghost.style.top = (lastY - offset) + 'px';
+            const rows = [...list.querySelectorAll('[data-key]')].filter((r) => r !== row);
+            const next = rows.find((r) => { const b = r.getBoundingClientRect(); return lastY < b.top + b.height / 2; });
+            if (next) { if (next.previousElementSibling !== row) list.insertBefore(row, next); }
+            else if (list.lastElementChild !== row) list.appendChild(row);
+            // Near the top or bottom of the page: scroll along.
+            const view = scroller === document.scrollingElement ? { top: 0, bottom: innerHeight } : scroller.getBoundingClientRect();
+            if (lastY < view.top + 60) scroller.scrollTop -= 12;
+            else if (lastY > view.bottom - 60) scroller.scrollTop += 12;
+        };
+        const move = (ev) => { lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
+        const finish = (keep) => {
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', cancel);
+            window.removeEventListener('keydown', esc);
+            if (raf) cancelAnimationFrame(raf);
+            ghost.remove();
+            row.classList.remove('is-dragging');
+            document.body.classList.remove('is-drag-sorting');
+            this.dragging = null;
+            const now = [...list.querySelectorAll('[data-key]')].map((r) => r.dataset.key);
+            if (!keep) {
+                start.forEach((k) => list.appendChild(list.querySelector(`[data-key="${CSS.escape(k)}"]`)));
+                return;
+            }
+            if (now.join() !== start.join()) $wire.reorder(now);
+        };
+        const up = () => finish(true);
+        const cancel = () => finish(false);
+        const esc = (ev) => { if (ev.key === 'Escape') finish(false); };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', cancel);
+        window.addEventListener('keydown', esc);
+    },
+});

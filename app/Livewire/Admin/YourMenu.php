@@ -107,6 +107,15 @@ class YourMenu extends Component
         $this->keep(order: $order);
     }
 
+    /** A new order, dragged into place: the keys from top to bottom. */
+    public function reorder(array $keys): void
+    {
+        $items = array_keys($this->items());
+        $keys = array_values(array_unique(array_filter($keys, fn ($k) => is_string($k) && in_array($k, $items, true))));
+        // Anything not sent keeps its place at the end, so nothing goes missing.
+        $this->keep(order: array_merge($keys, array_values(array_diff($items, $keys))));
+    }
+
     public function dockPick(int $slot, string $key): void
     {
         abort_unless(in_array($slot, [0, 1], true) && isset($this->items()[$key]), 422);

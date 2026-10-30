@@ -8,7 +8,7 @@
                 </x-admin.crumbs>
                 <p class="eyebrow chapter-mark">{{ __('Ex libris · just for you') }}</p>
                 <h1 class="display display--page" style="margin-top: 8px">{{ __('Your menu') }}</h1>
-                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.') }}</p>
+                <p class="lede" style="margin-top: 10px; font-size: 15px">{{ __('Drag the rows to change the order, and put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.') }}</p>
             </div>
             @if (\App\Support\YourBook::of(request()->user())['layout'] === 'dashboard')
                 <p class="field__hint" style="margin-top: 8px">{{ __('In the Dashboard layout, stickers are listed under Content in the sidebar, and side tabs under Tools.') }}</p>
@@ -16,10 +16,13 @@
         </div>
 
         <x-admin.card>
-            <div class="menu-edit" role="list" aria-label="{{ __('Your menu') }}">
-                <div class="menu-edit__head" aria-hidden="true"><span></span><span>{{ __('Name') }}</span><span>{{ __('Where it lives') }}</span><span>{{ __('Order') }}</span></div>
+            <div class="menu-edit" role="list" aria-label="{{ __('Your menu') }}" x-data="bookletDragList($wire)">
+                <div class="menu-edit__head" aria-hidden="true"><span></span><span></span><span>{{ __('Name') }}</span><span>{{ __('Where it lives') }}</span><span>{{ __('Order') }}</span></div>
                 @foreach ($items as $i => $item)
-                    <div role="listitem" @class(['menu-edit__row', 'is-hidden' => $item['where'] === 'hidden']) wire:key="mi-{{ $item['key'] }}">
+                    <div role="listitem" @class(['menu-edit__row', 'is-hidden' => $item['where'] === 'hidden']) wire:key="mi-{{ $item['key'] }}" data-key="{{ $item['key'] }}">
+                        <span class="menu-edit__grip" x-on:pointerdown="grab($event, $el.closest('[data-key]'))" title="{{ __('Drag to move') }}" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+                        </span>
                         <button type="button" class="menu-edit__tone" style="--tone: var(--{{ $item['tone'] }})" wire:click="recolour('{{ $item['key'] }}')"
                                 aria-label="{{ __('Colour of :name. Press for the next colour.', ['name' => $item['label']]) }}"></button>
                         <div class="menu-edit__name">

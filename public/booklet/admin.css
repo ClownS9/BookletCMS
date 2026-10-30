@@ -6971,9 +6971,9 @@ a.dash-figure:hover { border-color: var(--faint); color: var(--ink); }
 
 /* Your menu (the editor) */
 .menu-edit { flex: none; border: 1px solid var(--rule); border-radius: 14px; background: var(--paper-3); overflow: hidden; }
-.menu-edit__head, .menu-edit__row { display: grid; grid-template-columns: 30px minmax(0, 1fr) 76px; gap: 6px 10px; align-items: center; padding: 8px 12px; }
-.menu-edit__row .segmented { grid-column: 2 / -1; grid-row: 2; justify-self: start; }
-.menu-edit__head span:nth-child(3) { display: none; }
+.menu-edit__head, .menu-edit__row { display: grid; grid-template-columns: 18px 30px minmax(0, 1fr) 76px; gap: 6px 10px; align-items: center; padding: 8px 12px; }
+.menu-edit__row .segmented { grid-column: 3 / -1; grid-row: 2; justify-self: start; }
+.menu-edit__head span:nth-child(4) { display: none; }
 .menu-edit__head { padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
 .menu-edit__head span:last-child { text-align: right; }
 .menu-edit__row { border-bottom: 1px dashed var(--edge-1); }
@@ -7459,3 +7459,11 @@ body.layout-dashboard .btn--danger:not(.btn--sm) { min-height: 40px; font-size: 
     body.desk-narrow .sidebar .sidebar__sub .sidebar__badge { position: static; margin-left: auto; }
     body.desk-narrow .sidebar .sidebar__flyhead a { min-height: 34px; border-bottom: 1px solid var(--d-line2); border-radius: 7px 7px 0 0; margin-bottom: 2px; }
 }
+
+/* Dragging rows in Your menu */
+.menu-edit__grip { display: grid; place-items: center; width: 18px; height: 34px; margin-left: -4px; border-radius: 5px; color: var(--faint); cursor: grab; touch-action: none; }
+.menu-edit__grip:hover { background: var(--hover); color: var(--ink); }
+.menu-edit__row.is-dragging { opacity: .35; background: var(--hover); }
+.menu-edit__ghost { position: fixed; z-index: 90; margin: 0; border: 1px solid var(--rule-2); border-radius: 10px; background: var(--paper-3); box-shadow: 0 16px 36px rgba(20, 18, 14, .22); pointer-events: none; transform: rotate(-.6deg); }
+body.layout-dashboard .menu-edit__ghost { transform: none; border-color: var(--d-accent); background: var(--d-panel); }
+body.is-drag-sorting, body.is-drag-sorting * { cursor: grabbing !important; user-select: none; }

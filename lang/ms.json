@@ -3710,7 +3710,6 @@
     "Plex": "Plex",
     "Put back Booklet’s own look": "Kembalikan rupa asal Booklet",
     "Put back the usual menu": "Kembalikan menu biasa",
-    "Put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.": "Letakkan setiap bab dan alat di tempat yang mudah anda capai. Hanya anda yang nampak perubahan ini, dan apa yang anda tidak dibenarkan buka tidak akan dipaparkan.",
     "Second in the bar": "Kedua dalam bar",
     "Side tab": "Tab tepi",
     "Side tabs: :list.": "Tab tepi: :list.",
@@ -3776,5 +3775,6 @@
     "Fold the sidebar": "Lipat bar sisi",
     "Choose a time that hasn’t passed yet.": "Pilih masa yang belum berlalu.",
     "Goes out :when": "Keluar :when",
-    "More in :name": "Lagi dalam :name"
+    "More in :name": "Lagi dalam :name",
+    "Drag the rows to change the order, and put each chapter and tool where you’ll reach for it. Only you see these changes, and what you’re not allowed to open never shows.": "Seret baris untuk mengubah susunan, dan letakkan setiap bab dan alat di tempat yang mudah anda capai. Hanya anda yang nampak perubahan ini, dan apa yang anda tidak dibenarkan buka tidak akan dipaparkan."
 }

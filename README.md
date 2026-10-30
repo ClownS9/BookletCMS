@@ -68,7 +68,7 @@ Everyone who writes in Booklet can set it up their own way, from Your account â€
 - **Theme:** Paper, Linen, Mist or Rose, plus Night reading (on, off, or following the device).
 - **Fonts:** six pairs, including Easy reading (Atkinson Hyperlegible).
 - **Spacing and text size**, and whether pages turn between chapters.
-- **Your menu:** move each chapter and tool onto the stickers, the side tabs, only the Index, or hide it; rename and recolour them; pick the two chapters on the phone's bar. Only what someone may open is ever listed.
+- **Your menu:** drag them into your own order; move each chapter and tool onto the stickers, the side tabs, only the Index, or hide it; rename and recolour them; pick the two chapters on the phone's bar. Only what someone may open is ever listed.
 
 ### Collections and blueprints
 - Make your own chapters (collections) with their own fields, described in blueprints: simple YAML files you can read and edit by hand.

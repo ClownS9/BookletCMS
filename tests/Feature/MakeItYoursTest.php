@@ -174,6 +174,18 @@ class MakeItYoursTest extends TestCase
         $this->assertSame(['contents', 'comments'], array_column(AdminNav::dock(), 'key'));
     }
 
+    public function test_dragging_rows_into_a_new_order(): void
+    {
+        Livewire::actingAs($this->admin)->test(YourMenu::class)
+            ->assertSee('menu-edit__grip', false)
+            ->call('reorder', ['media', 'contents', '../etc', 'media', 7]);
+
+        $this->actingAs($this->admin->fresh())->get(route('admin.contents'));
+        $keys = array_column(AdminNav::menu(), 'key');
+        $this->assertSame(['media', 'contents'], array_slice($keys, 0, 2));
+        $this->assertContains('posts', $keys); // what wasn't sent keeps its place after
+    }
+
     public function test_a_writer_only_arranges_what_they_may_open(): void
     {
         $writer = User::factory()->create(['role' => 'writer']);
