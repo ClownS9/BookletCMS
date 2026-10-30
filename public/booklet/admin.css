@@ -7507,3 +7507,65 @@ body.is-drag-sorting, body.is-drag-sorting * { cursor: grabbing !important; user
 /* An admin-wide reminder while readers see "back soon" */
 .away-bar { position: relative; z-index: 46; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px; background: var(--sun); color: #1E1C18; font-size: 14px; }
 .away-bar a { color: #1E1C18; font-weight: 600; }
+
+/* Charts come in -------------------------------------------------------------
+   Every chart in the book grows into place when its page opens: bars rise
+   from the baseline one after another, strips and meters fill from the left,
+   heat squares fade in as a wave, and the month's ink line draws itself.
+   When the numbers change on the page (another range, a refresh), bars and
+   strips glide to their new sizes rather than jump. A day with nothing is an
+   empty stub, not a little bar. Reduced motion: everything simply appears. */
+@keyframes chart-rise { from { transform: scaleY(0); } }
+@keyframes chart-fill { from { transform: scaleX(0); } }
+@keyframes chart-fade { from { opacity: 0; transform: scale(.6); } }
+@keyframes chart-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes chart-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes chart-wash { from { opacity: 0; transform: scaleY(.2); } }
+@keyframes chart-pop { 0% { opacity: 0; transform: scale(0); } 70% { transform: scale(1.25); } }
+@keyframes chart-ink { from { transform: skewX(-8deg) scaleX(0); } }
+
+/* Bars: this week's figures, the sparks, hours of the day, visits per day */
+.dash-figure__bars span, .spark__bar, .hour-bars span, .visit-chart__bar i {
+    transform-origin: bottom;
+    animation: chart-rise .7s cubic-bezier(.2, .8, .25, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+    transition: height .45s cubic-bezier(.2, .8, .25, 1), background-color .15s ease;
+}
+.hour-bars span, .visit-chart__bar i, .reading__spark .spark__bar { animation-delay: calc(var(--i, 0) * 18ms); }
+.visit-chart__bar i { animation-delay: calc(var(--i, 0) * 12ms); }
+.dash-figure__bars span.is-zero, .spark__bar.is-zero {
+    height: 3px; min-height: 3px; opacity: 1;
+    background: color-mix(in srgb, var(--tone, var(--spark, var(--coral))) 28%, transparent);
+}
+.dash-figure__bars span { min-height: 0; }
+
+/* Strips and meters fill from the left */
+.share-strip, .device-strip { animation: chart-reveal .8s cubic-bezier(.3, .7, .2, 1) backwards; }
+.share-strip span, .device-strip span { transition: flex-basis .45s ease; }
+.visit-pages__depth::after, .visit-sources li::before, .sticker-book__bar span, .first-steps__bar span {
+    transform-origin: left;
+    animation: chart-fill .8s cubic-bezier(.3, .7, .2, 1) backwards;
+    transition: width .45s ease;
+}
+.visit-sources li::before { animation-delay: calc(var(--i, 0) * 70ms); }
+.most-read__ink { transform-origin: left; animation: chart-ink .8s cubic-bezier(.3, .7, .2, 1) backwards; }
+.most-read li:nth-child(2) .most-read__ink { animation-delay: .07s; }
+.most-read li:nth-child(3) .most-read__ink { animation-delay: .14s; }
+.most-read li:nth-child(4) .most-read__ink { animation-delay: .21s; }
+.most-read li:nth-child(5) .most-read__ink { animation-delay: .28s; }
+
+/* Squares: the reading heat map and the days something went out */
+.week-heat__cell, .pub-grid__day { animation: chart-fade .5s ease-out backwards; animation-delay: calc(var(--i, 0) * 25ms); }
+
+/* The month in ink: the wash rises, the line draws itself, the busiest day pops */
+.ink-chart__wash { transform-box: fill-box; transform-origin: bottom; animation: chart-wash .9s ease-out .15s backwards; }
+.ink-chart__before { animation: fade-in .8s ease-out .1s backwards; }
+.ink-chart__line { stroke-dasharray: 1; animation: chart-draw 1.3s cubic-bezier(.45, .1, .25, 1) backwards; }
+.ink-chart__peak { transform-box: fill-box; transform-origin: center; animation: chart-pop .45s ease-out 1.2s backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-figure__bars span, .spark__bar, .hour-bars span, .visit-chart__bar i, .share-strip, .device-strip,
+    .visit-pages__depth::after, .visit-sources li::before, .sticker-book__bar span, .first-steps__bar span, .most-read__ink,
+    .week-heat__cell, .pub-grid__day, .ink-chart__wash, .ink-chart__before, .ink-chart__line, .ink-chart__peak { animation: none !important; transition: none !important; }
+    .ink-chart__line { stroke-dasharray: none; }
+}

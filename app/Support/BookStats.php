@@ -39,7 +39,8 @@ class BookStats
         }
 
         $comments = array_fill_keys($days, 0);
-        $rows = rescue(fn () => Comment::query()->where('created_at', '>=', now()->subDays(13)->startOfDay())
+        // Real comments only: spam doesn't count.
+        $rows = rescue(fn () => Comment::query()->where('created_at', '>=', now()->subDays(13)->startOfDay())->where('status', '!=', 'spam')
             ->get(['created_at'])->countBy(fn ($c) => $c->created_at->toDateString())->all(), [], false);
         foreach ($rows as $day => $n) {
             if (isset($comments[$day])) {
@@ -50,7 +51,8 @@ class BookStats
         return [
             static::figure('visits', __('Visits'), $views, $days, 'coral', route('admin.visits')),
             static::figure('readers', __('Readers'), $readers, $days, 'sky', route('admin.visits')),
-            static::figure('published', __('Posts out'), array_values($published), $days, 'sun', null),
+            static::figure('published', __('Posts out'), array_values($published), $days, 'sun',
+                rescue(fn () => Booklet::collections()->find('posts') ? route('admin.entries', 'posts') : null, null, false)),
             static::figure('comments', __('Comments'), array_values($comments), $days, 'rose', route('admin.comments')),
         ];
     }

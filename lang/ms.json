@@ -3892,5 +3892,13 @@
     "Connected services": "Perkhidmatan yang disambungkan",
     "AI services, the email server, webhooks and Content API keys. Backups never carry their keys, so you set them up again.": "Perkhidmatan AI, pelayan e-mel, webhook dan kunci API Kandungan. Sandaran tidak pernah membawa kuncinya, jadi anda menyediakannya semula.",
     "Records and stats": "Rekod dan statistik",
-    "Activity, visits and reading stats, Stacy’s conversations and the bin. Backups don’t carry these, so they can’t be brought back.": "Aktiviti, statistik lawatan dan bacaan, perbualan Stacy dan tong sampah. Sandaran tidak membawanya, jadi ia tidak boleh dipulihkan."
+    "Activity, visits and reading stats, Stacy’s conversations and the bin. Backups don’t carry these, so they can’t be brought back.": "Aktiviti, statistik lawatan dan bacaan, perbualan Stacy dan tong sampah. Sandaran tidak membawanya, jadi ia tidak boleh dipulihkan.",
+    "Last 7 days": "7 hari lalu",
+    "Last 30 days": "30 hari lalu",
+    "Last 90 days": "90 hari lalu",
+    ":rate% read to the end": ":rate% dibaca hingga habis",
+    "Made by hand": "Dibuat sendiri",
+    "Nightly": "Setiap malam",
+    "Before a restore": "Sebelum pemulihan",
+    "Uploaded": "Dimuat naik"
 }
