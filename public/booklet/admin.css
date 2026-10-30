@@ -7171,3 +7171,30 @@ body.layout-dashboard .lamp { display: none !important; }
 @media (max-width: 900px) {
     body.layout-dashboard .book__pages { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 }
+
+/* --------------------------------------------------------------------------
+   The desk's columns and margins: the same gutter on both sides, columns that
+   share the width after the gap between them, and on big screens the content
+   centred at a comfortable width instead of stretched edge to edge.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1081px) {
+    body.layout-dashboard .book__pages { --gutter: max(28px, calc((100% - 1360px) / 2)); padding-left: var(--gutter); padding-right: var(--gutter); gap: 20px; }
+    body.layout-dashboard .book__pages:has(.page--dash) { padding: 18px var(--gutter) 0; }
+    body.layout-dashboard .page-head { left: var(--gutter); right: var(--gutter); }
+
+    /* Two cards side by side: equal shares of what's left after the gap */
+    body.layout-dashboard .book__pages > .page--left, body.layout-dashboard .book__pages > * > .page--left,
+    body.layout-dashboard .book__pages > .page--right, body.layout-dashboard .book__pages > * > .page--right {
+        flex: 1 1 0 !important;
+        max-width: none;
+        min-width: 0;
+    }
+    /* Writing and arranging pages: a main column and a narrower side column */
+    body.layout-dashboard .book__pages .page--wide-left { flex: 1 1 0 !important; max-width: none; }
+    body.layout-dashboard .book__pages .page--narrow-right { flex: 0 0 clamp(300px, 32%, 400px) !important; max-width: none; }
+    /* A desk page of its own fills the row */
+    body.layout-dashboard .book__pages > .page--dash, body.layout-dashboard .book__pages > * > .page--dash { flex: 1 1 100% !important; max-width: none; }
+}
+/* Both columns start level: stray lines outside the cards go after them */
+body.layout-dashboard .book__pages .page:has(> .desk-card) > :not(.desk-card, .page-head, div:has(> .page-head:first-child)),
+body.layout-dashboard .book__pages .page:has(> .desk-card) > div:has(> .page-head:first-child) > :not(.page-head) { order: 9; }
