@@ -64,7 +64,7 @@ It comes with **Stacy**, an assistant who can find, write, tidy and publish with
 
 Everyone who writes in Booklet can set it up their own way, from Your account › Make it yours. Nobody else is affected.
 
-- **How it opens:** the Book (two pages, stickers, page turning) or a plain Dashboard with a sidebar.
+- **How it opens:** the Book (two pages, stickers, page turning) or a plain Dashboard: a top bar, a sidebar, white panels, and each chapter as a table you can sort, filter and tick to change many at once.
 - **Theme:** Paper, Linen, Mist or Rose, plus Night reading (on, off, or following the device).
 - **Fonts:** six pairs, including Easy reading (Atkinson Hyperlegible).
 - **Spacing and text size**, and whether pages turn between chapters.
