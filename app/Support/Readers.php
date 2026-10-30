@@ -62,7 +62,7 @@ class Readers
         if (! $site) {
             return;
         }
-        $site->merge(['readers' => array_replace(self::settings(), array_intersect_key($changes, self::DEFAULTS))]);
+        $site->set('readers', array_replace(self::settings(), array_intersect_key($changes, self::DEFAULTS))); // set, not merge: fewer questions must replace more
         Booklet::globalVariables()->save($site);
         self::$settings = null;
     }

@@ -289,6 +289,14 @@ class ReadersTest extends TestCase
         $this->get(route('readers.group-invite', ['kuih-club', $token]))->assertNotFound();
     }
 
+    public function test_taking_a_question_off_the_sign_up_page_really_takes_it_off(): void
+    {
+        Readers::save(['questions' => [['key' => 'a', 'label' => 'Where are you from?', 'type' => 'text'], ['key' => 'b', 'label' => 'Favourite kuih?', 'type' => 'text']]]);
+        Readers::save(['questions' => [['key' => 'a', 'label' => 'Where are you from?', 'type' => 'text']]]);
+        Readers::forget();
+        $this->assertCount(1, Readers::questions());
+    }
+
     public function test_group_names_are_their_own_and_readers_emails_speak_the_sites_language(): void
     {
         Group::create(['name' => 'Kuih Club', 'joining' => 'open']);
