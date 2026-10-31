@@ -142,7 +142,7 @@ class Calendar extends Component
             $chosen = ['date' => $this->day, 'label' => $date->translatedFormat('j F'), 'today' => $date->isToday(), 'entries' => []];
         }
 
-        return view('livewire.admin.calendar', [
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.calendar-dashboard' : 'livewire.admin.calendar', [
             'first' => $first,
             'days' => $days,
             'chosen' => $chosen,
