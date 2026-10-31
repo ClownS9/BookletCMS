@@ -1292,3 +1292,9 @@ select option:checked { background: color-mix(in srgb, var(--accent) 28%, var(--
     select option:disabled { opacity: .45; cursor: default; }
     @media (prefers-reduced-motion: reduce) { select::picker(select) { transition: none; } }
 }
+
+/* What the writing toolbar can add: highlighted and crossed-out words, checklists */
+.prose mark { padding: .05em .2em; border-radius: 3px; background: color-mix(in srgb, var(--accent) 32%, transparent); color: inherit; }
+.prose del { color: var(--muted, var(--faint)); text-decoration-thickness: 1px; }
+.prose li:has(> input[type="checkbox"]:first-child), .prose li.task-list-item { list-style: none; margin-left: -1.4em; }
+.prose li > input[type="checkbox"] { width: 1em; height: 1em; margin: 0 .5em 0 0; vertical-align: -.12em; accent-color: var(--accent); }

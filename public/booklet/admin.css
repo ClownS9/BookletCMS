@@ -8354,3 +8354,29 @@ body:not(.night) .when-night, body.night .when-day { display: none !important; }
 :root { --label: var(--mono); }
 body.layout-dashboard { --label: var(--sans); }
 body.layout-dashboard :is(.toc__count, .visit-pages__n, .visit-sources__n, .most-read__n, .ink-chart svg, .hour-bars__axis, .week-heat__day, .week-heat__hour, .day__n, .index-list__count, .search-chip__n, .chapter-tabs__n, .terms-pick__count, .flag-note__n, .setup__n, .visit-chart__axis, .spark__days, .bin-list__left) { font-variant-numeric: tabular-nums; letter-spacing: 0; }
+
+/* ---------- The writing toolbar's groups ---------- */
+.format-bar { flex-wrap: wrap; align-items: center; row-gap: 2px; }
+.format-bar__group { display: inline-flex; align-items: center; gap: 2px; }
+.format-bar__group + .format-bar__group { margin-left: 2px; padding-left: 4px; border-left: 1px solid var(--rule); }
+.format-bar__h { font-family: var(--sans); font-size: 12.5px; font-weight: 700; letter-spacing: -.02em; }
+.format-bar s { font-family: var(--sans); font-weight: 600; }
+/* In the Book layout the bar sits in the top row and can run to two lines */
+.toolbar .format-bar { border-radius: 20px; max-width: 100%; }
+body.layout-dashboard .editor-box .format-bar { gap: 2px; padding: 4px 6px; }
+body.layout-dashboard .editor-box .format-bar button:not(.format-bar__stacy) { width: 30px; height: 30px; color: var(--ink-2); }
+body.layout-dashboard .editor-box .format-bar .format-bar__stacy { height: 30px; }
+body.layout-dashboard .editor-box .format-bar button:not(.format-bar__stacy):hover { background: var(--d-hover); color: var(--ink); }
+body.layout-dashboard .editor-box .format-bar__group + .format-bar__group { border-left-color: var(--d-line); }
+@media (max-width: 760px) {
+    /* A phone: one swipeable row rather than three lines of buttons */
+    .format-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .format-bar::-webkit-scrollbar { display: none; }
+    .format-bar__group { flex: none; }
+}
+/* A narrow writing box: Stacy's button keeps only her mark, so the bar stays one line */
+body.layout-dashboard .editor-box { container-type: inline-size; }
+@container (max-width: 760px) {
+    .format-bar .format-bar__stacy > span { display: none; }
+    .format-bar .format-bar__stacy { width: 30px; padding: 0; justify-content: center; }
+}

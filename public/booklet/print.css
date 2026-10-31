@@ -205,3 +205,6 @@ body:not(.is-set) .desk-print::before {
     .sheet::after { display: none !important; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+.prose mark { background: #F3E3A6; color: inherit; }
+.prose li:has(> input[type="checkbox"]:first-child) { list-style: none; }
+.prose li > input[type="checkbox"] { margin: 0 .4em 0 0; vertical-align: -.1em; }

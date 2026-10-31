@@ -10,7 +10,7 @@
     {{-- Left page: the writing --}}
     <section class="page page--left page--wide-left"
              x-data="writingDesk({ key: @js('booklet.draft.'.($entryId ?? 'new-'.$collection)), savedAt: @js($savedAt), others: @js($coEditors), words: @js(['offline' => __('Offline · kept on this page'), 'waiting' => __('Editing…'), 'saving' => __('Saving…'), 'justNow' => __('Saved just now'), 'moment' => __('Saved a moment ago'), 'manual' => __('Unsaved changes · press Save')]) })"
-             x-on:keydown="shortcut($event)">
+             x-on:keydown="shortcut($event)" x-on:booklet-picture.window="insertPicture($event.detail.markdown)">
         @if ($desk)
             {{-- The Dashboard layout: where you are, the title, its status and the main buttons, above the panels --}}
             <div class="page-head page-head--editor">

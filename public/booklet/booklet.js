@@ -134,55 +134,156 @@
 
             // Toolbar -----------------------------------------------------------
 
+            /*
+             * Markdown at the caret. Changes go through the browser's own
+             * editing (insertText), so Ctrl/⌘ Z undoes them like typing. A
+             * button pressed on words that already have its marks takes them
+             * off (bold, lists, headings, quotes…).
+             */
             format(kind) {
                 const ta = document.getElementById('field-content');
                 if (!ta) return;
+                if (kind === 'undo' || kind === 'redo') { ta.focus(); document.execCommand(kind); this._synced(ta); return; }
+                if (kind === 'picture') { this._caret = [ta.selectionStart, ta.selectionEnd]; this.$wire.openPicker('@body'); return; }
 
-                const start = ta.selectionStart, end = ta.selectionEnd;
                 const value = ta.value;
+                const start = ta.selectionStart, end = ta.selectionEnd;
                 const picked = value.slice(start, end);
-                const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-                let before = value.slice(0, start), after = value.slice(end), middle = picked, caret = null;
 
-                const wrap = (mark, placeholder) => {
-                    middle = mark + (picked || placeholder) + mark;
-                    caret = [start + mark.length, start + mark.length + (picked || placeholder).length];
+                const wrap = (open, close, placeholder) => {
+                    // Marks just outside the picked words, or inside them: take them off.
+                    if (picked && value.slice(start - open.length, start) === open && value.slice(end, end + close.length) === close) {
+                        return this._put(ta, start - open.length, end + close.length, picked, start - open.length, end - open.length);
+                    }
+                    if (picked.length > open.length + close.length && picked.startsWith(open) && picked.endsWith(close)) {
+                        const inner = picked.slice(open.length, picked.length - close.length);
+                        return this._put(ta, start, end, inner, start, start + inner.length);
+                    }
+                    const words = picked || placeholder;
+                    this._put(ta, start, end, open + words + close, start + open.length, start + open.length + words.length);
                 };
-                const prefixLines = (prefix) => {
-                    before = value.slice(0, lineStart);
-                    const block = value.slice(lineStart, end) || '';
-                    middle = block.split('\n').map((line, i) => (typeof prefix === 'function' ? prefix(i) : prefix) + line).join('\n');
-                    caret = [lineStart + middle.length, lineStart + middle.length];
+
+                // The whole lines the picked words touch.
+                const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                let lineEnd = value.indexOf('\n', end > start && value[end - 1] === '\n' ? end - 1 : end);
+                if (lineEnd === -1) lineEnd = value.length;
+                const lines = value.slice(lineStart, lineEnd).split('\n');
+                const MARK = /^(\s*)(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+[.)]\s+|>\s?)?/;
+                const lineMarks = (mark, has) => {
+                    const all = lines.filter((l) => l.trim() !== '');
+                    const off = all.length > 0 && all.every((l) => has.test(l));
+                    let n = 0;
+                    const out = lines.map((l) => {
+                        if (l.trim() === '') return l;
+                        const [, indent, , ] = l.match(MARK);
+                        const rest = l.replace(MARK, '');
+                        return off ? indent + rest : indent + (typeof mark === 'function' ? mark(++n) : mark) + rest;
+                    }).join('\n');
+                    // A caret on one line stays a caret; picked lines stay picked, so pressing again takes it off.
+                    if (start === end && lines.length === 1) this._put(ta, lineStart, lineEnd, out, lineStart + out.length);
+                    else this._put(ta, lineStart, lineEnd, out, lineStart, lineStart + out.length);
+                };
+
+                // Something that stands on lines of its own (a code block, a table, a divider).
+                const block = (text, selectFrom = null, selectTo = null) => {
+                    const pre = start === 0 || value.slice(0, start).endsWith('\n\n') ? '' : (value.slice(0, start).endsWith('\n') ? '\n' : '\n\n');
+                    const post = value.slice(end).startsWith('\n\n') || end === value.length ? (end === value.length ? '\n' : '') : (value.slice(end).startsWith('\n') ? '\n' : '\n\n');
+                    const at = start + pre.length;
+                    this._put(ta, start, end, pre + text + post,
+                        selectFrom === null ? at + text.length + post.length : at + selectFrom,
+                        selectTo === null ? null : at + selectTo);
                 };
 
                 switch (kind) {
-                    case 'heading': prefixLines('## '); break;
-                    case 'bold': wrap('**', 'bold words'); break;
-                    case 'italic': wrap('_', 'slanted words'); break;
+                    case 'heading':
+                    case 'h2': lineMarks('## ', /^\s*##\s/); break;
+                    case 'h3': lineMarks('### ', /^\s*###\s/); break;
+                    case 'bold': wrap('**', '**', 'bold words'); break;
+                    case 'italic': wrap('_', '_', 'slanted words'); break;
+                    case 'strike': wrap('~~', '~~', 'crossed-out words'); break;
+                    case 'mark': wrap('==', '==', 'highlighted words'); break;
+                    case 'code': wrap('`', '`', 'code'); break;
                     case 'link': {
-                        const url = window.prompt('Link to (https://…)', 'https://');
+                        const url = window.prompt('Link to (https://…)', /^https?:\/\//.test(picked) ? picked : 'https://');
                         if (!url) return;
-                        middle = '[' + (picked || 'link text') + '](' + url + ')';
-                        caret = [start + 1, start + 1 + (picked || 'link text').length];
+                        const text = picked && !/^https?:\/\//.test(picked) ? picked : 'link text';
+                        this._put(ta, start, end, '[' + text + '](' + url + ')', start + 1, start + 1 + text.length);
                         break;
                     }
-                    case 'list': prefixLines('- '); break;
-                    case 'quote': prefixLines('> '); break;
+                    case 'list': lineMarks('- ', /^\s*[-*+]\s+(?!\[[ xX]\])/); break;
+                    case 'numbers': lineMarks((n) => n + '. ', /^\s*\d+[.)]\s/); break;
+                    case 'tasks': lineMarks('- [ ] ', /^\s*[-*+]\s+\[[ xX]\]\s/); break;
+                    case 'quote': lineMarks('> ', /^\s*>/); break;
+                    case 'codeblock': {
+                        const inner = picked || 'code';
+                        block('```\n' + inner + '\n```', 4, picked ? null : 4 + inner.length);
+                        break;
+                    }
+                    case 'table': block('| Heading | Heading |\n| --- | --- |\n| Words | Words |', 2, 9); break;
+                    case 'divider': block('---'); break;
                     default: return;
                 }
+            },
 
-                ta.value = before + middle + after;
+            /** Replace part of the text through the browser's editing (so undo keeps it), then pick what's given. */
+            _put(ta, from, to, text, selectFrom = null, selectTo = null) {
                 ta.focus();
-                if (caret) ta.setSelectionRange(caret[0], caret[1]);
+                ta.setSelectionRange(from, to);
+                const done = document.queryCommandSupported?.('insertText') && document.execCommand('insertText', false, text);
+                if (!done) ta.setRangeText(text, from, to, 'end');
+                if (selectFrom !== null) ta.setSelectionRange(selectFrom, selectTo ?? selectFrom);
+                this._synced(ta);
+            },
+
+            _synced(ta) {
                 this.$wire.$set('values.content', ta.value, false);
                 this._keep();
             },
 
+            /** A picture chosen from Media goes where the caret was when the button was pressed. */
+            insertPicture(markdown) {
+                const ta = document.getElementById('field-content');
+                if (!ta || !markdown) return;
+                const [from, to] = this._caret || [ta.value.length, ta.value.length];
+                const value = ta.value;
+                const pre = from === 0 || value.slice(0, from).endsWith('\n\n') ? '' : (value.slice(0, from).endsWith('\n') ? '\n' : '\n\n');
+                const post = value.slice(to).startsWith('\n') || to === value.length ? '\n' : '\n\n';
+                this._put(ta, from, to, pre + markdown + post, from + pre.length + markdown.length + post.length);
+                this._caret = null;
+            },
+
+            /** Enter in a list starts the next item; Enter on an empty item ends the list. */
+            _continueList(e, ta) {
+                if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.metaKey || e.ctrlKey || e.isComposing) return false;
+                if (ta.selectionStart !== ta.selectionEnd) return false;
+                const value = ta.value, at = ta.selectionStart;
+                const lineStart = value.lastIndexOf('\n', at - 1) + 1;
+                const line = value.slice(lineStart, at);
+                const m = line.match(/^(\s*)([-*+]\s+\[[ xX]\]\s+|[-*+]\s+|(\d+)([.)])\s+|>\s?)/);
+                if (!m) return false;
+                e.preventDefault();
+                if (line.slice(m[0].length).trim() === '' && value.slice(at, value.indexOf('\n', at) === -1 ? value.length : value.indexOf('\n', at)).trim() === '') {
+                    this._put(ta, lineStart, at, m[1], lineStart + m[1].length); // an empty item: the list ends here
+                    return true;
+                }
+                let next = m[2];
+                if (m[3]) next = (parseInt(m[3], 10) + 1) + m[4] + ' ';
+                else if (/\[[ xX]\]/.test(next)) next = next.replace(/\[[xX]\]/, '[ ]');
+                this._put(ta, at, at, '\n' + m[1] + next);
+                return true;
+            },
+
             shortcut(e) {
+                const ta = document.getElementById('field-content');
+                if (ta && e.target === ta && this._continueList(e, ta)) return;
                 if (!(e.metaKey || e.ctrlKey)) return;
                 const k = e.key.toLowerCase();
+                if (e.shiftKey && k === 'x') { e.preventDefault(); this.format('strike'); return; }
+                if (e.shiftKey && k === 'h') { e.preventDefault(); this.format('mark'); return; }
+                if (e.shiftKey) return;
                 if (k === 'b') { e.preventDefault(); this.format('bold'); }
                 if (k === 'i') { e.preventDefault(); this.format('italic'); }
+                if (k === 'e' && e.target === ta) { e.preventDefault(); this.format('code'); }
                 if (k === 'k') { e.preventDefault(); e.stopPropagation(); this.format('link'); }
                 if (k === 's') { e.preventDefault(); this.$wire.save(); }
                 if (k === 'j' && document.querySelector('.format-bar__stacy')) { e.preventDefault(); this.pen(); }
