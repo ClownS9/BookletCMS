@@ -17,6 +17,10 @@ Route::get('/', [SiteController::class, 'home'])->name('site.home');
 Route::get('/search', [SiteController::class, 'search'])->name('site.search');
 Route::get('/feed.xml', [FeedController::class, 'feed'])->name('site.feed');
 Route::get('/sitemap.xml', [FeedController::class, 'sitemap'])->name('site.sitemap');
+// The site's icons (tab, phone, app list) and Booklet's own, drawn from Settings › Logo & icons
+Route::get('/icons/{set}/{file}', [\App\Http\Controllers\IconController::class, 'show'])
+    ->whereIn('set', ['site', 'booklet'])->where('file', '[a-z0-9.-]+')->name('icons');
+Route::get('/site.webmanifest', [\App\Http\Controllers\IconController::class, 'manifest'])->name('site.manifest');
 // What search engines may look at, and where the sitemap is (at the site's own address).
 Route::get('/robots.txt', function () {
     $site = app(\App\Booklet\Site::class);
