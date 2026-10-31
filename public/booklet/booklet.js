@@ -1140,25 +1140,68 @@ window.bookletSearch = (scopes) => ({
 
 /* The stamp at the bottom ("Saved.", "Moved to the bin."). When something went
    in the bin it offers Undo for a few seconds, which puts it straight back. */
-window.bookletStamp = (text, undo, binUrl) => ({
+window.bookletStamp = (text, undo, binUrl, words = {}) => ({
     text: text || '',
     undo: undo || null,
+    tone: 'done',
     show: false,
     busy: false,
     _timer: null,
+    _end: 0,
+    _left: 0,
     init() { if (this.text) this.pop(this.text, this.undo); },
-    pop(value, undo = null) {
+    /*
+     * A new stamp while one is showing takes its place (and its time starts
+     * again). Hiding and showing it again here would race the old one's
+     * leaving animation, which then hid the new one.
+     */
+    pop(value, undo = null, tone = 'done') {
         this.text = value;
         this.undo = undo || null;
-        this.show = false;
-        this.$nextTick(() => { this.show = true; this._arm(); });
+        this.tone = tone === 'error' ? 'error' : 'done';
+        if (this.show) {
+            this._bump();
+        } else {
+            this.show = true;
+        }
+        this.$nextTick(() => this._arm(this.undo ? 8000 : 4000));
     },
-    _arm() {
+    close() { clearTimeout(this._timer); this.show = false; },
+    _arm(ms) {
         clearTimeout(this._timer);
-        this._timer = setTimeout(() => { this.show = false; }, this.undo ? 8000 : 3500);
+        this._end = Date.now() + ms;
+        this._timer = setTimeout(() => { this.show = false; }, ms);
+        const bar = this.$refs.time;
+        if (bar) {
+            bar.style.animation = 'none';
+            void bar.offsetWidth; // start the bar over
+            bar.style.animation = `toast-time ${ms}ms linear forwards`;
+            bar.style.animationPlayState = 'running';
+        }
     },
-    hold() { clearTimeout(this._timer); },
-    release() { if (this.show) this._arm(); },
+    // A little nudge so a replaced stamp is noticed.
+    _bump() {
+        const el = this.$refs.toast;
+        if (!el) return;
+        el.classList.remove('is-bumped');
+        void el.offsetWidth;
+        el.classList.add('is-bumped');
+    },
+    hold() {
+        if (!this.show) return;
+        clearTimeout(this._timer);
+        this._left = Math.max(1200, this._end - Date.now());
+        if (this.$refs.time) this.$refs.time.style.animationPlayState = 'paused';
+    },
+    release() {
+        if (!this.show || !this._left) return;
+        const left = this._left;
+        this._left = 0;
+        clearTimeout(this._timer);
+        this._end = Date.now() + left;
+        this._timer = setTimeout(() => { this.show = false; }, left);
+        if (this.$refs.time) this.$refs.time.style.animationPlayState = 'running';
+    },
     async putBack() {
         if (!this.undo || this.busy) return;
         this.busy = true;
@@ -1171,12 +1214,12 @@ window.bookletStamp = (text, undo, binUrl) => ({
             });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(body.message || 'It couldn’t be put back. Try the Bin page.');
-            this.pop('Put back.');
+            this.pop(words.putBack || 'Put back.');
             // Show it where it was (or refresh the page we're on).
             const go = body.href || window.location.href;
             window.Livewire ? window.Livewire.navigate(go) : (window.location.href = go);
         } catch (e) {
-            this.pop(e.message);
+            this.pop(e.message, null, 'error');
         } finally {
             this.busy = false;
         }

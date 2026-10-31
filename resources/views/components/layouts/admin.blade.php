@@ -100,15 +100,23 @@
     @endunless
 
     {{-- The stamp ("Saved.", "Moved to the bin."), with Undo when something went in the bin --}}
-    <div x-data="bookletStamp(@js(session('stamp')), @js(session('stamp_undo')), @js(url('/admin/bin')))"
-         x-on:stamp.window="pop($event.detail.text, $event.detail.undo)">
+    <div x-data="bookletStamp(@js(session('stamp')), @js(session('stamp_undo')), @js(url('/admin/bin')), @js(['putBack' => __('Put back.')]))"
+         x-on:stamp.window="pop($event.detail.text, $event.detail.undo, $event.detail.tone)">
         {{-- Always on the page (empty until a stamp), so screen readers announce it reliably. --}}
         <p class="sr-only" role="status" aria-live="polite" x-text="show ? text : ''"></p>
-        <div class="toast" x-show="show" x-cloak @click="!undo && (show = false)"
-             x-on:mouseenter="hold()" x-on:mouseleave="release()"
+        <div class="toast" x-ref="toast" x-show="show" x-cloak :class="tone === 'error' && 'is-error'"
+             x-on:click="! undo && close()" x-on:mouseenter="hold()" x-on:mouseleave="release()" x-on:focusin="hold()" x-on:focusout="release()"
              x-transition:leave="toast-out" x-transition:leave-end="toast-out--to">
-            <span x-text="text"></span>
+            <span class="toast__icon" aria-hidden="true">
+                <svg x-show="tone !== 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <svg x-show="tone === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v6M12 17h.01"/></svg>
+            </span>
+            <span class="toast__text" x-text="text"></span>
             <button type="button" class="toast__undo" x-show="undo" x-on:click.stop="putBack()" :disabled="busy">{{ __('Undo') }}</button>
+            <button type="button" class="toast__close" x-on:click.stop="close()" aria-label="{{ __('Close') }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+            <span class="toast__time" x-ref="time" aria-hidden="true"></span>
         </div>
     </div>
 </body>

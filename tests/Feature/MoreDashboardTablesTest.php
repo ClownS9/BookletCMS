@@ -219,4 +219,16 @@ class MoreDashboardTablesTest extends TestCase
         $person = User::factory()->create(['role' => 'admin']);
         $this->actingAs($person)->get(route('admin.people'))->assertOk()->assertDontSee('<header class="deskbar">', false);
     }
+
+    public function test_the_stamp_has_its_close_button_time_line_and_translated_words(): void
+    {
+        $html = $this->actingAs($this->admin)->get(route('admin.people'))->assertOk()->getContent();
+        $this->assertStringContainsString('class="toast__close"', $html);
+        $this->assertStringContainsString('x-ref="time"', $html);
+        $this->assertStringContainsString('pop($event.detail.text, $event.detail.undo, $event.detail.tone)', $html);
+        $this->assertStringContainsString('putBack', $html);
+
+        $js = (string) file_get_contents(public_path('booklet/booklet.js'));
+        $this->assertStringContainsString('if (this.show) {', $js, 'a new stamp replaces the showing one instead of racing its leaving');
+    }
 }

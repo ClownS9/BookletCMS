@@ -8197,3 +8197,47 @@ body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child 
 .pill[role="radio"][aria-checked="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); box-shadow: 0 2px 0 color-mix(in srgb, var(--ink) 55%, #000); }
 body.layout-dashboard .pill[role="radio"][aria-checked="true"] { border-color: var(--d-accent); background: var(--d-sel); color: var(--ink); box-shadow: inset 0 0 0 1px var(--d-accent); }
 .pill[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* ---------- The stamp ("Saved.", "Moved to the bin." with Undo) ----------
+   The Book layout keeps its sticky note; the Dashboard layout gets a panel in
+   the bottom right, with an icon, Undo, a close button and a line showing how
+   long it stays (it waits while you point at it). */
+.toast__icon, .toast__close, .toast__time { display: none; }
+.toast.is-bumped { animation: stamp-in .45s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes toast-time { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+body.layout-dashboard .toast {
+    left: auto; right: 24px; bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+    width: max-content; min-width: 280px; max-width: min(440px, calc(100vw - 32px));
+    padding: 10px 8px 10px 12px; overflow: hidden;
+    border: 1px solid var(--d-line); border-radius: 10px;
+    background: var(--d-panel); color: var(--ink);
+    box-shadow: 0 12px 32px rgba(16, 18, 24, .16), 0 2px 6px rgba(16, 18, 24, .06);
+    font-family: var(--sans); font-size: 13.5px; font-weight: 500; line-height: 1.45;
+    transform: none; z-index: 140; cursor: default;
+    animation: desk-toast-in .28s cubic-bezier(.2, .8, .25, 1) backwards;
+}
+body.layout-dashboard .toast.is-bumped { animation: desk-toast-bump .32s ease; }
+body.layout-dashboard .toast-out { transition: opacity .2s ease, transform .2s ease; }
+body.layout-dashboard .toast-out--to { opacity: 0; transform: translateY(8px); }
+@keyframes desk-toast-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+@keyframes desk-toast-bump { 40% { transform: translateY(-3px); } }
+body.layout-dashboard .toast__icon { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; background: color-mix(in srgb, var(--d-ok) 16%, transparent); color: var(--d-ok); }
+body.layout-dashboard .toast.is-error .toast__icon { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+body.layout-dashboard .toast__text { flex: 1 1 auto; min-width: 0; }
+body.layout-dashboard .toast__undo { flex: none; min-height: 28px; padding: 0 10px; border: 1px solid var(--d-field); border-radius: 6px; background: var(--d-panel); color: var(--d-accent-text); font-size: 13px; font-weight: 600; }
+body.layout-dashboard .toast__undo:hover { background: var(--d-hover); }
+body.layout-dashboard .toast__close { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--faint); cursor: pointer; }
+body.layout-dashboard .toast__close:hover { background: var(--d-hover); color: var(--ink); }
+body.layout-dashboard .toast__close:focus-visible, body.layout-dashboard .toast__undo:focus-visible { outline: 2px solid var(--d-accent); outline-offset: 1px; }
+body.layout-dashboard .toast__time { display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--d-accent); opacity: .7; transform-origin: 0 50%; }
+body.layout-dashboard .toast.is-error .toast__time { background: var(--danger); }
+@media (max-width: 1080px) {
+    /* Above the phone's own bar, the width of the screen */
+    body.layout-dashboard .toast { left: 12px; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom)); width: auto; min-width: 0; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    body.layout-dashboard .toast, body.layout-dashboard .toast.is-bumped { animation: none; }
+    body.layout-dashboard .toast__time { display: none; }
+}
