@@ -386,7 +386,7 @@ class PageBuilder
             if (trim($markdown) === '') {
                 return;
             }
-            $html = (string) \Illuminate\Support\Str::markdown($markdown, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+            $html = (string) \App\Support\Markdown::html($markdown, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
             $doc = new \DOMDocument;
             libxml_use_internal_errors(true);
             $doc->loadHTML('<?xml encoding="utf-8"?><div id="pb-root">'.$html.'</div>', LIBXML_NONET);
@@ -421,7 +421,7 @@ class PageBuilder
                 }
             }
         };
-        $plain = fn (string $markdown): string => trim(strip_tags((string) \Illuminate\Support\Str::markdown(
+        $plain = fn (string $markdown): string => trim(strip_tags((string) \App\Support\Markdown::html(
             \App\Inserts\InsertManager::stripSlips($markdown), ['html_input' => 'strip'])));
 
         $words((string) $entry->get('content', ''));

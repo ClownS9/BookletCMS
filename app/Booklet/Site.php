@@ -521,7 +521,7 @@ class Site
     public function markdown(?string $text): HtmlString
     {
         // Pictures in the text get sized copies and load lazily; [[slips]] become what their insert makes.
-        return new HtmlString(app(\App\Inserts\InsertManager::class)->renderSlips(\App\Support\Pictures::enhanceHtml(Str::markdown((string) $text, [
+        return new HtmlString(app(\App\Inserts\InsertManager::class)->renderSlips(\App\Support\Pictures::enhanceHtml(\App\Support\Markdown::html((string) $text, [
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
         ]))));
@@ -573,7 +573,7 @@ class Site
         if ($text === '') {
             // Built of sections on the page: what readers read there.
             $text = app(\App\PageBuilder\PageBuilder::class)->readerText($entry)
-                ?? strip_tags((string) Str::markdown(\App\Inserts\InsertManager::stripSlips((string) $entry->get('content', '')), ['html_input' => 'strip']));
+                ?? strip_tags((string) \App\Support\Markdown::html(\App\Inserts\InsertManager::stripSlips((string) $entry->get('content', '')), ['html_input' => 'strip']));
         }
         if (trim($text) === '') {
             $text = \App\Support\Blocks::textOf($entry); // a page built only from cut-outs

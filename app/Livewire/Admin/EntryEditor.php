@@ -337,6 +337,17 @@ class EntryEditor extends Component
 
     public function choose(string $path): void
     {
+        // The Picture button in the writing toolbar: the picture goes into the words.
+        if ($this->picking === '@body') {
+            $asset = rescue(fn () => Booklet::assets()->find(['container' => 'media', 'path' => $path]), null, false);
+            $disk = \App\Support\Disk::of(Booklet::assetContainers()->find('media')?->attribute('disk') ?? 'public');
+            $alt = trim((string) ($asset?->get('alt') ?? ''));
+            $alt = str_replace(['[', ']'], '', $alt !== '' ? $alt : pathinfo($path, PATHINFO_FILENAME));
+            $this->dispatch('booklet-picture', markdown: '!['.$alt.']('.$disk->url($path).')');
+            $this->closePicker();
+
+            return;
+        }
         if ($this->picking !== null && str_contains($this->picking, '.')) {
             $this->chooseForBlock($path);
 
@@ -1074,7 +1085,7 @@ class EntryEditor extends Component
             'meta_title' => Str::limit(trim((string) ($this->values['title'] ?? '')), 70, ''),
             'meta_description' => Str::limit(trim((string) preg_replace('/\s+/', ' ', (string) (trim((string) ($this->values['excerpt'] ?? '')) !== ''
                 ? $this->values['excerpt']
-                : strip_tags((string) Str::markdown((string) ($this->values['content'] ?? ''), ['html_input' => 'strip']))))), 160),
+                : strip_tags((string) \App\Support\Markdown::html((string) ($this->values['content'] ?? ''), ['html_input' => 'strip']))))), 160),
             'cover_caption' => ($cover = (string) ($this->values['cover'] ?? '')) !== ''
                 ? trim((string) (Booklet::assets()->find(['container' => 'media', 'path' => $cover])?->get('alt', '') ?? ''))
                 : '',

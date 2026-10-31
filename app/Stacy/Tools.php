@@ -779,7 +779,7 @@ class Tools
             'categories' => (array) $entry->get('categories', []),
             'tags' => (array) $entry->get('tags', []),
             'words' => \App\Support\Milestones::words($entry->get('content')),
-            'opening' => Str::limit(trim(strip_tags(Str::markdown((string) $entry->get('content', '')))), 600),
+            'opening' => Str::limit(trim(strip_tags(\App\Support\Markdown::html((string) $entry->get('content', '')))), 600),
             'reading_last_30_days' => $entry->status() === 'published' ? rescue(function () use ($entry) {
                 $r = \App\Support\VisitStats::forEntry($entry->id());
 

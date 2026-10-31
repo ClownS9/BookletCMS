@@ -457,7 +457,7 @@ class Blocks
             }
             foreach ($kinds[$block['type'] ?? '']['fields'] ?? [] as $handle => $field) {
                 if (in_array($field['type'], ['text', 'textarea', 'markdown'], true) && is_string($block[$handle] ?? null)) {
-                    $parts[] = trim(strip_tags((string) Str::markdown(InsertManager::stripSlips($block[$handle]), ['html_input' => 'strip'])));
+                    $parts[] = trim(strip_tags((string) \App\Support\Markdown::html(InsertManager::stripSlips($block[$handle]), ['html_input' => 'strip'])));
                 }
             }
         }

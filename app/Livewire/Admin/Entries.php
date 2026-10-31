@@ -756,7 +756,7 @@ class Entries extends Component
             'canEditChosen' => $selected && ($this->canArrange()
                 || (string) $selected->get('author') === (string) request()->user()?->id),
             'author' => $selected?->get('author') ? User::find($selected->get('author')) : null,
-            'excerpt' => $selected ? Str::limit(trim(strip_tags(Str::markdown((string) $selected->get('content', '')))), 320) : null,
+            'excerpt' => $selected ? Str::limit(trim(strip_tags(\App\Support\Markdown::html((string) $selected->get('content', '')))), 320) : null,
             'editions' => ! $desk && $selected ? Booklet::revisions()->whereKey($selected->revisionKey())->count() : 0,
         ]), $collection->title());
     }
