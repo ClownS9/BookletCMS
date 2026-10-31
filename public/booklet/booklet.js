@@ -2137,3 +2137,25 @@ window.bookletDragList = ($wire) => ({
         });
     });
 })();
+
+/*
+ * The Dashboard layout lifts a two-page screen's header above both pages.
+ * How tall it is depends on its words, so the room left for it is measured
+ * (and measured again when it wraps or changes) instead of guessed.
+ */
+(() => {
+    let watcher = null;
+    const fit = () => {
+        const pages = document.querySelector('body.layout-dashboard .book__pages');
+        watcher?.disconnect();
+        if (!pages) return;
+        const head = pages.querySelector(':scope > .page .page-head, :scope > * > .page .page-head');
+        if (!head || getComputedStyle(head).position !== 'absolute') { pages.style.removeProperty('--desk-head'); return; }
+        const measure = () => pages.style.setProperty('--desk-head', `${Math.ceil(head.getBoundingClientRect().height)}px`);
+        measure();
+        if ('ResizeObserver' in window) { watcher = new ResizeObserver(measure); watcher.observe(head); }
+    };
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', fit) : fit();
+    document.addEventListener('livewire:navigated', fit);
+    window.addEventListener('resize', fit);
+})();

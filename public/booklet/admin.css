@@ -7983,7 +7983,7 @@ body.layout-dashboard .page-head__crumbs, body.layout-dashboard .dash-head .page
 /* Panels */
 body.layout-dashboard :is(.dash-card, .desk-card, .dash-figure) { border-color: var(--d-line); border-radius: 8px; box-shadow: var(--d-shadow); }
 @media (min-width: 1081px) {
-    body.layout-dashboard .book__pages > .page, body.layout-dashboard .book__pages > * > .page { border-radius: 8px !important; box-shadow: var(--d-shadow) !important; }
+    body.layout-dashboard .book__pages > .page:not(.page--dash, :has(> .desk-card)), body.layout-dashboard .book__pages > * > .page:not(.page--dash, :has(> .desk-card)) { border-radius: 8px !important; box-shadow: var(--d-shadow) !important; }
 }
 body.layout-dashboard .dash-card__head { min-height: 44px; padding: 0 16px; }
 body.layout-dashboard .dash-card__head h2 { font-size: 14px; }
@@ -8111,3 +8111,42 @@ body.layout-dashboard.night { --d-frame: #0C0D0F; --d-frame-2: #1A1C20; --d-fram
     body.layout-dashboard .book__pages:has(.page-head):not(:has(.page-head__crumbs > :nth-child(3))) { padding-top: 72px; }
     body.layout-dashboard .page-head:not(:has(.page-head__crumbs > :nth-child(3))) { padding-top: 0; height: 44px; top: 20px; }
 }
+@media (min-width: 1081px) {
+    /* The lifted header's room is its measured height (booklet.js), so a long
+       description never runs into the panels; the guesses above are only for
+       the moment before it's measured */
+    body.layout-dashboard .page-head { height: auto !important; min-height: 44px; }
+    body.layout-dashboard .book__pages:has(.page-head) { padding-top: calc(20px + var(--desk-head, 76px) + 20px) !important; }
+    body.layout-dashboard .page-head { top: 20px !important; }
+}
+@media (min-width: 1081px) {
+    /* The lifted header reads like the desk's own: title, then its line of
+       description, any buttons on the right; same top and gap everywhere */
+    body.layout-dashboard .page-head:not(.page-head--editor) {
+        display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: start; align-content: start;
+    }
+    body.layout-dashboard .page-head:not(.page-head--editor) > :not(.page-head__actions, .page-head__crumbs) { grid-column: 1; }
+    body.layout-dashboard .page-head:not(.page-head--editor) > .page-head__actions { grid-column: 2; grid-row: 1 / span 4; align-self: center; }
+    body.layout-dashboard .page-head:not(.page-head--editor) > :is(.lede, p:not(.eyebrow)) { margin: 0 !important; max-width: 100ch; font-size: 13.5px !important; line-height: 1.5; color: var(--muted); }
+    body.layout-dashboard .page-head { top: 18px !important; min-height: 0; }
+    body.layout-dashboard .book__pages:has(.page-head) { padding-top: calc(18px + var(--desk-head, 52px) + 16px) !important; }
+}
+/* The title starts at the top whatever sits beside it; buttons centre on the line */
+body.layout-dashboard .dash-head { align-items: flex-start; }
+body.layout-dashboard .dash-head > :not(.dash-head__title) { align-self: center; }
+/* A card that opens with only a small label (no heading) wears it as its title bar */
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child:not(:has(> :is(h2, h3))):has(> .eyebrow:first-child) {
+    margin: -14px -16px 2px !important; padding: 12px 16px; border-bottom: 1px solid var(--d-line2);
+}
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child:not(:has(> :is(h2, h3))) > .eyebrow:first-child {
+    margin: 0; color: var(--ink); font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none;
+}
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child:not(:has(> :is(h2, h3))) > .eyebrow:first-child ~ p { margin-top: 4px !important; font-size: 13px; color: var(--muted); }
+/* A card head whose heading sits in its own block with a label (Menus: "Arrange · Header menu") */
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child:has(> div > :is(h2, h3)) {
+    display: flex; align-items: center; gap: 10px; margin: -14px -16px 2px !important; padding: 6px 10px 6px 16px; min-height: 44px; box-sizing: border-box; border-bottom: 1px solid var(--d-line2);
+}
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div:has(> :is(h2, h3)) { flex: 1; min-width: 0; display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: baseline; gap: 8px; }
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div > :is(h2, h3) { margin: 0 !important; font-size: 14px !important; font-weight: 600; }
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div > .eyebrow { margin: 0; font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); }
+body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div > .eyebrow::before { content: '· '; }
