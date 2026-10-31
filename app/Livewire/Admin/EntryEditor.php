@@ -86,7 +86,14 @@ class EntryEditor extends Component
     #[Url(except: null)]
     public ?string $parent = null;
 
-    /** Email this post to subscribers when it goes live. */
+    /** Which tab of the margin notes is open: main, or seo (search, sharing and how it's found). */
+    #[Url(as: 'tab', except: 'main')]
+    public string $side = 'main';
+
+    /** Fields that belong in the SEO tab, wherever a blueprint puts them. */
+    public const SEO_FIELDS = ['meta_title', 'meta_description', 'share_image', 'canonical_url', 'noindex', 'og_title', 'og_description'];
+
+        /** Email this post to subscribers when it goes live. */
     public bool $emailIt = true;
 
     /** Who it's credited to (a user id); editors and admins can change it. */
@@ -191,8 +198,12 @@ class EntryEditor extends Component
 
             foreach ((array) ($tab['sections'] ?? []) as $section) {
                 foreach ((array) ($section['fields'] ?? []) as $field) {
+                    // The SEO fieldset, a blueprint tab called "seo", or a field known to be for search.
+                    $seo = $tabHandle === 'seo' || ($field['import'] ?? null) === 'seo';
                     foreach ($this->expand($field) as $expanded) {
-                        $groups[$group][] = $this->normalize($expanded);
+                        $normal = $this->normalize($expanded);
+                        $normal['seo'] = $group === 'side' && ($seo || in_array($normal['handle'], self::SEO_FIELDS, true));
+                        $groups[$group][] = $normal;
                     }
                 }
             }
@@ -212,6 +223,21 @@ class EntryEditor extends Component
     /**
      * Turn `- import: seo` into the fieldset's own fields.
      */
+    /** When saving stops on a field in the SEO tab (and only there), open that tab. */
+    public function exception($e, $stopPropagation): void
+    {
+        if (! $e instanceof \Illuminate\Validation\ValidationException) {
+            return;
+        }
+        $seo = collect($this->fields['side'])->where('seo', true)->pluck('handle')->map(fn ($h) => 'values.'.$h)->all();
+        $keys = array_keys($e->errors());
+        if ($keys !== [] && array_diff($keys, $seo) === []) {
+            $this->side = 'seo';
+        } elseif (array_intersect($keys, $seo) === []) {
+            $this->side = 'main';
+        }
+    }
+
     protected function expand(array $field): array
     {
         if (! isset($field['import'])) {
@@ -1521,6 +1547,9 @@ class EntryEditor extends Component
 
     public function render()
     {
+        if (! in_array($this->side, ['main', 'seo'], true)) {
+            $this->side = 'main';
+        }
         $title = $this->values['title'] ?? '';
         $this->heartbeat();
 
@@ -1547,7 +1576,9 @@ class EntryEditor extends Component
             'subscriberCount' => rescue(fn () => \App\Models\Subscriber::active()->count(), 0, false),
             'canTranslate' => $stacyHelp && $this->entryId && \App\Stacy\StacyConfig::allowsAction('translate'),
             'routePrefix' => Str::before((string) $this->model->route(), '{'),
-            'searchCard' => $this->searchCard(),
+            'searchCard' => $searchCard = $this->searchCard(),
+            // The SEO tab: there when there's something to put in it.
+            'seoTab' => $searchCard !== null || collect($this->fields['side'])->contains('seo', true),
             ...$this->building(),
             'coEditors' => $this->coEditors(),
             'takenDown' => $this->entryId && $this->status === 'draft'
