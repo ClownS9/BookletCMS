@@ -41,11 +41,11 @@ class UpdatesTest extends TestCase
         \Illuminate\Support\Facades\Storage::fake('public');
         $this->admin = User::factory()->create(['role' => 'admin']);
 
-        // A pretend Booklet 1.4, with things of the site's own around it.
+        // A pretend older Booklet, with things of the site's own around it.
         $this->root = storage_path('framework/testing/booklet-root-'.uniqid());
         $files = [
-            'app/Old.php' => '<?php // 1.4', 'vendor/autoload.php' => '<?php', 'public/index.php' => '<?php // 1.4', 'artisan' => '#!/usr/bin/env php',
-            'bootstrap/app.php' => '<?php', 'config/app.php' => '<?php return [];', 'themes/harbour/theme.json' => '{"v":"1.4"}',
+            'app/Old.php' => '<?php // 1.0', 'vendor/autoload.php' => '<?php', 'public/index.php' => '<?php // 1.0', 'artisan' => '#!/usr/bin/env php',
+            'bootstrap/app.php' => '<?php', 'config/app.php' => '<?php return [];', 'themes/harbour/theme.json' => '{"v":"1.0"}',
             // Not Booklet's: never touched.
             '.env' => 'APP_KEY=base64:secret', 'storage/app/public/kopi.jpg' => 'JPEG', 'content/collections/posts/hello.md' => '# Hello',
             'themes/mine/theme.json' => '{"mine":true}', 'database/database.sqlite' => 'SQLITE', 'public/storage/link.txt' => 'link',
@@ -125,9 +125,9 @@ class UpdatesTest extends TestCase
 
     public function test_an_older_or_same_version_isnt_offered(): void
     {
-        Cache::forever(Updates::CACHE, ['version' => '1.4', 'checked_at' => now()->toIso8601String()]);
+        Cache::forever(Updates::CACHE, ['version' => '1.0', 'checked_at' => now()->toIso8601String()]);
         $this->assertNull(Updates::available());
-        Cache::forever(Updates::CACHE, ['version' => '1.3.9']);
+        Cache::forever(Updates::CACHE, ['version' => '0.9.9']);
         $this->assertNull(Updates::available());
         Livewire::actingAs($this->admin)->test(UpdatesPage::class)->assertSee('This is the newest Booklet.');
     }
@@ -157,14 +157,14 @@ class UpdatesTest extends TestCase
 
         $this->assertSame('9.0', Updates::finish($token, $this->admin));
         $this->assertSame(1, ActivityLog::where('action', 'updated Booklet to')->count());
-        $this->assertSame('1.4', Updates::undoable()['from']);
-        Livewire::actingAs($this->admin)->test(UpdatesPage::class)->assertSee('Go back to 1.4')->assertSee('Updated from 1.4 to 9.0');
+        $this->assertSame('1.0', Updates::undoable()['from']);
+        Livewire::actingAs($this->admin)->test(UpdatesPage::class)->assertSee('Go back to 1.0')->assertSee('Updated from 1.0 to 9.0');
 
         // Going back: the old files return, yours still untouched.
-        $this->assertSame('1.4', Updates::undo($this->admin));
+        $this->assertSame('1.0', Updates::undo($this->admin));
         $this->assertFileExists($this->root.'/app/Old.php');
         $this->assertFileDoesNotExist($this->root.'/app/New.php');
-        $this->assertStringContainsString('1.4', (string) file_get_contents($this->root.'/public/index.php'));
+        $this->assertStringContainsString('// 1.0', (string) file_get_contents($this->root.'/public/index.php'));
         $this->assertSame('{"mine":true}', file_get_contents($this->root.'/themes/mine/theme.json'));
         $this->assertNull(Updates::undoable());
         $this->assertSame(1, ActivityLog::where('action', 'went back to Booklet')->count());

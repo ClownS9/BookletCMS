@@ -32,11 +32,9 @@ return [
     |
     */
 
-    // 1.1: inserts can guard forms ('guard') and keep secret settings ('secret').
-    // 1.2: inserts can list their public pages ('pages': the sitemap, plain files).
-    // 1.3: inserts can draw the blog page ('blog').
-    // 1.4: pages, posts and the blog page can be built of sections, on the page itself.
-    'version' => '1.4',
+    // Inserts and themes say which version they need ('needs'), and updates
+    // compare against it.
+    'version' => '1.0',
 
     'inserts_path' => env('BOOKLET_INSERTS_PATH', base_path('inserts')),
 

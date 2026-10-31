@@ -23,11 +23,11 @@ makes `inserts/reading-list/` with a working example. Then change it.
 | `name`, `about`, `version`, `author` | How it appears on the shelf (and what Stacy knows about it) |
 | `sticker` | Its colour: coral, sun, mint, sky, lilac, rose, sand or ink |
 | `needs` | The Booklet version it needs, like `'1.0'` |
-| `settings` | Fields drawn on the shelf for you (`secret` needs Booklet 1.1): `text`, `textarea`, `number`, `toggle`, `select`, `email`, `url`, and `secret` (another service’s key: kept encrypted with `APP_KEY`, never sent to the browser, left out of backups) |
-| `pages` | Its public pages, for the sitemap and plain files: `['/events']`, or a function giving `[['path' => '/offer', 'updated' => $date]]` (Booklet 1.2) |
-| `home` | A home page: `fn (Insert $insert, Request $request) => view(...)`, or null to leave it as it is (Booklet 1.2) |
-| `blog` | The blog page: `fn (Insert $insert, Request $request) => view(...)`, or null to leave it as Booklet draws it (Booklet 1.3) |
-| `guard` | Guarding the site’s forms (see below; Booklet 1.1, so say `'needs' => '1.1'`) |
+| `settings` | Fields drawn on the shelf for you: `text`, `textarea`, `number`, `toggle`, `select`, `email`, `url`, and `secret` (another service’s key: kept encrypted with `APP_KEY`, never sent to the browser, left out of backups) |
+| `pages` | Its public pages, for the sitemap and plain files: `['/events']`, or a function giving `[['path' => '/offer', 'updated' => $date]]` |
+| `home` | A home page: `fn (Insert $insert, Request $request) => view(...)`, or null to leave it as it is |
+| `blog` | The blog page: `fn (Insert $insert, Request $request) => view(...)`, or null to leave it as Booklet draws it |
+| `guard` | Guarding the site’s forms (see below) |
 | `page` | Its own page in the admin book: `title`, `chapter` (Posts, Pages, Media, People, Comments…; leave out for its own), `who` (roles), `form` (starting values), `data` (a function giving the view its variables), `actions` (functions its buttons call) |
 | `slips` | Pieces for writing: `'gallery' => fn ($words, $insert) => …` makes `[[gallery: …]]` work in posts and pages |
 | `slip_help` | How to use each slip, in one line |

@@ -96,7 +96,7 @@ class InsertManager
      * Inserts that became part of Booklet: never run any more, and the shelf
      * says where they went.
      */
-    public const BUILT_IN = ['page-builder' => 'Building on the page, for every page and post and the blog page (since Booklet 1.4). What you built with it comes across with php booklet builder-import'];
+    public const BUILT_IN = ['page-builder' => 'Building on the page, for every page and post and the blog page. What you built with it comes across with php booklet builder-import'];
 
     // Public pages --------------------------------------------------------------------------
 
@@ -137,7 +137,7 @@ class InsertManager
     /**
      * The home page, if a switched-on insert makes it ('home' in insert.php:
      * a function given the insert and the request, answering with a page,
-     * or null to leave the home page as it is). Booklet 1.2.
+     * or null to leave the home page as it is).
      */
     public function home(\Illuminate\Http\Request $request): mixed
     {
@@ -147,7 +147,7 @@ class InsertManager
     /**
      * The blog page, if a switched-on insert draws it ('blog' in insert.php:
      * a function given the insert and the request, answering with a page,
-     * or null to leave the blog as Booklet draws it). Booklet 1.3.
+     * or null to leave the blog as Booklet draws it).
      */
     public function blog(\Illuminate\Http\Request $request): mixed
     {
