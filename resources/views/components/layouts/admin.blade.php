@@ -7,6 +7,7 @@
     <meta name="theme-color" content="{{ \App\Support\YourBook::deskColour($you) }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ isset($title) ? __($title).' · ' : '' }}Booklet</title>
+    <x-icons set="booklet" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">

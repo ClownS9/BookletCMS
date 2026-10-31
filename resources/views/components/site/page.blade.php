@@ -65,7 +65,7 @@
         @if ($version['original']) <link rel="alternate" hreflang="x-default" href="{{ $version['url'] }}"> @endif
     @endforeach
     <link rel="alternate" type="application/rss+xml" title="{{ $site->name() }}" href="{{ route('site.feed') }}">
-    @if ($site->logoUrl()) <link rel="icon" href="{{ $site->logoUrl() }}"> @endif
+    <x-icons set="site" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     {{-- The fonts don't hold the page up: words show at once in a close system font, then switch

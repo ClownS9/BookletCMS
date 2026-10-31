@@ -69,35 +69,6 @@
                     </div>
                 </div>
 
-                <div class="field" id="logo">
-                    <span class="field__label">{{ __('Logo & icon') }}</span>
-                    <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap">
-                        <span class="logo-slot">
-                            @if ($logoUpload)
-                                <img src="{{ $logoUpload->temporaryUrl() }}" alt="{{ __('New logo preview') }}">
-                            @elseif ($logoUrl)
-                                <img src="{{ $logoUrl }}" alt="{{ __('Current logo') }}">
-                            @else
-                                <span class="muted serif" style="font-size: 13px">{{ __('No logo') }}</span>
-                            @endif
-                        </span>
-                        <span style="display: flex; flex-direction: column; gap: 8px">
-                            <span class="field__hint">{{ __('SVG or PNG, square works best. Up to 4 MB.') }}</span>
-                            <span style="display: flex; gap: 8px; flex-wrap: wrap">
-                                <label class="btn btn--sm" style="position: relative; overflow: hidden">
-                                    <span wire:loading.remove wire:target="logoUpload">{{ $logo ? __('Replace') : __('Upload') }}</span>
-                                    <span wire:loading wire:target="logoUpload">{{ __('Uploading…') }}</span>
-                                    <input type="file" accept="image/*" wire:model="logoUpload" style="position: absolute; inset: 0; opacity: 0; cursor: pointer">
-                                </label>
-                                @if ($logo)
-                                    <button type="button" class="btn btn--quiet btn--sm" wire:click="removeLogo">{{ __('Remove') }}</button>
-                                @endif
-                            </span>
-                        </span>
-                    </div>
-                    @error('logoUpload') <p class="field__error">{{ $message }}</p> @enderror
-                </div>
-
                 {{-- Colours, fonts and layouts live in the cover designer now. --}}
                 @php $cover = \App\Support\Look::current(); @endphp
                 <div>
@@ -114,6 +85,178 @@
                     @else
                         <p class="field__hint" style="margin: 0">{{ \App\Support\Look::presetName($cover) }}. An admin can change it.</p>
                     @endif
+                </div>
+            </fieldset>
+        </x-admin.card>
+
+        {{-- Logo & icons: the logo in the header, and the little pictures for tabs and phones --}}
+        <x-admin.card :title="__('Logo & icons')">
+            <fieldset @disabled(! $canEdit) class="brandkit" id="logo">
+                <legend class="sr-only">{{ __('Logo & icons') }}</legend>
+                @unless (\App\Support\YourBook::desk())
+                    <h2 class="heading" style="margin: 8px 0 -6px; padding-top: 20px; border-top: 1px solid var(--rule)">{{ __('Logo & icons') }}</h2>
+                @endunless
+
+                {{-- The logo --}}
+                <div class="brandkit__row">
+                    <div>
+                        <p class="field__label" style="margin: 0">{{ __('Logo') }}</p>
+                        <p class="field__hint" style="margin: 2px 0 0">{{ __('Any shape: a square mark or a wide wordmark. SVG or PNG, up to 4 MB.') }}</p>
+                    </div>
+                    <div class="brandkit__pair">
+                        <div class="brandkit__slot">
+                            <span class="logo-slot logo-slot--wide">
+                                @if ($logoUpload)<img src="{{ $logoUpload->temporaryUrl() }}" alt="{{ __('New logo preview') }}">
+                                @elseif ($logoUrl)<img src="{{ $logoUrl }}" alt="{{ __('Current logo') }}">
+                                @else<span class="muted" style="font-size: 13px">{{ __('No logo') }}</span>@endif
+                            </span>
+                            <span class="brandkit__buttons">
+                                <label class="btn btn--sm brandkit__file">
+                                    <span wire:loading.remove wire:target="logoUpload">{{ $logo ? __('Replace') : __('Upload') }}</span>
+                                    <span wire:loading wire:target="logoUpload">{{ __('Uploading…') }}</span>
+                                    <input type="file" accept="image/*" wire:model="logoUpload" aria-label="{{ __('Logo') }}">
+                                </label>
+                                @if ($logo)<button type="button" class="btn btn--quiet btn--sm" wire:click="removeLogo">{{ __('Remove') }}</button>@endif
+                            </span>
+                            @error('logoUpload') <p class="field__error">{{ $message }}</p> @enderror
+                        </div>
+                        @if ($logo)
+                            <div class="brandkit__slot">
+                                <span class="logo-slot logo-slot--wide logo-slot--dark">
+                                    @if ($logoDarkUrl)<img src="{{ $logoDarkUrl }}" alt="{{ __('Logo for dark mode') }}">
+                                    @else<span style="font-size: 12px; color: #A8A091; text-align: center; padding: 0 8px">{{ __('For dark mode (optional)') }}</span>@endif
+                                </span>
+                                <span class="brandkit__buttons">
+                                    <label class="btn btn--sm brandkit__file">
+                                        <span wire:loading.remove wire:target="logoDarkUpload">{{ $logoDark ? __('Replace') : __('Upload') }}</span>
+                                        <span wire:loading wire:target="logoDarkUpload">{{ __('Uploading…') }}</span>
+                                        <input type="file" accept="image/*" wire:model="logoDarkUpload" aria-label="{{ __('Logo for dark mode') }}">
+                                    </label>
+                                    @if ($logoDark)<button type="button" class="btn btn--quiet btn--sm" wire:click="removeLogoDark">{{ __('Remove') }}</button>@endif
+                                </span>
+                                @error('logoDarkUpload') <p class="field__error">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- The header --}}
+                @if ($logo)
+                    <div class="brandkit__row">
+                        <p class="field__label" id="logo-show" style="margin: 0">{{ __('In the header') }}</p>
+                        <div class="brandkit__controls">
+                            <div class="segmented" role="radiogroup" aria-labelledby="logo-show">
+                                @foreach (['both' => __('Logo and name'), 'logo' => __('Logo only'), 'name' => __('Name only')] as $key => $label)
+                                    <button type="button" role="radio" aria-checked="{{ $logoShow === $key ? 'true' : 'false' }}" wire:click="showLogo('{{ $key }}')">{{ $label }}</button>
+                                @endforeach
+                            </div>
+                            @if ($logoShow !== 'name')
+                                <label class="brandkit__size">
+                                    <span>{{ __('Size') }}</span>
+                                    <input type="range" min="20" max="80" step="2" wire:model.live="logoHeight" aria-label="{{ __('Logo height') }}">
+                                    <output>{{ $logoHeight }} px</output>
+                                </label>
+                            @endif
+                        </div>
+                        @php $previewLogo = $logoUpload ? $logoUpload->temporaryUrl() : $logoUrl; @endphp
+                        <div class="brandkit__header" aria-hidden="true">
+                            @foreach (array_filter(['light' => $previewLogo, 'dark' => $logoDarkUrl ?: null]) as $mode => $src)
+                                <div class="brandkit__bar brandkit__bar--{{ $mode }}">
+                                    @if ($logoShow !== 'name')<img src="{{ $src }}" alt="" style="height: {{ $logoHeight }}px">@endif
+                                    @if ($logoShow !== 'logo')<span>{{ $siteName ?: __('Your site') }}</span>@endif
+                                    <i></i><i></i><i></i>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                {{-- The icon --}}
+                <div class="brandkit__row">
+                    <div>
+                        <p class="field__label" id="icon-from" style="margin: 0">{{ __('Icon') }}</p>
+                        <p class="field__hint" style="margin: 2px 0 0">{{ __('For browser tabs, bookmarks and phone home screens. Booklet makes every size from it.') }}</p>
+                    </div>
+                    @php
+                        $choices = ['' => __('Choose for me'), 'upload' => __('My own icon'), 'logo' => __('My logo'), 'initials' => __('Initials'), 'booklet' => __('Booklet’s')];
+                        $names = ['upload' => __('your icon'), 'logo' => __('your logo'), 'initials' => __('your initials'), 'booklet' => __('Booklet’s icon')];
+                    @endphp
+                    <div class="pills" role="radiogroup" aria-labelledby="icon-from">
+                        @foreach ($choices as $key => $label)
+                            @php $off = ($key === 'logo' && ! $logo); @endphp
+                            <button type="button" class="pill" role="radio" aria-checked="{{ $iconFrom === $key ? 'true' : 'false' }}" wire:click="chooseIcon('{{ $key }}')" @disabled($off)
+                                    @if ($off) title="{{ __('Upload a logo first') }}" @endif>{{ $label }}</button>
+                        @endforeach
+                    </div>
+                    @if ($iconFrom === '')
+                        <p class="field__hint" style="margin: 0">{{ __('Using :what now. Order: your own icon, then your logo if it’s square, then your initials.', ['what' => $names[$icons['auto']]]) }}</p>
+                    @endif
+
+                    @if ($iconFrom === 'upload' || $icon)
+                        <div class="brandkit__slot brandkit__slot--row">
+                            <span class="logo-slot">
+                                @if ($iconUpload)<img src="{{ $iconUpload->temporaryUrl() }}" alt="{{ __('New icon preview') }}">
+                                @elseif ($icons['iconUrl'])<img src="{{ $icons['iconUrl'] }}" alt="{{ __('Current icon') }}" style="object-fit: cover">
+                                @else<span class="muted" style="font-size: 12px">{{ __('No icon') }}</span>@endif
+                            </span>
+                            <span style="display: flex; flex-direction: column; gap: 8px">
+                                <span class="field__hint">{{ __('Square, at least 512 × 512. A PNG works on every phone; an SVG stays sharp in tabs.') }}</span>
+                                <span class="brandkit__buttons">
+                                    <label class="btn btn--sm brandkit__file">
+                                        <span wire:loading.remove wire:target="iconUpload">{{ $icon ? __('Replace') : __('Upload an icon') }}</span>
+                                        <span wire:loading wire:target="iconUpload">{{ __('Uploading…') }}</span>
+                                        <input type="file" accept="image/*" wire:model="iconUpload" aria-label="{{ __('Icon') }}">
+                                    </label>
+                                    @if ($icon)<button type="button" class="btn btn--quiet btn--sm" wire:click="removeIcon">{{ __('Remove') }}</button>@endif
+                                </span>
+                            </span>
+                        </div>
+                        @error('iconUpload') <p class="field__error">{{ $message }}</p> @enderror
+                    @endif
+                    @if ($iconFrom === 'logo' && $logo && ! $icons['logoSquare'])
+                        <p class="field__hint" style="margin: 0">{{ __('Your logo isn’t square, so it’s fitted inside the icon with room around it. A square icon of its own usually looks better.') }}</p>
+                    @endif
+                    @if ($icons['source'] === 'initials')
+                        <div class="field" style="max-width: 220px">
+                            <label for="icon-letters">{{ __('Letters') }}</label>
+                            <input id="icon-letters" type="text" maxlength="2" wire:model.live.debounce.300ms="iconLetters" placeholder="{{ $icons['suggested'] ?: __('AB') }}" autocomplete="off">
+                            <p class="field__hint">{{ __('One or two. On your accent colour, from the cover.') }}</p>
+                            @error('iconLetters') <p class="field__error">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
+                    @if ($icons['pictureIsSvg'])
+                        <p class="field__hint" style="margin: 0">{{ __('Phones need a PNG, so they’ll show your initials until you add one. Tabs show your SVG.') }}</p>
+                    @endif
+
+                    {{-- How it looks: a browser tab, a phone's home screen, and the admin's own tab --}}
+                    @php
+                        $tile = function (string $size, bool $phone) use ($icons) {
+                            $style = 'width: '.$size.'; height: '.$size.'; border-radius: 22%; background: '.$icons['accent'].'; color: '.$icons['on'];
+                            if ($icons['picture'] && ! ($icons['pictureIsSvg'] && $phone)) {
+                                $fit = $icons['source'] === 'upload' ? 'cover' : 'contain';
+                                return '<img src="'.e($icons['picture']).'" alt="" style="width: '.$size.'; height: '.$size.'; object-fit: '.$fit.'; border-radius: 22%">';
+                            }
+                            if (in_array($icons['source'], ['initials', 'upload', 'logo'], true) && $icons['letters'] !== '') {
+                                return '<span class="brandkit__tile" style="'.$style.'; font-size: calc('.$size.' * '.(mb_strlen($icons['letters']) > 1 ? '.4' : '.5').')">'.e($icons['letters']).'</span>';
+                            }
+                            return '<span class="brandkit__tile" style="'.$style.'"><svg viewBox="0 0 24 24" width="62%" height="62%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5c3-1.5 6.5-1.5 10 1 3.5-2.5 7-2.5 10-1v14c-3-1.5-6.5-1.5-10 1-3.5-2.5-7-2.5-10-1z"/><path d="M12 6v14"/></svg></span>';
+                        };
+                    @endphp
+                    <div class="brandkit__previews" aria-label="{{ __('How it looks') }}">
+                        <figure class="brandkit__tabs">
+                            <div class="brandkit__tab is-on">{!! $tile('16px', false) !!}<span>{{ $siteName ?: __('Your site') }}</span><b>×</b></div>
+                            <div class="brandkit__tab"><span class="brandkit__admin">{!! $icons['admin'] !!}</span><span>{{ __('Dashboard') }} · Booklet</span><b>×</b></div>
+                            <figcaption>{{ __('Browser tabs: your site, and the admin with Booklet’s icon') }}</figcaption>
+                        </figure>
+                        <figure class="brandkit__phone">
+                            <div class="brandkit__screen">
+                                <span class="brandkit__app"><span class="brandkit__ghost"></span><small>&nbsp;</small></span>
+                                <span class="brandkit__app">{!! $tile('52px', true) !!}<small>{{ \Illuminate\Support\Str::limit($siteName ?: __('Your site'), 12, '…') }}</small></span>
+                                <span class="brandkit__app"><span class="brandkit__ghost"></span><small>&nbsp;</small></span>
+                            </div>
+                            <figcaption>{{ __('A phone’s home screen') }}</figcaption>
+                        </figure>
+                    </div>
                 </div>
             </fieldset>
         </x-admin.card>
