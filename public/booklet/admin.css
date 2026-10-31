@@ -7898,3 +7898,216 @@ body.layout-dashboard .book__pages .desk-card__body > :is(.ribbon-clear, [class*
     margin: 0 !important; color: var(--ink); font-family: var(--sans); font-size: 15px !important; font-weight: 600; line-height: 1.4; letter-spacing: 0; text-transform: none;
 }
 body.layout-dashboard .book__pages .desk-card__body > :is(.ribbon-clear, [class*="__head"]):first-child > :is(h2, h3) ~ p { margin-top: 4px !important; font-size: 13px !important; line-height: 1.5; color: var(--muted); }
+
+/* ==========================================================================
+   Dashboard look, second edition: calm grey and white, a grouped sidebar
+   with an icon on every item, denser tables and forms, and one strong accent
+   per theme. Booklet's own touches stay: the section colours as a bookmark
+   ribbon on the page you're on, and the coloured dots.
+   ========================================================================== */
+body.layout-dashboard {
+    --ink: #17191E; --ink-2: #2A2D34; --muted: #5B606B; --faint: #727884;
+    --d-bg: #F2F3F5; --d-top: #FFFFFF; --d-panel: #FFFFFF; --d-head: #F8F9FA;
+    --d-line: #E2E4E8; --d-line2: #ECEEF1; --d-field: #D2D5DB; --d-hover: #EEF0F3; --d-side-hover: #E7E9ED;
+    --d-accent: #C8401A; --d-on-accent: #FFFFFF; --d-accent-text: #B83A17; --d-sel: #FDF0EB;
+    --d-ok: #1F8A4C; --d-draft: #7A808A; --d-later: #2F64D6; --d-review: #A87410;
+    --d-shadow: 0 1px 2px rgba(16, 18, 24, .05);
+    --d-ring: 0 0 0 3px color-mix(in srgb, var(--d-accent) 20%, transparent);
+}
+body.layout-dashboard.theme-linen, body.layout-dashboard.theme-mist, body.layout-dashboard.theme-rose {
+    --d-bg: #F2F3F5; --d-head: #F8F9FA; --d-line: #E2E4E8; --d-line2: #ECEEF1; --d-field: #D2D5DB; --d-hover: #EEF0F3;
+}
+body.layout-dashboard.theme-linen { --d-accent: #1C7A4B; --d-accent-text: #186B41; --d-sel: #EAF5EF; }
+body.layout-dashboard.theme-mist { --d-accent: #2456D3; --d-accent-text: #1F4CBD; --d-sel: #EBF0FD; }
+body.layout-dashboard.theme-rose { --d-accent: #BE2A5A; --d-accent-text: #A82450; --d-sel: #FCEDF2; }
+body.layout-dashboard.night, body.layout-dashboard.night:is(.theme-linen, .theme-mist, .theme-rose) {
+    --ink: #ECEEF2; --ink-2: #D5D8DE; --muted: #A7ACB6; --faint: #8B909A;
+    --d-bg: #131417; --d-top: #1A1C20; --d-panel: #1B1D21; --d-head: #202328;
+    --d-line: #2D3036; --d-line2: #25282D; --d-field: #3B3F46; --d-hover: #24272C; --d-side-hover: #212429;
+    --d-on-accent: #131417; --d-ok: #6FD39A; --d-draft: #A7ACB6; --d-later: #8FB0FF; --d-review: #F0C45A;
+    --d-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+}
+body.layout-dashboard.night { --d-accent: #FF8A62; --d-accent-text: #FF9B78; --d-sel: #2E211C; }
+body.layout-dashboard.night.theme-linen { --d-accent: #5CCB93; --d-accent-text: #6FD3A2; --d-sel: #1A2A22; }
+body.layout-dashboard.night.theme-mist { --d-accent: #85A6FF; --d-accent-text: #97B3FF; --d-sel: #1B2338; }
+body.layout-dashboard.night.theme-rose { --d-accent: #FF86AA; --d-accent-text: #FF99B7; --d-sel: #321D25; }
+
+/* The top bar: white, with the accent on the book mark */
+body.layout-dashboard .deskbar__mark { background: var(--d-accent); color: var(--d-on-accent); border-radius: 7px; }
+body.layout-dashboard .deskbar__search { height: 36px; border-color: transparent; background: var(--d-bg); font-size: 13.5px; }
+body.layout-dashboard .deskbar__search:hover { border-color: var(--d-field); }
+body.layout-dashboard .deskbar__icon { width: 34px; height: 34px; border-radius: 7px; box-shadow: var(--d-shadow); }
+body.layout-dashboard .deskbar__stacy { height: 34px; font-size: 13px; }
+
+/* The sidebar: grouped, an icon on every item, a bookmark on the page you're on */
+@media (min-width: 1081px) {
+    body.layout-dashboard .sidebar { padding: 6px 12px 12px; border-right: 0; background: var(--d-bg); }
+    body.layout-dashboard .sidebar__group { margin: 18px 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: .07em; color: var(--faint); }
+    body.layout-dashboard .sidebar__group:first-child { margin-top: 10px; }
+    body:not(.desk-narrow).layout-dashboard .sidebar__dot,
+    body:not(.desk-narrow).layout-dashboard .sidebar__gear { display: none; }
+    body:not(.desk-narrow).layout-dashboard .sidebar__icon { display: inline-flex; flex: none; color: var(--faint); transition: color .15s ease; }
+    body:not(.desk-narrow).layout-dashboard .sidebar__list a { position: relative; gap: 10px; min-height: 34px; padding: 0 10px; border: 0; border-radius: 7px; color: var(--ink-2); font-size: 13.5px; }
+    body:not(.desk-narrow).layout-dashboard .sidebar__list a:hover { background: var(--d-side-hover); }
+    body:not(.desk-narrow).layout-dashboard .sidebar__list a:hover .sidebar__icon { color: var(--ink); }
+    body:not(.desk-narrow).layout-dashboard .sidebar__list a[aria-current="page"],
+    body:not(.desk-narrow).layout-dashboard .sidebar__item.has-current > .sidebar__row > a { background: var(--d-panel); color: var(--ink); font-weight: 600; box-shadow: var(--d-shadow), 0 0 0 1px var(--d-line); }
+    body:not(.desk-narrow).layout-dashboard .sidebar__list a[aria-current="page"] .sidebar__icon,
+    body:not(.desk-narrow).layout-dashboard .sidebar__item.has-current > .sidebar__row .sidebar__icon { color: var(--d-accent-text); }
+    /* The bookmark: the section's own colour hanging from the left edge */
+    body:not(.desk-narrow).layout-dashboard .sidebar__row > a[aria-current="page"]::before,
+    body:not(.desk-narrow).layout-dashboard .sidebar__item.has-current > .sidebar__row > a::before {
+        content: ''; position: absolute; left: -12px; top: 7px; bottom: 7px; width: 4px; border-radius: 0 3px 3px 0; background: var(--tone);
+    }
+    body:not(.desk-narrow).layout-dashboard .sidebar__sub { margin: 2px 0 6px 18px; padding-left: 12px; border-left-color: var(--d-line); }
+    body:not(.desk-narrow).layout-dashboard .sidebar .sidebar__sub a { min-height: 30px; border: 0; border-radius: 6px; font-size: 13px; }
+    body:not(.desk-narrow).layout-dashboard .sidebar .sidebar__sub a:hover { background: var(--d-side-hover); }
+    body:not(.desk-narrow).layout-dashboard .sidebar .sidebar__sub a[aria-current="page"] { background: var(--d-panel); box-shadow: var(--d-shadow), 0 0 0 1px var(--d-line); }
+    body.layout-dashboard .sidebar__more { width: 26px; height: 26px; }
+    body.layout-dashboard .sidebar__more:hover { background: var(--d-side-hover); }
+    body.layout-dashboard .sidebar__card { padding: 6px 8px; border-radius: 8px; box-shadow: var(--d-shadow); }
+}
+body.layout-dashboard .sidebar__badge { min-width: 18px; padding: 0 6px; background: var(--d-accent); color: var(--d-on-accent); font-size: 10.5px; line-height: 18px; }
+
+/* The ground and page headers */
+@media (min-width: 1081px) {
+    body.layout-dashboard .book__pages:has(.page--dash) { padding: 18px 28px 0; }
+    body.layout-dashboard .book__pages { padding-left: 28px; padding-right: 28px; }
+    body.layout-dashboard .page-head { left: 28px; right: 28px; }
+}
+body.layout-dashboard .dash { gap: 16px; }
+body.layout-dashboard .dash-head h1, body.layout-dashboard .page-head h1 { font-size: 22px !important; font-weight: 650; letter-spacing: -.015em; }
+body.layout-dashboard .dash-head p { font-size: 13.5px; }
+body.layout-dashboard .page-head__crumbs, body.layout-dashboard .dash-head .page-head__crumbs { font-size: 12.5px; }
+
+/* Panels */
+body.layout-dashboard :is(.dash-card, .desk-card, .dash-figure) { border-color: var(--d-line); border-radius: 8px; box-shadow: var(--d-shadow); }
+@media (min-width: 1081px) {
+    body.layout-dashboard .book__pages > .page, body.layout-dashboard .book__pages > * > .page { border-radius: 8px !important; box-shadow: var(--d-shadow) !important; }
+}
+body.layout-dashboard .dash-card__head { min-height: 44px; padding: 0 16px; }
+body.layout-dashboard .dash-card__head h2 { font-size: 14px; }
+body.layout-dashboard .desk-card__title,
+body.layout-dashboard .book__pages .desk-card__title,
+body.layout-dashboard .book__pages .desk-card__body > :is(h2, h3):first-child,
+body.layout-dashboard .book__pages .desk-card__body > :is(.ribbon-clear, [class*="__head"]):first-child > :is(h2, h3) { font-size: 14px !important; }
+body.layout-dashboard .dash-figure { padding: 12px 16px; }
+body.layout-dashboard .dash-figure__n b { font-size: 24px; }
+
+/* Tables: denser rows, quiet capital headings */
+body.layout-dashboard .dash-table { font-size: 13.5px; }
+body.layout-dashboard .dash-table th { padding: 7px 12px; font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); }
+body.layout-dashboard .dash-table th .dash-table__sort { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
+body.layout-dashboard .dash-table td { padding: 7px 12px; }
+body.layout-dashboard .dash-table tbody tr { transition: background-color .12s ease; }
+body.layout-dashboard .dash-table tbody tr:hover { background: var(--d-head); }
+body.layout-dashboard .dash-table__name { font-size: 13.5px; }
+body.layout-dashboard .dash-table__sub { font-size: 12px; }
+body.layout-dashboard .dash-tabs { padding: 0 8px; }
+body.layout-dashboard .dash-tabs button { min-height: 40px; padding: 0 10px; font-size: 13.5px; }
+body.layout-dashboard .dash-tabs button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--d-accent); }
+body.layout-dashboard .dash-tabs button[aria-pressed="true"] b { background: color-mix(in srgb, var(--d-accent) 14%, transparent); color: var(--d-accent-text); }
+body.layout-dashboard .dash-tabs b { font-size: 11px; }
+body.layout-dashboard .dash-tools { min-height: 54px; padding: 9px 12px; }
+body.layout-dashboard .dash-foot { padding: 10px 16px; font-size: 12.5px; }
+body.layout-dashboard .dash-role { font-size: 12px; padding: 1px 9px 1px 7px; }
+
+/* Controls: smaller and tighter, the accent where it counts */
+body.layout-dashboard .btn { min-height: 34px; padding: 0 12px; gap: 6px; border-radius: 7px; font-size: 13.5px; }
+body.layout-dashboard .btn--sm { min-height: 30px; padding: 0 10px; border-radius: 6px; font-size: 13px; }
+body.layout-dashboard .btn--lg { min-height: 40px; padding: 0 16px; font-size: 14.5px; }
+body.layout-dashboard .btn--ink { box-shadow: 0 1px 2px color-mix(in srgb, var(--d-accent) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, .14) !important; }
+body.layout-dashboard .btn .icon, body.layout-dashboard .btn svg { flex: none; }
+body.layout-dashboard .icon-btn { border-radius: 7px; }
+body.layout-dashboard .field :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"]), select, textarea),
+body.layout-dashboard .input { min-height: 36px; border-radius: 7px; font-size: 14px; }
+body.layout-dashboard .field textarea, body.layout-dashboard textarea.input { min-height: 80px; }
+body.layout-dashboard .field :is(input, select, textarea):focus, body.layout-dashboard .input:focus { box-shadow: var(--d-ring); }
+body.layout-dashboard .field > label, body.layout-dashboard .field__label { font-size: 13px; font-weight: 600; color: var(--ink); }
+body.layout-dashboard .field__hint { font-size: 12.5px; color: var(--muted); }
+body.layout-dashboard .search { min-height: 36px; border-radius: 7px; font-size: 14px; }
+body.layout-dashboard .search:focus-within { box-shadow: var(--d-ring); }
+body.layout-dashboard .pill { min-height: 30px; border-radius: 7px; font-size: 13px; }
+body.layout-dashboard .title-input { min-height: 42px; font-size: 18px; border-radius: 7px; }
+body.layout-dashboard .editor-box, body.layout-dashboard .slug { border-radius: 7px; }
+body.layout-dashboard .pick[aria-pressed="true"] { box-shadow: inset 3px 0 0 var(--d-accent); }
+body.layout-dashboard a.dash-figure:hover { border-color: var(--d-field); }
+/* Home: a card's first heading is its title bar, like every other card */
+body.layout-dashboard .dash-card__body { padding: 14px 16px; }
+body.layout-dashboard .dash-card__body > h2.section-label:first-child,
+body.layout-dashboard .dash-card__body > section:first-child > h2.section-label:first-child,
+body.layout-dashboard .dash-card__body > .first-steps > .first-steps__head {
+    display: flex; align-items: center; gap: 10px; min-height: 44px; margin: -14px -16px 14px !important; padding: 0 16px; border-bottom: 1px solid var(--d-line2);
+    color: var(--ink); font-family: var(--sans); font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none;
+}
+body.layout-dashboard .dash-card__body > .first-steps > .first-steps__head h2 { margin: 0; color: var(--ink); font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+body.layout-dashboard .first-steps__count { font-size: 12.5px; color: var(--muted); }
+body.layout-dashboard .first-steps__away { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--d-accent-text); text-decoration: none; }
+body.layout-dashboard .first-steps__bar span { background: var(--d-accent); }
+body.layout-dashboard .first-steps__list a { font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: none; }
+body.layout-dashboard .first-steps__list a:hover { color: var(--d-accent-text); text-decoration: underline; }
+body.layout-dashboard .first-steps__list small { font-size: 12.5px; }
+body.layout-dashboard .dash-list a, body.layout-dashboard .dash-list .dash-list__row { min-height: 40px; padding: 4px 16px; font-size: 13.5px; }
+body.layout-dashboard .nudges .btn, body.layout-dashboard .insert-card .btn { min-height: 28px; font-size: 12.5px; }
+body.layout-dashboard .search input { font-size: 14px; }
+
+/* ---------- The frame: a dark top bar, and a light sheet beneath it ----------
+   Your site, Booklet's version and the section you're in sit in the bar; the
+   sidebar and the page sit on a sheet with rounded top corners, the page in
+   its own panel. Computers only; phones keep their own bars. */
+body.layout-dashboard { --d-frame: #17181C; --d-frame-2: #24262B; --d-frame-line: #2F3238; --d-frame-ink: #ECEDF0; --d-frame-muted: #9CA0A9; --d-sheet: #E9EBEF; }
+body.layout-dashboard.night { --d-frame: #0C0D0F; --d-frame-2: #1A1C20; --d-frame-line: #26292E; --d-sheet: #17181B; }
+.deskbar__badge, .deskbar__slash, .deskbar__crumb, .deskbar__me { display: none; }
+@media (min-width: 1081px) {
+    html:has(body.layout-dashboard), body.layout-dashboard, body.layout-dashboard .desk { background: var(--d-frame); }
+    body.layout-dashboard .desk { grid-template-rows: 52px minmax(0, 1fr); }
+    body.layout-dashboard .deskbar { gap: 8px; padding: 0 14px 0 10px; border-bottom: 0; background: var(--d-frame); color: var(--d-frame-ink); }
+    body.layout-dashboard .deskbar__brand { flex: 0 1 auto; gap: 9px; font-size: 14px; font-weight: 600; }
+    body.layout-dashboard .deskbar__mark { width: 26px; height: 26px; border-radius: 7px; }
+    body.layout-dashboard .deskbar__badge { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border: 1px solid var(--d-frame-line); border-radius: 5px; background: var(--d-frame-2); color: var(--d-frame-muted) !important; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    body.layout-dashboard a.deskbar__badge.is-new { border-color: transparent; background: var(--d-accent); color: var(--d-on-accent) !important; }
+    body.layout-dashboard .deskbar__slash { display: inline; margin: 0 2px 0 6px; color: #50545C; font-size: 18px; font-weight: 300; }
+    body.layout-dashboard .deskbar__crumb { display: flex; min-width: 0; }
+    body.layout-dashboard .deskbar .crumb-switch__button { min-height: 30px; margin: 0; padding: 0 8px; border-radius: 7px; color: var(--d-frame-ink); font-size: 13.5px; }
+    body.layout-dashboard .deskbar .crumb-switch__button svg { color: var(--d-frame-muted); }
+    body.layout-dashboard .deskbar .crumb-switch__button:hover, body.layout-dashboard .deskbar .crumb-switch__button[aria-expanded="true"] { border-color: var(--d-frame-line); background: var(--d-frame-2); }
+    body.layout-dashboard .deskbar .crumb-switch__menu { color: var(--ink); }
+    body.layout-dashboard .deskbar__search { flex: 0 0 auto; min-width: 0; width: 180px; height: 32px; padding: 0 8px 0 10px; border: 1px solid var(--d-frame-line); border-radius: 8px; background: var(--d-frame-2); color: var(--d-frame-muted) !important; font-size: 13px; }
+    body.layout-dashboard .deskbar__search:hover { border-color: #444851; color: var(--d-frame-ink) !important; }
+    body.layout-dashboard .deskbar__search kbd { border-color: var(--d-frame-line); background: var(--d-frame); color: var(--d-frame-muted); }
+    body.layout-dashboard .deskbar__stacy { height: 32px; padding: 0 12px; border: 1px solid var(--d-frame-line); background: var(--d-frame-2); color: var(--d-frame-ink) !important; box-shadow: none !important; }
+    body.layout-dashboard .deskbar__stacy:hover { background: #2C2F35; }
+    body.layout-dashboard .deskbar__stacy[aria-current="page"] { border-color: transparent; background: var(--sun); color: #1E1C18 !important; }
+    body.layout-dashboard .deskbar__icon { width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--d-frame-muted) !important; box-shadow: none; }
+    body.layout-dashboard .deskbar__icon:hover { background: var(--d-frame-2); color: var(--d-frame-ink) !important; }
+    body.layout-dashboard .deskbar__link { display: none; }
+    body.layout-dashboard .deskbar__me { display: block; position: relative; margin-left: 4px; }
+    body.layout-dashboard .deskbar__avatar { display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; box-shadow: 0 0 0 2px var(--d-frame-line); }
+    body.layout-dashboard .deskbar__avatar:hover, body.layout-dashboard .deskbar__avatar[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--d-frame-muted); }
+    body.layout-dashboard .deskbar__me .sidebar__menu { top: calc(100% + 10px); bottom: auto; left: auto; right: 0; width: 260px; transform-origin: 100% 0; }
+
+    /* The sheet: the sidebar on its grey, the page in its own panel */
+    body.layout-dashboard .desk > .sidebar { border-top-left-radius: 12px; background: var(--d-sheet); }
+    body.layout-dashboard .desk > .book { padding: 8px 8px 0 0; border-top-right-radius: 12px; background: var(--d-sheet); }
+    body.layout-dashboard .desk > .book > .book__pages { flex: 1 1 auto; border: 1px solid var(--d-line); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--d-bg); box-shadow: var(--d-shadow); }
+    body.layout-dashboard .sidebar__list a:hover, body.layout-dashboard .sidebar .sidebar__sub a:hover, body.layout-dashboard .sidebar__more:hover { background: color-mix(in srgb, var(--ink) 6%, transparent) !important; }
+    body.layout-dashboard .sidebar__faces .avatar { box-shadow: 0 0 0 2px var(--d-sheet); }
+
+    /* The section and its switcher are in the bar now, so the page keeps only
+       any extra steps of its trail */
+    body.layout-dashboard .book__pages .page-head__crumbs > a:first-child,
+    body.layout-dashboard .book__pages .page-head__crumbs > .crumb-switch { display: none; }
+    body.layout-dashboard .book__pages .page-head__crumbs:not(:has(> :nth-child(3))) { display: none; }
+}
+@media (min-width: 1081px) and (max-width: 1280px) {
+    body.layout-dashboard .deskbar__search { width: auto; }
+    body.layout-dashboard .deskbar__search span, body.layout-dashboard .deskbar__search kbd { display: none; }
+}
+@media (min-width: 1081px) {
+    body.layout-dashboard .book__pages .page-head__crumbs > :nth-child(2)::before { content: none; }
+}
+@media (min-width: 1081px) {
+    /* A page whose trail is all in the bar starts as high as the desk's own pages */
+    body.layout-dashboard .book__pages:has(.page-head):not(:has(.page-head__crumbs > :nth-child(3))) { padding-top: 72px; }
+    body.layout-dashboard .page-head:not(:has(.page-head__crumbs > :nth-child(3))) { padding-top: 0; height: 44px; top: 20px; }
+}

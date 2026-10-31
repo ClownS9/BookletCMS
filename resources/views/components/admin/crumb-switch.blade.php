@@ -1,4 +1,4 @@
-@props(['switch'])
+@props(['switch', 'menuId' => 'crumb-switch-menu'])
 {{-- The section in the breadcrumb, with ⇕: the pages beside it, something
      new, and the section's settings, without reaching for the sidebar. --}}
 <span class="crumb-switch"
@@ -17,12 +17,12 @@
       x-on:click.outside="close()"
       x-on:focusout="$nextTick(() => { if (! $el.contains(document.activeElement)) close() })">
     <button type="button" class="crumb-switch__button" x-ref="button" x-on:click="toggle()"
-            aria-haspopup="true" :aria-expanded="open ? 'true' : 'false'" aria-controls="crumb-switch-menu"
+            aria-haspopup="true" :aria-expanded="open ? 'true' : 'false'" aria-controls="{{ $menuId }}"
             title="{{ __('Go to another page in :section', ['section' => $switch['label']]) }}">
         <span>{{ $switch['label'] }}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
     </button>
-    <div class="crumb-switch__menu" id="crumb-switch-menu" x-ref="menu" x-show="open" x-cloak
+    <div class="crumb-switch__menu" id="{{ $menuId }}" x-ref="menu" x-show="open" x-cloak
          x-transition:enter="crumb-switch-in" x-transition:enter-start="crumb-switch-in--from"
          x-on:keydown.down.prevent="move(1)" x-on:keydown.up.prevent="move(-1)"
          x-on:keydown.home.prevent="$refs.menu.querySelector('a')?.focus()" x-on:keydown.end.prevent="[...$refs.menu.querySelectorAll('a')].pop()?.focus()">

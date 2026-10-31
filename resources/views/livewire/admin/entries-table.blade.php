@@ -11,7 +11,7 @@
         <div class="dash">
             <div class="dash-head">
                 <div class="dash-head__title">
-                    <nav class="dash-crumbs" aria-label="{{ __('Breadcrumb') }}"><a href="{{ route('admin.contents') }}" wire:navigate>{{ __('Dashboard') }}</a> <span aria-hidden="true">/</span> @if ($switch = \App\Support\AdminNav::switcher())<x-admin.crumb-switch :switch="$switch" />@else{{ __($model->title()) }}@endif</nav>
+                    <x-admin.crumbs />
                     <h1 id="chapter-title">{{ __($model->title()) }}</h1>
                 </div>
                 @if ($structured && $canArrange)

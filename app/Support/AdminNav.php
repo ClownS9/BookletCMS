@@ -652,6 +652,15 @@ class AdminNav
         $underTools = collect($tools)->flatMap(fn ($i) => array_column($i['subs'], 'key'))->all();
         $tools = array_values(array_filter($tools, fn ($i) => ! in_array($i['key'], $underTools, true)));
 
+        // Contents lights up for the pages it holds in the book (Activity, the
+        // bin, Collections); in the sidebar it steps aside when another item,
+        // or one of its sub-pages, already marks where you are.
+        $lit = fn (array $i) => $i['active'] || collect($i['subs'])->contains('active', true);
+        $elsewhere = collect([...$content, ...$tools, ...$settings])->reject(fn ($i) => $i['key'] === 'contents')->contains($lit);
+        if ($elsewhere) {
+            $content = array_map(fn ($i) => $i['key'] === 'contents' ? [...$i, 'active' => false, 'open' => false] : $i, $content);
+        }
+
         return ['content' => $content, 'tools' => $tools, 'settings' => $settings];
     }
 
