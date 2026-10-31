@@ -186,4 +186,17 @@ class MoreDashboardTablesTest extends TestCase
             ->assertSee('page page--left', false)
             ->assertDontSee('dcal__grid', false);
     }
+
+    public function test_settings_pages_mark_their_list_and_side_columns_and_every_card_has_a_title(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.collections'))->assertOk()->assertSee('page--list', false);
+        $this->actingAs($this->admin)->get(route('admin.settings.webhooks'))->assertOk()->assertSee('page--list', false);
+        $this->actingAs($this->admin)->get(route('admin.settings.updates'))->assertOk()->assertSee('page--aside', false);
+        $this->actingAs($this->admin)->get(route('admin.settings'))->assertOk()
+            ->assertSee('<h2 class="desk-card__title">Your site</h2>', false);
+
+        // An empty card made a blank sliver on the cover page
+        $this->assertDoesNotMatchRegularExpression('/<div class="desk-card__body">\s*<\/div>/',
+            $this->actingAs($this->admin)->get(route('admin.settings.look'))->assertOk()->getContent());
+    }
 }
