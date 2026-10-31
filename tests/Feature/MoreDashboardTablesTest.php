@@ -199,4 +199,24 @@ class MoreDashboardTablesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/<div class="desk-card__body">\s*<\/div>/',
             $this->actingAs($this->admin)->get(route('admin.settings.look'))->assertOk()->getContent());
     }
+
+    public function test_the_top_bar_has_the_site_version_section_switcher_and_your_menu(): void
+    {
+        $html = $this->actingAs($this->admin)->get(route('admin.people'))->assertOk()->getContent();
+        $bar = substr($html, strpos($html, '<header class="deskbar">'), 12000);
+
+        $this->assertStringContainsString('class="deskbar__badge"', $bar);
+        $this->assertStringContainsString(config('booklet.version'), $bar);
+        $this->assertStringContainsString('id="desk-switch-menu"', $bar);
+        $this->assertStringContainsString('aria-controls="desk-me-menu"', $bar);
+        $this->assertStringContainsString(route('logout'), $bar);
+        $this->assertStringNotContainsString('sidebar__card', $html, 'your menu moved from the sidebar to the top bar');
+        $this->assertSame(1, substr_count($html, 'id="desk-switch-menu"'));
+
+        \Illuminate\Support\Facades\Cache::forever(\App\Support\Updates::CACHE, ['version' => '99.0', 'checked_at' => now()->toIso8601String()]);
+        $this->actingAs($this->admin)->get(route('admin.people'))->assertSee('deskbar__badge is-new', false);
+
+        $person = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($person)->get(route('admin.people'))->assertOk()->assertDontSee('<header class="deskbar">', false);
+    }
 }
