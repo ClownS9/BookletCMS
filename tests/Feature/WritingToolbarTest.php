@@ -56,6 +56,11 @@ class WritingToolbarTest extends TestCase
         foreach (['h2', 'h3', 'strike', 'mark', 'code', 'picture', 'numbers', 'tasks', 'codeblock', 'table', 'divider', 'undo', 'redo'] as $kind) {
             $this->assertStringContainsString("\$btn('{$kind}'", $bar, $kind);
         }
+        // The Book layout keeps one row and puts the rest on a card under More.
+        $this->assertStringContainsString('format-bar format-bar--book', $bar);
+        $this->assertStringContainsString('aria-controls="format-more"', $bar);
+        $this->assertStringContainsString('@container booktools', (string) file_get_contents(public_path('booklet/admin.css')));
+
         $js = (string) file_get_contents(public_path('booklet/booklet.js'));
         $this->assertStringContainsString("document.execCommand('insertText', false, text)", $js, 'changes keep the undo history');
         $this->assertStringContainsString('_continueList(e, ta)', $js);

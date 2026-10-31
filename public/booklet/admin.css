@@ -8362,7 +8362,33 @@ body.layout-dashboard :is(.toc__count, .visit-pages__n, .visit-sources__n, .most
 .format-bar__h { font-family: var(--sans); font-size: 12.5px; font-weight: 700; letter-spacing: -.02em; }
 .format-bar s { font-family: var(--sans); font-weight: 600; }
 /* In the Book layout the bar sits in the top row and can run to two lines */
-.toolbar .format-bar { border-radius: 20px; max-width: 100%; }
+/* The Book layout's bar: one neat row; the rest on a card under More */
+.format-bar--book { position: relative; flex-wrap: nowrap; border-radius: 999px; max-width: 100%; }
+.format-bar--book .format-bar__group + .format-bar__group { margin-left: 2px; padding-left: 3px; border-left-color: var(--rule); }
+.format-bar--book .format-bar__group { align-self: stretch; }
+.format-bar--book .format-bar__stacy { margin-left: 4px; }
+.format-bar__more-wrap { position: relative; }
+.format-bar__more[aria-expanded="true"] { background: var(--hover); }
+.format-more {
+    position: absolute; top: calc(100% + 10px); left: 50%; z-index: 40;
+    width: 300px; margin-left: -150px; padding: 6px;
+    border: 1px solid var(--rule-2); border-radius: 12px;
+    background: var(--paper-3);
+    box-shadow: 0 2px 0 var(--edge-2), 0 14px 32px rgba(30, 28, 24, .18);
+    transform-origin: 50% 0;
+}
+.format-more button {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 0 10px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--ink);
+    font-family: var(--sans); font-size: 14px; text-align: left; cursor: pointer;
+}
+.format-more button:hover, .format-more button:focus-visible { background: var(--hover); outline: none; }
+.format-more__face { flex: none; display: inline-grid; place-items: center; width: 22px; color: var(--muted); }
+.format-more button > span:nth-child(2) { flex: 1; }
+.format-more kbd { flex: none; white-space: nowrap; padding: 1px 6px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); color: var(--faint); font-family: var(--mono); font-size: 10.5px; }
+@media (max-width: 760px) {
+    .format-more { position: fixed; top: auto; bottom: calc(96px + env(safe-area-inset-bottom)); left: 12px; right: 12px; width: auto; margin: 0; }
+}
 body.layout-dashboard .editor-box .format-bar { gap: 2px; padding: 4px 6px; }
 body.layout-dashboard .editor-box .format-bar button:not(.format-bar__stacy) { width: 30px; height: 30px; color: var(--ink-2); }
 body.layout-dashboard .editor-box .format-bar .format-bar__stacy { height: 30px; }
@@ -8377,6 +8403,23 @@ body.layout-dashboard .editor-box .format-bar__group + .format-bar__group { bord
 /* A narrow writing box: Stacy's button keeps only her mark, so the bar stays one line */
 body.layout-dashboard .editor-box { container-type: inline-size; }
 @container (max-width: 760px) {
-    .format-bar .format-bar__stacy > span { display: none; }
-    .format-bar .format-bar__stacy { width: 30px; padding: 0; justify-content: center; }
+    body.layout-dashboard .editor-box .format-bar .format-bar__stacy > span { display: none; }
+    body.layout-dashboard .editor-box .format-bar .format-bar__stacy { width: 30px; padding: 0; justify-content: center; }
+}
+/* The Book layout's bar fits the page it's on, whatever the window */
+.toolbar:has(> .format-bar--book) { container: booktools / inline-size; }
+@container booktools (max-width: 469px) {
+    .format-bar--book .format-bar__stacy > span { display: none; }
+    .format-bar--book .format-bar__stacy { width: 34px; padding: 0; justify-content: center; }
+}
+@container booktools (max-width: 439px) {
+    .format-bar--book button { width: 31px; height: 32px; }
+    .format-bar--book .format-bar__stacy { width: 32px; }
+}
+@container booktools (max-width: 399px) {
+    .format-bar--book .format-bar__group:has(> [x-on\:click="format('undo')"]) { display: none; }
+}
+.format-bar--book button, .format-bar--book .format-bar__stacy { flex-shrink: 0; }
+@media (max-width: 760px) {
+    .format-bar--book { overflow: visible; }
 }
