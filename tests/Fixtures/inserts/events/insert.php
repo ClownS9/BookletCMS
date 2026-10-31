@@ -233,7 +233,7 @@ return [
 
     'site' => ['css' => ['events.css']],
 
-    // Its page, for the sitemap and plain files (Booklet 1.2; older ones ignore it).
+    // Its page, for the sitemap and plain files.
     'pages' => ['/events'],
 
     // On the Contents page: what's on in the next week (nothing shows when nothing is).

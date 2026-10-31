@@ -91,7 +91,7 @@ return [
     'version' => '1.0',
     'author' => 'Booklet',
     'sticker' => 'ink',
-    'needs' => '1.1', // Booklet's form hook ('guard') and encrypted 'secret' settings
+    'needs' => '1.0',
 
     'settings' => [
         'provider' => ['type' => 'select', 'label' => 'The check', 'default' => 'none', 'options' => [
