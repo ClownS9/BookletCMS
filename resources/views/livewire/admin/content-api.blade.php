@@ -13,7 +13,7 @@
             </div>
         </div>
 
-        <x-admin.card>
+        <x-admin.card :title="__('Access')">
             <label class="nav-switch">
                 <input type="checkbox" role="switch" wire:model.live="enabled">
                 <span><b>{{ __('Turn on the content API') }}</b>

@@ -16,9 +16,7 @@
         </div>
 
 
-        <x-admin.card>
-            {{-- Themes: Booklet's own, cover packs, and themes with their own templates --}}
-        </x-admin.card>
+        {{-- Themes: Booklet's own, cover packs, and themes with their own templates --}}
 
         <x-admin.card>
             <section class="cover-themes" aria-labelledby="cover-themes-title">

@@ -1,6 +1,6 @@
 <div style="display: contents">
     {{-- Left page: the shelf --}}
-    <section class="page page--left page--stack" style="flex-basis: 380px">
+    <section class="page page--left page--list page--stack" style="flex-basis: 380px">
         <div>
             <div class="page-head">
                 <x-admin.crumbs>

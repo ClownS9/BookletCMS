@@ -1,6 +1,6 @@
 <div style="display: contents">
     {{-- Left page: how it works, and the upload --}}
-    <section class="page page--left page--stack" style="flex-basis: 400px">
+    <section class="page page--left page--aside page--stack" style="flex-basis: 400px">
         <div>
             <div class="page-head">
                 <x-admin.crumbs>

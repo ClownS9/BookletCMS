@@ -12,7 +12,7 @@
             </div>
         </div>
 
-        <x-admin.card>
+        <x-admin.card :title="__('How she answers')">
             <fieldset class="engine-pick">
                 <legend class="field__label">{{ __('Answer length') }}</legend>
                 <div class="choice-grid">

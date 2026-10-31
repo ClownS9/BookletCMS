@@ -13,7 +13,7 @@
             @endif
         </div>
 
-        <x-admin.card>
+        <x-admin.card :title="__('Your site')">
             @unless ($canEdit)
                 <div class="locked">
                     <x-admin.icon name="lock" size="20" />

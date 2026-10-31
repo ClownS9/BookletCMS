@@ -53,7 +53,7 @@
     </section>
 
     {{-- Right page: what changed, and updating --}}
-    <section class="page page--right page--stack" style="--ribbon: var(--{{ $available ? 'sun' : 'mint' }})">
+    <section class="page page--right page--aside page--stack" style="--ribbon: var(--{{ $available ? 'sun' : 'mint' }})">
         <div class="ribbon" aria-hidden="true"></div>
         <x-admin.card>
             @if ($available)

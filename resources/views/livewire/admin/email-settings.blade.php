@@ -1,6 +1,6 @@
 <div style="display: contents">
     {{-- Left page: where email goes, and the services --}}
-    <section class="page page--left" style="flex-basis: 360px">
+    <section class="page page--left page--list" style="flex-basis: 360px">
         <div class="page-head">
             <x-admin.crumbs>
                 <a href="{{ route('admin.settings') }}" class="back" wire:navigate><x-admin.icon name="back" size="16" /> {{ __('Settings') }}</a>

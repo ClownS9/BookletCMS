@@ -4,7 +4,7 @@
 @endphp
 <div style="display: contents">
     {{-- Left page: switching it on, and what's waiting --}}
-    <section class="page page--left page--stack" style="flex-basis: 380px">
+    <section class="page page--left page--aside page--stack" style="flex-basis: 380px">
         <div>
             <div class="page-head">
                 <x-admin.crumbs>

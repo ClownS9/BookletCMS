@@ -1,7 +1,7 @@
 <div style="display: contents"
      x-data="{ copied: null, copy(text, id) { navigator.clipboard?.writeText(text).then(() => { this.copied = id; setTimeout(() => this.copied = null, 1800) }) } }">
     {{-- Left page: the webhooks, and new ones --}}
-    <section class="page page--left page--stack" style="flex-basis: 380px">
+    <section class="page page--left page--list page--stack" style="flex-basis: 380px">
         <div>
             <div class="page-head">
                 <x-admin.crumbs>

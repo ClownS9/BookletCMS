@@ -61,7 +61,7 @@
 
     {{-- Right page: every check --}}
     {{-- Focusable, so the list can be scrolled from the keyboard (nothing in it is a link) --}}
-    <section class="page page--right page--stack" style="--ribbon: var(--{{ $fails ? 'coral' : ($warns ? 'sun' : 'mint') }})" tabindex="0" aria-labelledby="every-check">
+    <section class="page page--right page--aside page--stack" style="--ribbon: var(--{{ $fails ? 'coral' : ($warns ? 'sun' : 'mint') }})" tabindex="0" aria-labelledby="every-check">
         <div class="ribbon" aria-hidden="true"></div>
         <x-admin.card>
             <div class="ribbon-clear">

@@ -73,7 +73,7 @@
     </section>
 
     {{-- Right page: what came out, and what's different --}}
-    <section class="page page--right page--stack" style="--ribbon: var(--sky)">
+    <section class="page page--right page--aside page--stack" style="--ribbon: var(--sky)">
         <div class="ribbon" aria-hidden="true"></div>
         <x-admin.card>
             <div class="ribbon-clear">
