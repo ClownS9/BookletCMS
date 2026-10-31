@@ -15,7 +15,7 @@
         <div class="lib-editor__card" aria-hidden="true">
             <span class="lib-editor__stripe"></span>
             <span class="lib-editor__title">{{ $cardForm['name'] !== '' ? $cardForm['name'] : __('Name this card') }}</span>
-            <span class="lib-editor__line">{{ __('Acts like :value', ['value' => $cardForm['base'] === 'editor' ? 'an editor' : 'a writer']) }}</span>
+            <span class="lib-editor__line">{{ __('Acts like :value', ['value' => $cardForm['base'] === 'editor' ? __('an editor') : __('a writer')]) }}</span>
             <ul class="lib-editor__stamps">
                 @foreach ($collections as $c)
                     @php $a = $cardForm['chapters'][$c->handle()] ?? 'write'; @endphp
