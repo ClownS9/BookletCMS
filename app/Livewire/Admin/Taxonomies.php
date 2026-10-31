@@ -38,6 +38,61 @@ class Taxonomies extends Component
 
     public string $mergeInto = '';
 
+    // The Dashboard's table ----------------------------------------------------
+
+    #[Url(as: 'q', except: '')]
+    public string $search = '';
+
+    /** The drawer with one term open. */
+    public bool $drawer = false;
+
+    /** @var list<string> slugs ticked in the table */
+    public array $ticked = [];
+
+    public function closeDrawer(): void
+    {
+        $this->drawer = false;
+    }
+
+    /** Categories or tags: the table's tabs. */
+    public function showTaxonomy(string $taxonomy): void
+    {
+        if (Booklet::taxonomies()->find($taxonomy)) {
+            $this->taxonomy = $taxonomy;
+            $this->selected = null;
+            $this->ticked = [];
+            $this->drawer = false;
+        }
+    }
+
+    public function tickAll(array $slugs): void
+    {
+        $slugs = array_values(array_filter($slugs, 'is_string'));
+        $this->ticked = array_diff($slugs, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $slugs))
+            : array_values(array_unique(array_merge($this->ticked, $slugs)));
+    }
+
+    /** Remove every ticked one from every entry, and delete them. */
+    public function removeTicked(): void
+    {
+        abort_unless($this->canManage(), 403);
+        $terms = 0;
+        $entries = 0;
+        foreach (array_slice(array_filter($this->ticked, 'is_string'), 0, 500) as $slug) {
+            if ($term = Booklet::terms()->findBySlug($this->taxonomy, $slug)) {
+                $entries += $this->retag($this->taxonomy, $term->slug(), null);
+                Booklet::terms()->delete($term);
+                ActivityLog::record('removed', 'settings', 'term', $this->taxonomy.'/'.$term->slug(), $term->title());
+                $terms++;
+            }
+        }
+        $this->ticked = [];
+        $this->selected = null;
+        $this->drawer = false;
+        $this->stamp(trans_choice(':count removed, from :entries entries.|:count removed, from :entries entries.', $terms, ['entries' => $entries]));
+    }
+
     public function mount(): void
     {
         if (! Booklet::taxonomies()->find($this->taxonomy)) {
@@ -73,6 +128,7 @@ class Taxonomies extends Component
     {
         $this->taxonomy = $taxonomy;
         $this->selected = $slug;
+        $this->drawer = true;
         $this->rename = '';
         $this->mergeInto = '';
         $this->resetValidation();
@@ -224,6 +280,7 @@ class Taxonomies extends Component
 
         ActivityLog::record('removed', 'settings', 'term', $this->taxonomy.'/'.$term->slug(), $term->title());
         $this->selected = null;
+        $this->drawer = false;
         $this->stamp(trans_choice('Removed from :count entry.|Removed from :count entries.', $count));
     }
 
@@ -236,14 +293,26 @@ class Taxonomies extends Component
         $tags = Booklet::terms()->whereTaxonomy('tags')->sortByDesc($count)->values();
 
         $chosen = $this->selected ? Booklet::terms()->findBySlug($this->taxonomy, $this->selected) : null;
-        $chosen ??= $this->taxonomy === 'tags' ? ($tags->first() ?? $categories->first()) : ($categories->first() ?? $tags->first());
+        if (! \App\Support\YourBook::desk()) { // the Dashboard opens one only when asked
+            $chosen ??= $this->taxonomy === 'tags' ? ($tags->first() ?? $categories->first()) : ($categories->first() ?? $tags->first());
+        }
 
         if ($chosen) {
             $this->taxonomy = $chosen->taxonomy();
             $this->selected = $chosen->slug();
         }
 
-        return view('livewire.admin.taxonomies', [
+        $desk = \App\Support\YourBook::desk();
+        $shown = collect();
+        if ($desk) {
+            $list = $this->taxonomy === 'categories' ? $categories : $tags;
+            $shown = $list->when(trim($this->search) !== '', fn ($c) => $c->filter(fn (Term $t) => \Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($t->title().' '.$t->slug()), \Illuminate\Support\Str::lower(trim($this->search)))))
+                ->sortByDesc($count)->values();
+            $this->ticked = array_values(array_intersect($this->ticked, $list->map(fn (Term $t) => $t->slug())->all()));
+        }
+
+        return view($desk ? 'livewire.admin.taxonomies-table' : 'livewire.admin.taxonomies', [
+            'shown' => $shown,
             'categories' => $categories,
             'tags' => $tags,
             'count' => $count,

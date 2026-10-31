@@ -24,10 +24,6 @@ class Activity extends Component
         return 'activity';
     }
 
-    protected function pageResetsOn(): array
-    {
-        return ['kind', 'person'];
-    }
 
     public const KINDS = [
         'edits' => ['Edits', 'var(--sun)'],
@@ -43,6 +39,31 @@ class Activity extends Component
 
     #[Url(as: 'by', except: '')]
     public string $person = '';
+
+    /** Find a stamp by what it was about. */
+    #[Url(as: 'q', except: '')]
+    public string $search = '';
+
+    /** One stamp open in the Dashboard's drawer. */
+    public ?int $opened = null;
+
+    protected function pageResetsOn(): array
+    {
+        return ['kind', 'person', 'search'];
+    }
+
+    public function closeDrawer(): void
+    {
+        $this->opened = null;
+    }
+
+    /** "Everything by them", from a stamp. */
+    public function byPerson(int $id): void
+    {
+        $this->person = (string) $id;
+        $this->opened = null;
+        $this->page = 1;
+    }
 
     public function updatedKind(): void
     {
@@ -88,12 +109,21 @@ class Activity extends Component
             $query->where('user_id', (int) $this->person);
         }
 
+        if (trim($this->search) !== '') {
+            $words = '%'.trim($this->search).'%';
+            $query->where(fn ($q) => $q->where('subject_label', 'like', $words)->orWhere('action', 'like', $words));
+        }
+
         $logs = $this->pageOf($query);
         $counts = ActivityLog::query()
             ->when($this->person !== '', fn ($q) => $q->where('user_id', (int) $this->person))
             ->selectRaw('kind, count(*) as n')->groupBy('kind')->pluck('n', 'kind');
 
-        return view('livewire.admin.activity', [
+        $opened = $this->opened ? ActivityLog::with('user')->find($this->opened) : null;
+
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.activity-table' : 'livewire.admin.activity', [
+            'openedLog' => $opened,
+            'openedLink' => $opened ? $this->linkFor($opened) : null,
             'logs' => $logs,
             'links' => $logs->getCollection()->mapWithKeys(fn (ActivityLog $log) => [$log->id => $this->linkFor($log)]),
             'kinds' => self::KINDS,

@@ -55,6 +55,7 @@ class Subscribers extends Component
 
     public function updatedShow(): void
     {
+        $this->ticked = [];
         $this->resetPage();
     }
 
@@ -76,12 +77,40 @@ class Subscribers extends Component
 
         $result = Newsletter::subscribe($this->inviteEmail, null, 'invited');
         ActivityLog::record('invited a subscriber', 'people', 'subscriber', $this->inviteEmail, $this->inviteEmail);
-        $this->reset('inviteEmail');
+        $this->reset('inviteEmail', 'inviting');
         $this->stamp(match ($result) {
             'already' => 'They’re subscribed already.',
             'wait' => 'An invitation went to them a moment ago.',
             default => 'Invitation sent. They’re added once they confirm.',
         });
+    }
+
+    // The Dashboard's table ----------------------------------------------------
+
+    /** @var list<int> subscribers ticked in the table */
+    public array $ticked = [];
+
+    public bool $inviting = false;
+
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_map('intval', array_filter($ids, 'is_numeric')));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    public function removeTicked(): void
+    {
+        $this->authorise();
+        $n = 0;
+        foreach (Subscriber::query()->whereIn('id', array_slice(array_map('intval', $this->ticked), 0, 500))->get() as $subscriber) {
+            ActivityLog::record('removed a subscriber', 'people', 'subscriber', (string) $subscriber->id, $subscriber->email);
+            $subscriber->delete();
+            $n++;
+        }
+        $this->ticked = [];
+        $this->stamp(trans_choice(':count removed, and the address forgotten.|:count removed, and their addresses forgotten.', $n));
     }
 
     /** Take someone off the list entirely (their address is forgotten). */
@@ -130,7 +159,7 @@ class Subscribers extends Component
             ->latest();
         $people = $this->pageOf($people);
 
-        return view('livewire.admin.subscribers', [
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.subscribers-table' : 'livewire.admin.subscribers', [
             'people' => $people,
             'counts' => Newsletter::counts(),
             'on' => Newsletter::enabled(),

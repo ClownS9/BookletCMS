@@ -133,6 +133,57 @@ class Readers extends Component
 
     // Readers ---------------------------------------------------------------------------------
 
+    // The Dashboard's table --------------------------------------------------------------------
+
+    /** @var list<int> readers ticked in the table */
+    public array $ticked = [];
+
+    /** The invitation form, above the table. */
+    public bool $inviting = false;
+
+    public function closeDrawer(): void
+    {
+        $this->open = null;
+    }
+
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_map('intval', array_filter($ids, 'is_numeric')));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    /** Let in, block or remove every ticked reader. */
+    public function doTicked(string $what): void
+    {
+        $this->authorise();
+        abort_unless(in_array($what, ['letIn', 'block', 'unblock', 'remove'], true), 422);
+        $ids = array_slice(array_map('intval', $this->ticked), 0, 500);
+        $n = 0;
+        foreach (Reader::query()->whereIn('id', $ids)->get() as $reader) {
+            if ($what === 'letIn' && ! in_array($reader->state, ['waiting', 'unconfirmed'], true)) {
+                continue;
+            }
+            match ($what) {
+                'letIn' => ReaderAccounts::approve($reader),
+                'block' => $reader->forceFill(['state' => 'blocked', 'remember_token' => Str::random(60)])->save(),
+                'unblock' => $reader->state === 'blocked' ? $reader->forceFill(['state' => $reader->confirmed() ? 'active' : 'unconfirmed'])->save() : null,
+                'remove' => tap($reader, fn ($r) => GroupMember::query()->where('member_type', 'reader')->where('member_id', $r->id)->delete())->delete(),
+            };
+            ActivityLog::record(['letIn' => 'let in the reader', 'block' => 'blocked the reader', 'unblock' => 'unblocked the reader', 'remove' => 'removed the reader'][$what], 'people', 'reader', (string) $reader->id, $reader->name);
+            $n++;
+        }
+        $this->ticked = [];
+        $this->open = null;
+        $this->stamp(match ($what) {
+            'letIn' => trans_choice(':count reader let in.|:count readers let in.', $n),
+            'block' => trans_choice(':count reader blocked.|:count readers blocked.', $n),
+            'unblock' => trans_choice(':count reader unblocked.|:count readers unblocked.', $n),
+            default => trans_choice(':count reader removed.|:count readers removed.', $n),
+        });
+    }
+
     public function toggle(int $id): void
     {
         $this->open = $this->open === $id ? null : $id;
@@ -229,14 +280,14 @@ class Readers extends Component
             foreach ($groups as $handle) {
                 ReaderAccounts::addTo(Group::query()->where('handle', $handle)->firstOrFail(), $reader);
             }
-            $this->reset('inviteEmail', 'inviteName', 'inviteGroups');
+            $this->reset('inviteEmail', 'inviteName', 'inviteGroups', 'inviting');
             $this->stamp($groups !== [] ? __('They have an account already, so they’re in those groups now.') : __('They have an account already.'));
 
             return;
         }
         ReaderAccounts::invite($this->inviteEmail, $this->inviteName, $groups, request()->user());
         ActivityLog::record('invited a reader', 'people', 'reader', $this->inviteEmail, $this->inviteEmail);
-        $this->reset('inviteEmail', 'inviteName', 'inviteGroups');
+        $this->reset('inviteEmail', 'inviteName', 'inviteGroups', 'inviting');
         $this->stamp(__('Invitation sent. The link works for :days days.', ['days' => ReaderAccounts::INVITE_DAYS]));
     }
 
@@ -465,7 +516,11 @@ class Readers extends Component
         $asks = GroupMember::query()->where('state', 'asked')->with('group')->latest()->limit(20)->get()
             ->map(fn (GroupMember $m) => ['member' => $m, 'who' => $m->who()])->filter(fn ($r) => $r['who'] !== null)->values();
 
-        return view('livewire.admin.readers', [
+        $desk = \App\Support\YourBook::desk();
+
+        return view($desk ? 'livewire.admin.readers-table' : 'livewire.admin.readers', [
+            'chosenReader' => $desk && $this->open ? Reader::find($this->open) : null,
+            'chosenGroups' => $desk && $this->open ? GroupMember::query()->where('member_type', 'reader')->where('member_id', $this->open)->get()->keyBy('group_id') : collect(),
             'readers' => $readers,
             'memberGroups' => $memberGroups,
             'groups' => $groups,

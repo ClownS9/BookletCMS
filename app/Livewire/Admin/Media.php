@@ -55,7 +55,7 @@ class Media extends Component
 
     protected function pageResetsOn(): array
     {
-        return ['search', 'folder', 'container'];
+        return ['search', 'folder', 'container', 'noAlt', 'sort'];
     }
 
     #[Url(as: 'in', except: '')]
@@ -155,8 +155,39 @@ class Media extends Component
         abort_unless(request()->user()->canChangeMedia(), 403, 'Your role can’t change Media.');
     }
 
+    // Grid or list ------------------------------------------------------------
+
+    /** The album as photos (grid) or as a table (list); each person's own choice. */
+    public string $view = 'grid';
+
+    /** The list's order: newest (''), name, -size, -date, date. */
+    #[Url(except: '')]
+    public string $sort = '';
+
+    /** Only files without alt text (pictures readers can't see described). */
+    #[Url(as: 'noalt', except: false)]
+    public bool $noAlt = false;
+
+    public function setView(string $view): void
+    {
+        $this->view = $view === 'list' ? 'list' : 'grid';
+        if ($user = request()->user()) {
+            $user->forceFill(['preferences' => array_merge((array) $user->preferences, ['media_view' => $this->view])])->save();
+        }
+    }
+
+    public function sortBy(string $column): void
+    {
+        abort_unless(in_array($column, ['name', 'size', 'date'], true), 422);
+        $first = $column === 'name' ? 'name' : '-'.$column;
+        $turned = $first === $column ? '-'.$column : $column;
+        $this->sort = $this->sort === $first ? $turned : $first;
+        $this->page = 1;
+    }
+
     public function mount(): void
     {
+        $this->view = (((array) request()->user()?->preferences)['media_view'] ?? 'grid') === 'list' ? 'list' : 'grid';
         $this->container = $this->container ?: (string) Booklet::assetContainers()->all()->first()?->handle();
         $this->loadAlt();
     }
@@ -386,7 +417,19 @@ class Media extends Component
             ->when($this->search !== '', fn ($c) => $c->filter(
                 fn (Asset $a) => Str::contains(Str::lower($a->path().' '.$a->get('alt')), Str::lower($this->search))
             ))
+            ->when($this->noAlt, fn ($c) => $c->filter(fn (Asset $a) => $a->isImage() && trim((string) $a->get('alt', '')) === ''))
             ->values();
+        if (! in_array($this->sort, ['', 'name', '-name', 'size', '-size', 'date', '-date'], true)) {
+            $this->sort = '';
+        }
+        if ($this->sort !== '') {
+            $by = ltrim($this->sort, '-');
+            $visible = $visible->sortBy(fn (Asset $a) => match ($by) {
+                'name' => Str::lower((string) $a->attribute('basename')),
+                'size' => (int) $a->get('size', 0),
+                default => (string) ($a->lastModified() ?? ''),
+            }, SORT_NATURAL, str_starts_with($this->sort, '-'))->values();
+        }
         $visible = $this->pageOf($visible);
 
         $folderCounts = $this->assets->countBy(fn (Asset $a) => $a->attribute('folder'));
@@ -398,6 +441,7 @@ class Media extends Component
             'visible' => $visible,
             'folderCounts' => $folderCounts,
             'total' => $this->assets->count(),
+            'missingAlt' => $this->assets->filter(fn (Asset $a) => $a->isImage() && trim((string) $a->get('alt', '')) === '')->count(),
             'urls' => $visible->getCollection()->concat(array_filter([$this->chosen]))
                 ->mapWithKeys(fn (Asset $a) => [$a->path() => $this->assetUrl($a)])
                 ->all(),

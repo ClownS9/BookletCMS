@@ -41,6 +41,8 @@ class Bin extends Component
     public function show(string $kind): void
     {
         $this->kind = array_key_exists($kind, self::KINDS) ? $kind : '';
+        $this->ticked = [];
+        $this->page = 1;
     }
 
     public function restore(int $id): void
@@ -65,6 +67,47 @@ class Bin extends Component
 
         TheBin::forget($item);
         $this->stamp('Gone for good.');
+    }
+
+    // The Dashboard's table ----------------------------------------------------
+
+    /** @var list<int> */
+    public array $ticked = [];
+
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_map('intval', array_filter($ids, 'is_numeric')));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    /** Put back, or delete for good, every ticked one this person may. */
+    public function doTicked(string $what): void
+    {
+        abort_unless(in_array($what, ['restore', 'forget'], true), 422);
+        $user = request()->user();
+        $back = $gone = $stuck = 0;
+        foreach (BinItem::query()->whereIn('id', array_slice(array_map('intval', $this->ticked), 0, 500))->get() as $item) {
+            if (! TheBin::canHandle($user, $item)) {
+                continue;
+            }
+            if ($what === 'restore') {
+                try {
+                    TheBin::restore($item);
+                    $back++;
+                } catch (RuntimeException) {
+                    $stuck++;
+                }
+            } elseif (in_array($user->level(), ['admin', 'editor'], true) || (string) $item->deleted_by === (string) $user->id) {
+                TheBin::forget($item);
+                $gone++;
+            }
+        }
+        $this->ticked = [];
+        $this->stamp($what === 'restore'
+            ? trans_choice(':count put back.|:count put back.', $back).($stuck ? ' '.trans_choice(':count couldn’t come back.|:count couldn’t come back.', $stuck) : '')
+            : trans_choice(':count gone for good.|:count gone for good.', $gone));
     }
 
     public function emptyBin(): void
@@ -93,7 +136,7 @@ class Bin extends Component
         $all = TheBin::visibleTo($user);
         $counts = (clone $all)->reorder()->selectRaw('kind, count(*) as n')->groupBy('kind')->pluck('n', 'kind');
 
-        return view('livewire.admin.bin', [
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.bin-table' : 'livewire.admin.bin', [
             'items' => $this->pageOf((clone $all)->with('deleter')->when($this->kind, fn ($q) => $q->where('kind', $this->kind))),
             'counts' => $counts,
             'kinds' => self::KINDS,

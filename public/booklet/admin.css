@@ -7750,3 +7750,52 @@ body.layout-dashboard .margin-tabs button[aria-selected="true"] { background: va
     .drawer__panel { width: 100vw; border-left: 0; }
     .drawer__head { padding-top: calc(8px + env(safe-area-inset-top)); }
 }
+
+/* More Dashboard tables: Readers, Subscribers, Inbox, Redirects, Bin, Activity, Backups, Categories & tags */
+.dash-card__pad { padding: 16px 18px; }
+.dash-card__pad > .ribbon-clear:first-child { padding-right: 0; }
+.dash-tabs--top { padding-top: 2px; }
+.dash-subtabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 12px 0; }
+.dash-subtabs .pill b { margin-left: 4px; font-weight: 600; color: var(--muted); }
+.dash-table__sub--plain { font-family: inherit; }
+.dash-head__switch { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
+.dash-figure--switch .dash-figure__n { align-items: center; }
+.dash-figure--switch .dash-figure__n span { font-weight: 500; }
+button.dash-figure:hover, a.dash-figure:hover { border-color: var(--faint); }
+.dash-code { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.dash-table__warn { display: block; margin-top: 3px; font-size: 12px; color: var(--danger); }
+.dash-days { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dash-days.is-soon { color: var(--danger); font-weight: 600; }
+.dash-tools__add { display: flex; gap: 6px; flex: 0 1 320px; }
+.dash-tools__add .input { min-width: 0; }
+.dash-tag--warn { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.dash-table .is-big { color: var(--danger); font-weight: 600; }
+.dash-table tr.is-unread .dash-table__name, .dash-table tr.is-unread .dash-table__quote { font-weight: 700; }
+.dash-table tr.is-unread td:first-child { box-shadow: inset 3px 0 0 var(--d-accent, var(--coral)); }
+.drawer__form { display: flex; flex-direction: column; gap: 8px; }
+.drawer-facts { margin: 0; display: flex; flex-direction: column; border-top: 1px solid var(--d-line2, var(--rule)); }
+.drawer-facts > div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--d-line2, var(--rule)); font-size: 14px; }
+.drawer-facts dt { color: var(--muted); }
+.drawer-facts dd { margin: 0; overflow-wrap: anywhere; }
+.drawer-note__extra { margin: 10px 0 0; font-size: 14px; }
+.drawer .restore-card { padding: 0; }
+.drawer .restore-card > h2.heading:first-child { display: none; }
+/* Media: grid or list */
+.view-switch { display: inline-flex; padding: 3px; border-radius: 9px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.view-switch button { display: grid; place-items: center; width: 34px; height: 30px; border: 0; border-radius: 7px; background: none; color: var(--muted); cursor: pointer; }
+.view-switch button[aria-pressed="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 18, 14, .14); }
+.view-switch button:focus-visible { outline: 2px solid var(--focus, var(--sky)); outline-offset: 1px; }
+body.layout-dashboard .view-switch button[aria-pressed="true"] { background: var(--d-panel, var(--paper)); }
+.media-list { border: 1px solid var(--rule); border-radius: 10px; }
+body.layout-dashboard .media-list { border-color: var(--d-line); }
+.media-list__file { display: inline-flex !important; align-items: center; gap: 10px; width: auto !important; }
+.media-list__thumb { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: var(--paper-3); font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.media-list__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.media-list__alt { max-width: 260px; }
+@media (max-width: 640px) { .dash-tools__add { flex-basis: 100%; } }
+.dash-tag + .dash-tag { margin-left: 4px; }
+/* Media's list needs the room: the left page narrows while it shows */
+body.layout-dashboard .page--left:has(+ .page--right .media-list) { flex: 0 1 320px !important; }
+.media-list .is-num { white-space: nowrap; }
+.media-list__alt { min-width: 140px; }
+@media (max-width: 480px) { .dash-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .dash-figure__n b { font-size: 22px; } }

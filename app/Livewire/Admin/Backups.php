@@ -127,7 +127,7 @@ class Backups extends Component
             }
         }
 
-        return view('livewire.admin.backups', [
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.backups-table' : 'livewire.admin.backups', [
             'backups' => Store::list(),
             'available' => Store::available(),
             'manifest' => $manifest,

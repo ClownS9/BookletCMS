@@ -39,6 +39,58 @@ class Redirects extends Component
 
     public bool $temporary = false;
 
+    // The Dashboard's table ----------------------------------------------------
+
+    /** All, the automatic ones, or those added by hand. */
+    #[Url(except: '')]
+    public string $kind = '';
+
+    /** Order: newest (''), hits, -hits, from, used. */
+    #[Url(except: '')]
+    public string $sort = '';
+
+    public const SORTS = ['', 'hits', '-hits', 'from', '-from', 'used', '-used'];
+
+    /** @var list<int> */
+    public array $ticked = [];
+
+    public bool $adding = false;
+
+    protected function pageResetsOn(): array
+    {
+        return ['search', 'kind', 'sort'];
+    }
+
+    public function sortBy(string $column): void
+    {
+        abort_unless(in_array($column, ['hits', 'from', 'used'], true), 422);
+        $first = $column === 'from' ? 'from' : '-'.$column;
+        $turned = $first === $column ? '-'.$column : $column;
+        $this->sort = $this->sort === $first ? $turned : $first;
+        $this->page = 1;
+    }
+
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_map('intval', array_filter($ids, 'is_numeric')));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    public function removeTicked(): void
+    {
+        abort_unless(in_array(request()->user()->level(), ['admin', 'editor'], true), 403);
+        $n = 0;
+        foreach (Redirect::query()->whereIn('id', array_slice(array_map('intval', $this->ticked), 0, 500))->get() as $redirect) {
+            ActivityLog::record('removed a redirect from', 'settings', 'redirect', $redirect->from_path, $redirect->from_path.' → '.$redirect->to_path);
+            $redirect->delete();
+            $n++;
+        }
+        $this->ticked = [];
+        $this->stamp(trans_choice(':count redirect removed.|:count redirects removed.', $n));
+    }
+
     public function mount(): void
     {
         abort_unless(in_array(request()->user()->level(), ['admin', 'editor'], true), 403);
@@ -85,7 +137,7 @@ class Redirects extends Component
         }
 
         ActivityLog::record('added a redirect from', 'settings', 'redirect', $from, $from.' → '.$to);
-        $this->reset('from', 'to', 'temporary');
+        $this->reset('from', 'to', 'temporary', 'adding');
         $this->stamp('Redirect added.');
     }
 
@@ -117,6 +169,7 @@ class Redirects extends Component
     {
         $this->from = \App\Support\Redirects::normalise($path);
         $this->to = '';
+        $this->adding = true;
         $this->dispatch('focus-redirect-to');
     }
 
@@ -126,7 +179,19 @@ class Redirects extends Component
             ->when($this->search !== '', fn ($q) => $q->where(fn ($q) => $q
                 ->where('from_path', 'like', '%'.$this->search.'%')
                 ->orWhere('to_path', 'like', '%'.$this->search.'%')))
-            ->orderByDesc('updated_at');
+            ->when($this->kind === 'auto', fn ($q) => $q->where('automatic', true))
+            ->when($this->kind === 'hand', fn ($q) => $q->where('automatic', false));
+        if (! in_array($this->sort, self::SORTS, true)) {
+            $this->sort = '';
+        }
+        $by = ltrim($this->sort, '-');
+        $down = str_starts_with($this->sort, '-');
+        $redirects = match ($by) {
+            'hits' => $redirects->orderBy('hits', $down ? 'desc' : 'asc'),
+            'from' => $redirects->orderBy('from_path', $down ? 'desc' : 'asc'),
+            'used' => $redirects->orderBy('last_hit_at', $down ? 'desc' : 'asc'),
+            default => $redirects->orderByDesc('updated_at'),
+        };
         $redirects = $this->pageOf($redirects);
 
         // Live addresses, to spot a redirect that's hidden by a page, or one that leads nowhere.
@@ -134,7 +199,8 @@ class Redirects extends Component
             ->filter(fn ($e) => $e->status() === 'published' && $e->uri())
             ->mapWithKeys(fn ($e) => [$e->uri() => $e->title() ?: 'Untitled']), collect(), false);
 
-        return view('livewire.admin.redirects', [
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.redirects-table' : 'livewire.admin.redirects', [
+            'kindCounts' => ['' => Redirect::count(), 'auto' => Redirect::where('automatic', true)->count(), 'hand' => Redirect::where('automatic', false)->count()],
             'redirects' => $redirects,
             'live' => $live,
             'total' => Redirect::count(),

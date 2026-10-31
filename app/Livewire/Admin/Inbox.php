@@ -84,8 +84,56 @@ class Inbox extends Component
 
     public function updatedShow(): void
     {
+        $this->ticked = [];
         $this->selected = null;
         $this->reply = '';
+    }
+
+    // The Dashboard's table ----------------------------------------------------
+
+    /** @var list<string> messages ticked in the table */
+    public array $ticked = [];
+
+    public function closeDrawer(): void
+    {
+        $this->selected = null;
+        $this->reply = '';
+    }
+
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_filter($ids, 'is_string'));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    /** Archive, spam, back to the inbox, mark read, or delete every ticked message. */
+    public function doTicked(string $what): void
+    {
+        abort_unless($this->allowed() && in_array($what, ['archived', 'spam', 'read', 'new', 'delete'], true), 403);
+        $n = 0;
+        foreach (array_slice(array_filter($this->ticked, 'is_string'), 0, 500) as $id) {
+            if (! $m = Letters::find($id)) {
+                continue;
+            }
+            if ($what === 'delete') {
+                Letters::delete($m);
+                ActivityLog::record($m->form() === Letters::FORM ? 'deleted a message from the contact form' : 'deleted an answer to “'.Letters::formName($m).'”', 'comments', 'message', (string) $m->id(), null);
+            } else {
+                Letters::setStatus($m, $what);
+            }
+            $n++;
+        }
+        $this->ticked = [];
+        $this->selected = null;
+        $this->stamp(match ($what) {
+            'archived' => trans_choice(':count archived.|:count archived.', $n),
+            'spam' => trans_choice(':count moved to Spam.|:count moved to Spam.', $n),
+            'new' => trans_choice(':count marked unread.|:count marked unread.', $n),
+            'delete' => trans_choice(':count deleted.|:count deleted.', $n),
+            default => trans_choice(':count back in the inbox.|:count back in the inbox.', $n),
+        });
     }
 
     public function pick(string $id): void
@@ -203,7 +251,7 @@ class Inbox extends Component
         $chosen = $this->chosen();
         $contact = app(Site::class)->contactPage();
 
-        return view('livewire.admin.inbox', [
+        return view(\App\Support\YourBook::desk() ? 'livewire.admin.inbox-table' : 'livewire.admin.inbox', [
             'pile' => $pile,
             'counts' => $counts,
             'chosen' => $chosen,
