@@ -168,4 +168,22 @@ class MoreDashboardTablesTest extends TestCase
             ->call('sortBy', 'size')->assertSet('sort', '-size')
             ->set('noAlt', true)->assertSet('page', 1);
     }
+
+    public function test_the_calendar_is_one_month_grid_with_the_day_beside_it(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.calendar'))->assertOk()
+            ->assertSee('class="dcal__grid"', false)
+            ->assertSee('Drafts on the desk')
+            ->assertDontSee('class="page page--left', false)
+            ->assertDontSee('role="grid"', false);
+
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Admin\Calendar::class)
+            ->call('pickDay', now()->startOfMonth()->format('Y-m-d'))
+            ->assertSee(now()->startOfMonth()->translatedFormat('l, j F'));
+
+        $person = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($person)->get(route('admin.calendar'))->assertOk()
+            ->assertSee('page page--left', false)
+            ->assertDontSee('dcal__grid', false);
+    }
 }
