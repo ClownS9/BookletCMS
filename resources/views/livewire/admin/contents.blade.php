@@ -4,9 +4,9 @@
         <div style="display: flex; align-items: center; gap: 10px">
             <x-admin.logo />
             <span class="serif" style="font-size: 22px; font-weight: 500">{{ __('booklet') }}</span>
-            <button type="button" class="night-toggle" wire:click="toggleNight" aria-pressed="{{ ($user->preferences['night'] ?? false) ? 'true' : 'false' }}">
-                <x-admin.icon :name="($user->preferences['night'] ?? false) ? 'sun' : 'moon'" size="15" />
-                {{ ($user->preferences['night'] ?? false) ? __('Day reading') : __('Night reading') }}
+            <button type="button" class="night-toggle" data-night-toggle data-night-switch="aria-pressed" data-night-url="{{ route('admin.night') }}" aria-pressed="{{ ($user->preferences['night'] ?? false) ? 'true' : 'false' }}">
+                <span class="when-day"><x-admin.icon name="moon" size="15" /> {{ __('Night reading') }}</span>
+                <span class="when-night"><x-admin.icon name="sun" size="15" /> {{ __('Day reading') }}</span>
             </button>
         </div>
 

@@ -1864,12 +1864,50 @@ window.bookletTerms = ({ input, model, value = '', choices = [], max = 0, words 
  */
 (() => {
     const dark = window.matchMedia?.('(prefers-color-scheme: dark)');
+    // Every night switch says what's showing, wherever the dark comes from.
+    const sync = () => {
+        const on = document.body?.classList.contains('night') ?? false;
+        document.querySelectorAll('[data-night-switch]').forEach((el) => {
+            el.setAttribute(el.getAttribute('data-night-switch') || 'aria-checked', on ? 'true' : 'false');
+        });
+    };
     const follow = () => {
         if (document.body?.dataset.nightAuto === 'on' && dark) {
             document.body.classList.toggle('night', dark.matches);
         }
+        sync();
     };
-    document.addEventListener('DOMContentLoaded', follow);
+    /*
+     * A switch flips what's showing at once and tells the server in the
+     * background (no reload, so nothing unsaved is lost). Choosing here stops
+     * following the device's dark mode, so the switch always does what it says.
+     */
+    const flip = (url) => {
+        const on = ! document.body.classList.contains('night');
+        document.body.classList.toggle('night', on);
+        document.body.dataset.nightAuto = 'off';
+        sync();
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            body: 'to=' + (on ? 'on' : 'off'),
+        }).catch(() => {});
+    };
+    document.addEventListener('submit', (e) => {
+        const form = e.target.closest?.('form[data-night-form]');
+        if (!form) return;
+        e.preventDefault();
+        flip(form.action);
+    }, true);
+    document.addEventListener('click', (e) => {
+        const button = e.target.closest?.('[data-night-toggle]');
+        if (!button) return;
+        e.preventDefault();
+        flip(button.dataset.nightUrl);
+    });
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', follow) : follow();
     document.addEventListener('livewire:navigated', follow);
     dark?.addEventListener?.('change', follow);
 })();

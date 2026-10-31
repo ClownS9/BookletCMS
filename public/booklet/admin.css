@@ -7244,10 +7244,11 @@ body.layout-dashboard :is(.switch, .switch-row input, input[type="checkbox"][rol
 body.layout-dashboard :is(.switch, .switch-row input, input[type="checkbox"][role="switch"]):disabled { opacity: .5; cursor: default; }
 body.layout-dashboard :is(.switch, .switch-row input, input[type="checkbox"][role="switch"]):focus-visible { outline: 2px solid var(--d-accent); outline-offset: 2px; }
 /* The little switch inside a menu row (night reading) */
-body.layout-dashboard [role="switch"] > .switch--sm { width: 34px; height: 20px; min-width: 34px; pointer-events: none; }
-body.layout-dashboard [role="switch"] > .switch--sm::after { top: 2px; left: 2px; }
-body.layout-dashboard [aria-checked="true"] > .switch--sm { background: var(--d-accent); }
-body.layout-dashboard [aria-checked="true"] > .switch--sm::after { left: 16px; }
+/* (Written strongly enough to win over the general toggle above, whose :is() counts as its most specific part.) */
+body.layout-dashboard [role="switch"] > .switch.switch--sm:not([aria-checked]) { width: 34px; height: 20px; min-width: 34px; pointer-events: none; background: var(--d-field); }
+body.layout-dashboard [role="switch"] > .switch.switch--sm:not([aria-checked])::after { top: 2px; left: 2px; }
+body.layout-dashboard [role="switch"][aria-checked="true"] > .switch.switch--sm:not([aria-checked]) { background: var(--d-accent); }
+body.layout-dashboard [role="switch"][aria-checked="true"] > .switch.switch--sm:not([aria-checked])::after { left: 16px; }
 /* Words beside a switch line up with its middle */
 body.layout-dashboard .switch-row { align-items: center; }
 body.layout-dashboard .switch-row span { padding-top: 0; }
@@ -8337,3 +8338,9 @@ body.layout-dashboard select option:checked { background: var(--d-sel); }
     body.layout-dashboard select::picker-icon { color: var(--faint); }
     @media (prefers-reduced-motion: reduce) { select::picker(select) { transition: none; } }
 }
+
+/* Night reading: what a switch shows by day and by night (the page may turn dark
+   without a reload, so both are there and the body says which shows) */
+body:not(.night) .when-night, body.night .when-day { display: none !important; }
+.when-day, .when-night { display: inline-flex; align-items: center; gap: inherit; }
+.night-toggle .when-day, .night-toggle .when-night { gap: 6px; }

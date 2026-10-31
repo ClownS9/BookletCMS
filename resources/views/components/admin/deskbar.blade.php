@@ -5,7 +5,7 @@
 @php
     $user = request()->user();
     $site = rescue(fn () => \App\Booklet\Facades\Booklet::globals('site')?->get('site_name'), null, false);
-    $night = (bool) ($user->preferences['night'] ?? false);
+    $night = ! \App\Support\YourBook::of($user)['night_auto'] && (bool) ($user->preferences['night'] ?? false);
     $narrow = (bool) ($user->preferences['sidebar_narrow'] ?? false);
     $switch = \App\Support\AdminNav::switcher();
     $version = \App\Support\Updates::current();
@@ -49,10 +49,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
         <span class="sr-only">{{ __('View site') }} {{ __('(opens in a new tab)') }}</span>
     </a>
-    <form method="POST" action="{{ route('admin.night') }}" class="deskbar__night">
+    <form method="POST" action="{{ route('admin.night') }}" class="deskbar__night" data-night-form>
         @csrf
-        <button type="submit" class="deskbar__icon" role="switch" aria-checked="{{ $night ? 'true' : 'false' }}" aria-label="{{ __('Night reading') }}" title="{{ __('Night reading') }}">
-            <x-admin.icon :name="$night ? 'sun' : 'moon'" size="16" />
+        <button type="submit" class="deskbar__icon" role="switch" data-night-switch aria-checked="{{ $night ? 'true' : 'false' }}" aria-label="{{ __('Night reading') }}" title="{{ __('Night reading') }}">
+            <span class="when-day"><x-admin.icon name="moon" size="16" /></span><span class="when-night"><x-admin.icon name="sun" size="16" /></span>
         </button>
     </form>
     <div class="deskbar__me" x-data="{ open: false }" x-on:keydown.escape.window="open = false" x-on:click.outside="open = false" x-on:livewire:navigating.window="open = false">
@@ -66,9 +66,9 @@
                 <a href="{{ route('admin.account') }}" wire:navigate @if (request()->routeIs('admin.account')) aria-current="page" @endif><x-admin.icon name="user" size="16" /> {{ __('Your account') }}</a>
                 <a href="{{ route('admin.account.yours') }}" wire:navigate @if (request()->routeIs('admin.account.yours')) aria-current="page" @endif><x-admin.icon name="book" size="16" /> {{ __('Make it yours') }}</a>
                 <a href="{{ route('admin.account.menu') }}" wire:navigate @if (request()->routeIs('admin.account.menu')) aria-current="page" @endif><x-admin.icon name="list" size="16" /> {{ __('Your menu') }}</a>
-                <form method="POST" action="{{ route('admin.night') }}">
+                <form method="POST" action="{{ route('admin.night') }}" data-night-form>
                     @csrf
-                    <button type="submit" role="switch" aria-checked="{{ ($user->preferences['night'] ?? false) ? 'true' : 'false' }}">
+                    <button type="submit" role="switch" data-night-switch aria-checked="{{ $night ? 'true' : 'false' }}">
                         <x-admin.icon name="moon" size="16" /><span>{{ __('Night reading') }}</span><span class="switch switch--sm" aria-hidden="true"></span>
                     </button>
                 </form>

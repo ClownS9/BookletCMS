@@ -25,12 +25,14 @@
     // The focus ring takes the colour of the chapter you're in.
     $focusTone = collect(\App\Support\AdminNav::menu())->firstWhere('active', true)['tone'] ?? 'sky';
 @endphp
-<body @class(['night' => ($you?->preferences['night'] ?? false), ...\App\Support\YourBook::bodyClasses($you)])
+<body @class(['night' => ! $yours['night_auto'] && ($you?->preferences['night'] ?? false), ...\App\Support\YourBook::bodyClasses($you)])
       style="--focus: var(--{{ $focusTone }})"
       data-night-auto="{{ $yours['night_auto'] ? 'on' : 'off' }}"
       data-page-sound="{{ (request()->user()?->preferences['page_sound'] ?? true) ? 'on' : 'off' }}"
       x-data
 >
+    {{-- Night reading with the device: dark before anything paints, not after --}}
+    <script>if (document.body.dataset.nightAuto === 'on' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) document.body.classList.add('night');</script>
     <a href="#main" class="skip">{{ __('Skip to the page') }}</a>
     <x-admin.handheld-nav />
 
