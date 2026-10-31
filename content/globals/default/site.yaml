@@ -27,3 +27,6 @@ comments: true
 moderation: true
 stacy: true
 page_cache: true
+logo_show: both
+logo_height: 32
+icon_from: booklet
