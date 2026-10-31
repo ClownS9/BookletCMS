@@ -58,6 +58,28 @@ class Site
         return $logo ? \App\Support\Disk::of('public')->url($logo) : null;
     }
 
+    /** The logo for the site's dark mode, when there is one. */
+    public function logoDarkUrl(): ?string
+    {
+        $logo = $this->setting('logo_dark');
+
+        return $logo && $this->setting('logo') ? \App\Support\Disk::of('public')->url($logo) : null;
+    }
+
+    /** What the header shows: the logo and the name ('both'), the logo alone, or the name alone. */
+    public function logoShow(): string
+    {
+        $show = (string) $this->setting('logo_show', 'both');
+
+        return in_array($show, ['both', 'logo', 'name'], true) ? $show : 'both';
+    }
+
+    /** How tall the logo stands in the header, in pixels. */
+    public function logoHeight(): int
+    {
+        return max(20, min(80, (int) $this->setting('logo_height', 32)));
+    }
+
     public function perPage(): int
     {
         return max(1, min(100, (int) $this->setting('per_page', 10)));
