@@ -190,6 +190,31 @@
         </div>
         @endunless
 
+        @php
+            $seoHandles = collect($this->fields['side'])->where('seo', true)->pluck('handle')->all();
+            $seoErrors = collect($seoHandles)->contains(fn ($h) => $errors->has('values.'.$h));
+            $mainErrors = collect($errors->keys())->contains(fn ($k) => ! in_array(\Illuminate\Support\Str::after($k, 'values.'), $seoHandles, true));
+            $seoWarns = $searchCard ? collect($searchCard['hints'])->where('level', 'warn')->count() : 0;
+            $showMain = $seoTab ? 'x-show="$wire.side !== \'seo\'"'.($side === 'seo' ? ' style="display: none"' : '') : '';
+            $showSeo = $seoTab ? 'x-show="$wire.side === \'seo\'" x-cloak' : '';
+        @endphp
+        @if ($seoTab)
+            {{-- Two tabs, so the margin isn't one long column: what it is and when it goes out; how it's found and shared --}}
+            <div class="margin-tabs" role="tablist" aria-label="{{ __('Entry details') }}">
+                <button type="button" role="tab" id="margin-tab-main" aria-controls="margin-main"
+                        :aria-selected="($wire.side !== 'seo').toString()" aria-selected="{{ $side !== 'seo' ? 'true' : 'false' }}"
+                        x-on:click="$wire.$set('side', 'main', false)">
+                    {{ __('Main') }}@if ($mainErrors && $side === 'seo') <i class="margin-tabs__alert" title="{{ __('Something here needs a look') }}">!</i>@endif
+                </button>
+                <button type="button" role="tab" id="margin-tab-seo" aria-controls="margin-seo"
+                        :aria-selected="($wire.side === 'seo').toString()" aria-selected="{{ $side === 'seo' ? 'true' : 'false' }}"
+                        x-on:click="$wire.$set('side', 'seo', false)">
+                    {{ __('SEO') }}@if ($seoErrors) <i class="margin-tabs__alert" title="{{ __('Something here needs a look') }}">!</i>@elseif ($seoWarns) <b class="margin-tabs__n" title="{{ __('Things to look at') }}">{{ $seoWarns }}</b>@endif
+                </button>
+            </div>
+        @endif
+
+        <div class="margin-tab" id="margin-main" @if ($seoTab) role="tabpanel" aria-labelledby="margin-tab-main" @endif {!! $showMain !!}>
         <x-admin.card :title="__('Publishing')">
         <fieldset style="margin: 0; padding: 0; border: 0">
             <legend class="field__label" style="padding: 0; margin-bottom: 10px">{{ __('Status') }}</legend>
@@ -396,13 +421,9 @@
 
         @foreach ($this->fields['side'] as $field)
             @continue(in_array($field['handle'], $hidden, true))
-            @continue($searchCard && in_array($field['handle'], ['meta_title', 'meta_description'], true)) {{-- in the Search & sharing card --}}
+            @continue($seoTab && $field['seo']) {{-- in the SEO tab --}}
             <x-admin.card>@include('livewire.admin.fields.field', ['field' => $field])</x-admin.card>
         @endforeach
-
-        @if ($searchCard)
-            <x-admin.card>@include('livewire.admin.partials.search-card')</x-admin.card>
-        @endif
 
         {{-- New posts by email --}}
         @if ($newsletter && ! $translationOf)
@@ -465,6 +486,21 @@
             </x-admin.card>
         @endif
 
+        </div>
+
+        {{-- SEO: how it shows up in search and when shared, its own search fields, and how it's found --}}
+        <div class="margin-tab" id="margin-seo" @if ($seoTab) role="tabpanel" aria-labelledby="margin-tab-seo" @endif {!! $showSeo !!}>
+        @if ($searchCard)
+            <x-admin.card>@include('livewire.admin.partials.search-card')</x-admin.card>
+        @endif
+        @if ($seoTab)
+            @foreach ($this->fields['side'] as $field)
+                @continue(! $field['seo'] || in_array($field['handle'], $hidden, true))
+                @continue($searchCard && in_array($field['handle'], ['meta_title', 'meta_description'], true)) {{-- in the Search & sharing card --}}
+                <x-admin.card>@include('livewire.admin.fields.field', ['field' => $field])</x-admin.card>
+            @endforeach
+        @endif
+
         {{-- How it's being read --}}
         @if ($reading)
             <x-admin.card>
@@ -523,6 +559,9 @@
             </x-admin.card>
         @endif
 
+        </div>
+
+        <div class="margin-tab" @if ($seoTab) role="tabpanel" aria-labelledby="margin-tab-main" @endif {!! $showMain !!}>
         @if ($entryId)
             <x-admin.card>
             <livewire:admin.entry-notes :entry-id="$entryId" :key="'notes-'.$entryId" />
@@ -531,6 +570,7 @@
         @else
             <p class="field__hint">{{ __('Once saved, you can stick notes for the team on this :one.', ['one' => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::singular($this->model->title()))]) }}</p>
         @endif
+        </div>
 
         <div @class(['editor-save', 'is-desk' => $desk]) style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--rule); display: flex; gap: 10px; flex-wrap: wrap">
             <button type="submit" class="btn btn--ink btn--lg" style="flex: 1 1 auto" wire:loading.attr="disabled" wire:target="save">{{ __($primaryLabel) }}</button>

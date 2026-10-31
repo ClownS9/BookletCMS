@@ -7668,3 +7668,16 @@ body:not(.layout-dashboard) .pager__numbers button[aria-current="page"] { backgr
     .pager__step { min-width: 40px; }
     .pager__turn { gap: 8px; }
 }
+
+/* The margin's two tabs: Main, and SEO (search, sharing, how it's found) */
+.margin-tab { display: contents; }
+.margin-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.margin-tabs button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 6px 12px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s ease, color .15s ease; }
+.margin-tabs button:hover { color: var(--ink); }
+.margin-tabs button[aria-selected="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 18, 14, .12); }
+.margin-tabs button:focus-visible { outline: 2px solid var(--focus, var(--sky)); outline-offset: 2px; }
+.margin-tabs__n { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--sun); color: #1E1C18; font-size: 11px; font-weight: 700; }
+.margin-tabs__alert { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--danger, #C2412D); color: #fff; font-size: 11px; font-style: normal; font-weight: 700; }
+body.layout-dashboard .margin-tabs { background: var(--d-line2, var(--rule)); border-radius: 10px; }
+body.layout-dashboard .margin-tabs button { border-radius: 7px; }
+body.layout-dashboard .margin-tabs button[aria-selected="true"] { background: var(--d-panel, var(--paper)); }
