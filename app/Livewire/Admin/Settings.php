@@ -64,6 +64,25 @@ class Settings extends Component
 
     public $logoUpload = null;
 
+    /** The logo for dark mode (optional), and its upload */
+    public ?string $logoDark = null;
+
+    public $logoDarkUpload = null;
+
+    /** The header: 'both', 'logo' or 'name'; and the logo's height */
+    public string $logoShow = 'both';
+
+    public int $logoHeight = 32;
+
+    /** The tab and home-screen icon: its own picture, where it comes from ('' = choose for me), the letters */
+    public ?string $icon = null;
+
+    public $iconUpload = null;
+
+    public string $iconFrom = '';
+
+    public string $iconLetters = '';
+
     public bool $saved = false;
 
     public function mount(): void
@@ -83,6 +102,12 @@ class Settings extends Component
         $this->stacy = (bool) $site->get('stacy', true);
         $this->pageCache = (bool) $site->get('page_cache', true);
         $this->logo = $site->get('logo');
+        $this->logoDark = $site->get('logo_dark');
+        $this->logoShow = in_array($site->get('logo_show'), ['both', 'logo', 'name'], true) ? $site->get('logo_show') : 'both';
+        $this->logoHeight = max(20, min(80, (int) $site->get('logo_height', 32)));
+        $this->icon = $site->get('icon');
+        $this->iconFrom = in_array($site->get('icon_from'), \App\Support\SiteIcons::SOURCES, true) ? $site->get('icon_from') : '';
+        $this->iconLetters = (string) $site->get('icon_letters', '');
     }
 
     protected function canEdit(): bool
@@ -123,29 +148,84 @@ class Settings extends Component
 
     public function updatedLogoUpload(): void
     {
+        $this->logo = $this->keepPicture('logoUpload', 'logo') ?? $this->logo;
+    }
+
+    public function updatedLogoDarkUpload(): void
+    {
+        $this->logoDark = $this->keepPicture('logoDarkUpload', 'logo-dark') ?? $this->logoDark;
+    }
+
+    public function updatedIconUpload(): void
+    {
+        $icon = $this->keepPicture('iconUpload', 'icon');
+        if ($icon) {
+            $this->icon = $icon;
+            $this->iconFrom = 'upload';
+        }
+    }
+
+    /** An uploaded picture, checked and kept on the public disk (null when it isn't one). */
+    protected function keepPicture(string $field, string $prefix): ?string
+    {
         abort_unless($this->canEdit(), 403);
 
-        $this->validate(['logoUpload' => ['file', 'mimes:svg,png,jpg,jpeg,webp,gif', 'max:4096']], [], ['logoUpload' => 'logo']);
+        $this->validate([$field => ['file', 'mimes:svg,png,jpg,jpeg,webp,gif', 'max:4096']], [], [$field => $prefix === 'icon' ? 'icon' : 'logo']);
 
         // A real picture extension, and an SVG with nothing in it that could run.
-        $extension = \App\Support\SafeUpload::extension($this->logoUpload, ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif']);
+        $extension = \App\Support\SafeUpload::extension($this->{$field}, ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif']);
         if (! in_array($extension, ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif'], true)
-            || ($extension === 'svg' && ! \App\Support\SafeUpload::cleanSvgFile($this->logoUpload->getRealPath()))) {
-            $this->addError('logoUpload', __('That file doesn’t look like a picture. Try an SVG or PNG.'));
-            $this->logoUpload = null;
+            || ($extension === 'svg' && ! \App\Support\SafeUpload::cleanSvgFile($this->{$field}->getRealPath()))) {
+            $this->addError($field, __('That file doesn’t look like a picture. Try an SVG or PNG.'));
+            $this->{$field} = null;
 
-            return;
+            return null;
         }
 
-        $name = 'logo-'.Str::lower(Str::random(6)).'.'.$extension;
-        $this->logo = $this->logoUpload->storeAs('site', $name, 'public');
-        $this->logoUpload = null;
+        $path = $this->{$field}->storeAs('site', $prefix.'-'.Str::lower(Str::random(6)).'.'.$extension, 'public');
+        $this->{$field} = null;
         $this->saved = false;
+
+        return $path;
     }
 
     public function removeLogo(): void
     {
         $this->logo = null;
+        $this->logoDark = null;
+        if ($this->iconFrom === 'logo') {
+            $this->iconFrom = '';
+        }
+        $this->saved = false;
+    }
+
+    public function removeLogoDark(): void
+    {
+        $this->logoDark = null;
+        $this->saved = false;
+    }
+
+    public function removeIcon(): void
+    {
+        $this->icon = null;
+        if ($this->iconFrom === 'upload') {
+            $this->iconFrom = '';
+        }
+        $this->saved = false;
+    }
+
+    /** Where the icon comes from: '' (choose for me), upload, logo, initials or booklet. */
+    public function chooseIcon(string $from): void
+    {
+        abort_unless($from === '' || in_array($from, \App\Support\SiteIcons::SOURCES, true), 422);
+        $this->iconFrom = $from;
+        $this->saved = false;
+    }
+
+    public function showLogo(string $show): void
+    {
+        abort_unless(in_array($show, ['both', 'logo', 'name'], true), 422);
+        $this->logoShow = $show;
         $this->saved = false;
     }
 
@@ -161,10 +241,14 @@ class Settings extends Component
             'language' => ['required', Rule::in(array_keys(self::LANGUAGES))],
             'homepage' => ['required', 'string'],
             'perPage' => ['required', 'integer', 'min:1', 'max:100'],
-        ], [], ['siteName' => 'site name', 'perPage' => 'posts per page', 'siteUrl' => 'site address']);
+            'logoHeight' => ['required', 'integer', 'min:20', 'max:80'],
+            'logoShow' => ['required', Rule::in(['both', 'logo', 'name'])],
+            'iconFrom' => ['nullable', Rule::in(['', ...\App\Support\SiteIcons::SOURCES])],
+            'iconLetters' => ['nullable', 'string', 'max:2'],
+        ], [], ['iconLetters' => 'letters', 'siteName' => 'site name', 'perPage' => 'posts per page', 'siteUrl' => 'site address']);
 
         $site = $this->site();
-        $previousLogo = $site->get('logo');
+        $previous = ['logo' => $site->get('logo'), 'logo_dark' => $site->get('logo_dark'), 'icon' => $site->get('icon')];
 
         $site->merge([
             'site_name' => $this->siteName,
@@ -179,10 +263,18 @@ class Settings extends Component
             'stacy' => $this->stacy,
             'page_cache' => $this->pageCache,
             'logo' => $this->logo,
+            'logo_dark' => $this->logo ? $this->logoDark : null,
+            'logo_show' => $this->logoShow,
+            'logo_height' => $this->logoHeight,
+            'icon' => $this->icon,
+            'icon_from' => $this->iconFrom !== '' ? $this->iconFrom : null,
+            'icon_letters' => trim($this->iconLetters) !== '' ? trim($this->iconLetters) : null,
         ]);
 
-        if ($this->logo === null) {
-            $site->remove('logo');
+        foreach (['logo', 'logo_dark', 'icon', 'icon_from', 'icon_letters'] as $key) {
+            if ($site->get($key) === null) {
+                $site->remove($key);
+            }
         }
         if ($this->siteUrl === '') {
             $site->remove('site_url');
@@ -190,8 +282,10 @@ class Settings extends Component
 
         Booklet::globalVariables()->save($site);
 
-        if ($previousLogo && $previousLogo !== $this->logo) {
-            \App\Support\Disk::of('public')->delete($previousLogo);
+        foreach ($previous as $key => $was) {
+            if ($was && $was !== $site->get($key)) {
+                \App\Support\Disk::of('public')->delete($was);
+            }
         }
 
         ActivityLog::record('changed', 'settings', 'settings', 'site', 'Settings');
@@ -216,6 +310,35 @@ class Settings extends Component
             'logoUrl' => $this->logoUpload
                 ? null
                 : ($this->logo ? \App\Support\Disk::of('public')->url($this->logo) : null),
+            'logoDarkUrl' => $this->logoDark ? \App\Support\Disk::of('public')->url($this->logoDark) : null,
+            'icons' => $this->iconPreview(),
         ]);
+    }
+
+    /**
+     * What the icon looks like with the choices on this page (saved or not):
+     * where it comes from, what it shows, and what each choice can offer.
+     */
+    protected function iconPreview(): array
+    {
+        $over = ['icon' => $this->icon, 'icon_from' => $this->iconFrom !== '' ? $this->iconFrom : null,
+            'icon_letters' => $this->iconLetters, 'logo' => $this->logo, 'name' => $this->siteName];
+        $s = \App\Support\SiteIcons::settings($over);
+        $source = \App\Support\SiteIcons::source($s);
+        $url = fn (?string $path) => $path ? \App\Support\Disk::of('public')->url($path) : null;
+
+        return [
+            'source' => $source,
+            'auto' => \App\Support\SiteIcons::source(['icon_from' => null] + $s),
+            'letters' => \App\Support\SiteIcons::initials($this->siteName, $this->iconLetters),
+            'suggested' => \App\Support\SiteIcons::initials($this->siteName),
+            'accent' => $s['accent'],
+            'on' => \App\Support\Look::onAccent($s['accent']),
+            'iconUrl' => $url($this->icon),
+            'picture' => $source === 'upload' ? $url($this->icon) : ($source === 'logo' ? $url($this->logo) : null),
+            'logoSquare' => $this->logo ? \App\Support\SiteIcons::isSquare($this->logo) : false,
+            'pictureIsSvg' => $source === 'upload' ? \App\Support\SiteIcons::isSvg((string) $this->icon) : ($source === 'logo' && \App\Support\SiteIcons::isSvg((string) $this->logo)),
+            'admin' => \App\Support\SiteIcons::bookSvg($s['accent']),
+        ];
     }
 }

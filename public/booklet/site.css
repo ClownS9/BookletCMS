@@ -100,7 +100,10 @@ a.sticker:hover { color: var(--ink); transform: rotate(0deg); }
 .masthead__inner { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; padding-top: 18px; padding-bottom: 18px; }
 .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; }
 .brand__mark { width: 28px; height: 28px; border-radius: 7px; background: var(--accent); transform: rotate(-8deg); }
-.brand__logo { width: 32px; height: 32px; object-fit: contain; }
+.brand__logo { width: auto; height: var(--logo-h, 32px); max-width: min(260px, 60vw); object-fit: contain; }
+.brand__logo--dark { display: none; }
+[data-theme="dark"] .brand__logo--light { display: none; }
+[data-theme="dark"] .brand__logo--dark { display: block; }
 .brand__name { font-family: var(--serif); font-size: 24px; font-weight: 500; }
 
 .menu { font-size: 15px; }
@@ -1263,3 +1266,6 @@ html { overflow-x: clip; } /* edge-to-edge pictures don't leave a sideways scrol
     .reader-card__title { font-size: 28px; }
     .locked__door { transform: none; }
 }
+
+/* A tall logo stays in proportion on a phone */
+@media (max-width: 640px) { .brand__logo { height: min(var(--logo-h, 32px), 44px); } }

@@ -8150,3 +8150,50 @@ body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child 
 body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div > :is(h2, h3) { margin: 0 !important; font-size: 14px !important; font-weight: 600; }
 body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div > .eyebrow { margin: 0; font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); }
 body.layout-dashboard .book__pages .desk-card__body > .ribbon-clear:first-child > div > .eyebrow::before { content: '· '; }
+
+/* ---------- Settings › Logo & icons ---------- */
+.brandkit { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.brandkit__row { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.brandkit__row + .brandkit__row { padding-top: 20px; border-top: 1px solid var(--rule); }
+.brandkit__pair { display: flex; flex-wrap: wrap; gap: 14px 18px; }
+.brandkit__slot { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.brandkit__slot--row { flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brandkit__buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.brandkit__file { position: relative; overflow: hidden; }
+.brandkit__file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.logo-slot--wide { width: 176px; height: 72px; padding: 8px; box-sizing: border-box; }
+.logo-slot--dark { background: #1E1C18; border-color: #4A453C; }
+.brandkit__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.brandkit__size { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.brandkit__size input { width: 140px; accent-color: var(--accent, var(--coral)); }
+.brandkit__size output { min-width: 44px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.brandkit__header { display: flex; flex-direction: column; gap: 8px; }
+.brandkit__bar { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; border: 1px solid var(--rule); border-radius: 10px; background: #FBF8F1; color: #1E1C18; overflow: hidden; }
+.brandkit__bar--dark { background: #171513; border-color: #36322C; color: #EDE6D6; }
+.brandkit__bar img { flex: none; max-width: 60%; object-fit: contain; }
+.brandkit__bar span { font-family: var(--serif); font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brandkit__bar i { flex: none; width: 34px; height: 6px; border-radius: 3px; background: currentColor; opacity: .14; }
+.brandkit__bar i:first-of-type { margin-left: auto; }
+.brandkit__previews { display: flex; flex-wrap: wrap; gap: 14px; }
+.brandkit__previews figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.brandkit__previews figcaption { font-size: 12px; color: var(--muted); }
+.brandkit__tabs { flex: 1 1 280px; padding: 8px 8px 10px; border-radius: 10px; background: #DEE1E6; }
+.brandkit__tabs figcaption { padding: 0 4px; color: #5B606B; }
+.brandkit__tab { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 8px 8px 0 0; color: #3C4043; font-family: system-ui, sans-serif; font-size: 12.5px; }
+.brandkit__tab.is-on { background: #FFFFFF; color: #1F1F1F; }
+.brandkit__tab > span:not(.brandkit__tile, .brandkit__admin) { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.brandkit__tab b { font-weight: 400; opacity: .55; }
+.brandkit__tab img, .brandkit__tab .brandkit__tile { flex: none; }
+.brandkit__admin { flex: none; display: flex; width: 16px; height: 16px; }
+.brandkit__admin svg { width: 16px; height: 16px; }
+.brandkit__tile { display: inline-flex; flex: none; align-items: center; justify-content: center; font-family: var(--sans); font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+.brandkit__phone { flex: 0 1 230px; }
+.brandkit__screen { display: flex; justify-content: center; gap: 18px; padding: 18px 14px 14px; border-radius: 18px; background: linear-gradient(160deg, #4B5D7A, #9B7A8E); }
+.brandkit__app { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 60px; }
+.brandkit__app small { max-width: 64px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #fff; font-family: system-ui, sans-serif; font-size: 11px; }
+.brandkit__app img, .brandkit__app .brandkit__tile { box-shadow: 0 2px 6px rgba(0, 0, 0, .2); }
+.brandkit__ghost { width: 52px; height: 52px; border-radius: 22%; background: rgba(255, 255, 255, .28); }
+/* Pills that choose one of several (role="radio") light up like pressed ones */
+.pill[role="radio"][aria-checked="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); box-shadow: 0 2px 0 color-mix(in srgb, var(--ink) 55%, #000); }
+body.layout-dashboard .pill[role="radio"][aria-checked="true"] { border-color: var(--d-accent); background: var(--d-sel); color: var(--ink); box-shadow: inset 0 0 0 1px var(--d-accent); }
+.pill[disabled] { opacity: .45; cursor: not-allowed; }
