@@ -88,7 +88,7 @@
                 <div class="term-card">
                     <p style="font-size: 15px">
                         <strong>{{ $chosen->taxonomy() === 'tags' ? '#' : '' }}{{ $chosen->title() }}</strong>
-                        · {{ $chosen->taxonomy() === 'tags' ? 'tag' : 'category' }}
+                        · {{ $chosen->taxonomy() === 'tags' ? __('tag') : __('category') }}
                         · {{ trans_choice('used on :count entry|used on :count entries', $count($chosen)) }}
                         @if ($chosen->attribute('uri')) · <a href="{{ url($chosen->attribute('uri')) }}" target="_blank" rel="noopener">{{ __('see its page ↗') }}</a> @endif
                     </p>
@@ -120,7 +120,7 @@
                         @endif
 
                         <button type="button" class="btn btn--danger" style="align-self: flex-start" wire:click="removeTerm"
-                                wire:confirm="Remove “{{ $chosen->title() }}” from every entry and delete it?">{{ __('Remove') }}</button>
+                                wire:confirm="{{ __('Remove “:name” from every entry and delete it?', ['name' => $chosen->title()]) }}">{{ __('Remove') }}</button>
                     @else
                         <p class="field__hint">{{ __('Editors and admins can rename, merge or remove these.') }}</p>
                     @endif

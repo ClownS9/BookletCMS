@@ -186,7 +186,7 @@ class DashboardDeskTest extends TestCase
     public function test_every_page_gets_a_header_with_breadcrumbs_and_the_book_keeps_its_own(): void
     {
         $this->actingAs($this->admin)->get(route('admin.backups'))->assertOk()
-            ->assertSee('class="page-head"', false)
+            ->assertSee('class="dash-head"', false)
             ->assertSee('page-head__crumbs', false);
 
         $person = User::factory()->create(['role' => 'admin']);

@@ -154,7 +154,7 @@
                                 @endif
                                 @if ($canChange)
                                 <button type="button" class="btn btn--danger" wire:click="deleteChosen"
-                                        wire:confirm="Move {{ $chosen->attribute('basename') }} to the bin? Posts using it will lose the picture until it’s put back.">{{ __('Delete') }}</button>
+                                        wire:confirm="{{ __('Move :name to the bin? Posts using it will lose the picture until it’s put back.', ['name' => $chosen->attribute('basename')]) }}">{{ __('Delete') }}</button>
                                 @endif
                             </div>
                         </form>
@@ -176,6 +176,13 @@
                     <label for="media-search" class="sr-only">{{ __('Search media') }}</label>
                     <input id="media-search" type="search" wire:model.live.debounce.250ms="search" placeholder="{{ __('Search by name or alt text') }}">
                 </div>
+                @if ($missingAlt > 0 || $noAlt)
+                    <button type="button" class="pill" wire:click="$toggle('noAlt')" aria-pressed="{{ $noAlt ? 'true' : 'false' }}" title="{{ __('Pictures without a description for people who can’t see them') }}">{{ __('No alt text') }} <b>{{ $missingAlt }}</b></button>
+                @endif
+                <div class="view-switch" role="group" aria-label="{{ __('Show as') }}">
+                    <button type="button" wire:click="setView('grid')" aria-pressed="{{ $view === 'grid' ? 'true' : 'false' }}" title="{{ __('Grid') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="sr-only">{{ __('Grid') }}</span></button>
+                    <button type="button" wire:click="setView('list')" aria-pressed="{{ $view === 'list' ? 'true' : 'false' }}" title="{{ __('List') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="sr-only">{{ __('List') }}</span></button>
+                </div>
                 @if ($this->containerModel && $canChange)
                     <button type="button" class="btn btn--quiet" wire:click="sync" style="font-size: 14px">{{ __('Find new files') }}</button>
                 @endif
@@ -193,6 +200,50 @@
                         {{ __('Drop images, PDFs or audio on the left. They’ll be ready to tape into any post or page.') }}
                     </p>
                 </div>
+            @elseif ($view === 'list')
+                @php
+                    $sortMark = fn (string $col) => ltrim($sort, '-') === $col ? (str_starts_with($sort, '-') ? '↓' : '↑') : '↕';
+                    $ariaSort = fn (string $col) => ltrim($sort, '-') === $col ? (str_starts_with($sort, '-') ? 'descending' : 'ascending') : 'none';
+                @endphp
+                <div class="dash-table-wrap media-list">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" aria-sort="{{ $ariaSort('name') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('name')">{{ __('File') }}<span aria-hidden="true">{{ $sortMark('name') }}</span></button></th>
+                                <th scope="col" class="is-wide">{{ __('Folder') }}</th>
+                                <th scope="col" class="is-num" aria-sort="{{ $ariaSort('size') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('size')">{{ __('Size') }}<span aria-hidden="true">{{ $sortMark('size') }}</span></button></th>
+                                <th scope="col" class="is-wide">{{ __('Dimensions') }}</th>
+                                <th scope="col" class="is-wide">{{ __('Alt text') }}</th>
+                                <th scope="col" class="is-wide" aria-sort="{{ $ariaSort('date') }}"><button type="button" class="dash-table__sort" wire:click="sortBy('date')">{{ __('Added') }}<span aria-hidden="true">{{ $sortMark('date') }}</span></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($visible as $asset)
+                                @php $alt = trim((string) $asset->get('alt', '')); $bytes = (int) $asset->get('size', 0); @endphp
+                                <tr wire:key="row-{{ md5($asset->path()) }}" @class(['is-open' => $chosen?->path() === $asset->path()])>
+                                    <td class="dash-table__main">
+                                        <button type="button" class="dash-table__open media-list__file" wire:click="pick(@js($asset->path()))">
+                                            <span class="media-list__thumb" aria-hidden="true">
+                                                @if ($asset->isImage() && ($urls[$asset->path()] ?? null))<img src="{{ $urls[$asset->path()] }}" alt="" loading="lazy" decoding="async">@else<span>{{ strtoupper($asset->attribute('extension')) }}</span>@endif
+                                            </span>
+                                            <span style="min-width: 0"><span class="dash-table__name">{{ $asset->attribute('basename') }}</span><span class="dash-table__sub dash-table__sub--plain">{{ strtoupper((string) $asset->attribute('extension')) }}</span></span>
+                                        </button>
+                                    </td>
+                                    <td class="is-wide is-quiet">{{ $asset->attribute('folder') && $asset->attribute('folder') !== '/' ? $asset->attribute('folder') : '—' }}</td>
+                                    <td class="is-num"><span @class(['is-big' => $bytes > 2 * 1048576])>{{ $bytes ? \App\Support\Sizes::file($bytes) : '—' }}</span></td>
+                                    <td class="is-wide is-quiet">{{ $asset->get('width') ? $asset->get('width').'×'.$asset->get('height') : '—' }}</td>
+                                    <td class="is-wide media-list__alt">
+                                        @if (! $asset->isImage())<span class="is-quiet">—</span>
+                                        @elseif ($alt === '')<span class="dash-tag dash-tag--warn">{{ __('Missing') }}</span>
+                                        @else<span title="{{ $alt }}">{{ \Illuminate\Support\Str::limit($alt, 48) }}</span>@endif
+                                    </td>
+                                    <td class="is-wide is-quiet">{{ $asset->lastModified() ? \Illuminate\Support\Carbon::parse($asset->lastModified())->translatedFormat('j M Y') : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <x-admin.pager :of="$visible" :sizes="$pageSizes" class="picks-pager" id="media-pager" />
             @else
                 <div class="album">
                     @foreach ($visible as $i => $asset)

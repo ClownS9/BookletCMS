@@ -68,7 +68,7 @@
                             <span class="bin-list__text">
                                 <span class="bin-list__title serif">{{ $item->title }}</span>
                                 <span class="bin-list__meta">
-                                    {{ $item->meta }} · deleted {{ $item->created_at->diffForHumans() }}{{ $item->deleter ? ' by '.($item->deleter->id === request()->user()?->id ? 'you' : $item->deleter->name) : '' }}
+                                    {{ $item->meta }} · {{ $item->deleter ? __('deleted :when by :who', ['when' => $item->created_at->diffForHumans(), 'who' => $item->deleter->id === request()->user()?->id ? __('you') : $item->deleter->name]) : __('deleted :when', ['when' => $item->created_at->diffForHumans()]) }}
                                 </span>
                             </span>
                             <span @class(['bin-list__left', 'is-soon' => $left <= 3])>{{ trans_choice(':count day left|:count days left', $left) }}</span>
@@ -76,7 +76,7 @@
                                 <button type="button" class="btn btn--sm btn--ink" wire:click="restore({{ $item->id }})" wire:loading.attr="disabled">{{ __('Put back') }}</button>
                                 @if ($canForgetAny || (string) $item->deleted_by === (string) request()->user()?->id)
                                     <button type="button" class="link-button bin-list__forget" wire:click="forget({{ $item->id }})"
-                                            wire:confirm="Delete “{{ \Illuminate\Support\Str::limit($item->title, 40) }}” for good? It can’t come back after this.">{{ __('Delete for good') }}</button>
+                                            wire:confirm="{{ __('Delete “:name” for good? It can’t come back after this.', ['name' => \Illuminate\Support\Str::limit($item->title, 40)]) }}">{{ __('Delete for good') }}</button>
                                 @endif
                             </span>
                         </li>
