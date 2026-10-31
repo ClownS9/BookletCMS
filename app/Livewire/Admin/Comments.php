@@ -44,6 +44,112 @@ class Comments extends Component
 
     public string $reply = '';
 
+    // The Dashboard's table ----------------------------------------------------
+
+    /** Search the pile: who wrote it, their email, what they said. */
+    #[Url(as: 'q', except: '')]
+    public string $search = '';
+
+    /** The drawer with one note open (the Dashboard opens it on a click). */
+    public bool $drawer = false;
+
+    /** @var list<int> notes ticked in the table */
+    public array $ticked = [];
+
+    public function mount(): void
+    {
+        // Opened at a note (?comment=…): show it straight away.
+        $this->drawer = $this->selected !== null;
+    }
+
+    public function closeDrawer(): void
+    {
+        $this->drawer = false;
+        $this->selected = null;
+        $this->reply = '';
+        unset($this->chosen);
+    }
+
+    /** Approve, spam or send back one note, from its row. */
+    public function setStatusFor(int $id, string $status): void
+    {
+        abort_unless(array_key_exists($status, self::STATUSES), 422);
+        $comment = Comment::find($id);
+        if (! $comment) {
+            return;
+        }
+        $this->moveTo([$comment], $status);
+        $this->stamp(['approved' => 'Approved — it’s on the site now.', 'spam' => 'Moved to spam.', 'waiting' => 'Back in the waiting pile.'][$status]);
+    }
+
+    /** The same for every ticked note. */
+    public function setStatusTicked(string $status): void
+    {
+        abort_unless(array_key_exists($status, self::STATUSES), 422);
+        $comments = Comment::query()->whereIn('id', array_slice(array_map('intval', $this->ticked), 0, 500))->get();
+        $this->moveTo($comments->all(), $status);
+        $this->ticked = [];
+        $n = $comments->count();
+        $this->stamp(match ($status) {
+            'approved' => trans_choice(':count approved — on the site now.|:count approved — on the site now.', $n),
+            'spam' => trans_choice(':count moved to spam.|:count moved to spam.', $n),
+            default => trans_choice(':count back in the waiting pile.|:count back in the waiting pile.', $n),
+        });
+    }
+
+    /** Into the bin, one or the ticked ones (each with its replies). */
+    public function binOne(int $id): void
+    {
+        $comment = Comment::find($id);
+        if ($comment) {
+            $binned = \App\Support\Bin::comment($comment);
+            if ($this->selected === $id) {
+                $this->selected = null;
+            }
+            unset($this->pile, $this->chosen);
+            $this->stamp('Moved to the bin.', undo: $binned->id);
+        }
+    }
+
+    public function binTicked(): void
+    {
+        $n = 0;
+        foreach (Comment::query()->whereIn('id', array_slice(array_map('intval', $this->ticked), 0, 500))->get() as $comment) {
+            if (Comment::find($comment->id)) { // a reply may have gone with its note already
+                \App\Support\Bin::comment($comment);
+                $n++;
+            }
+        }
+        $this->ticked = [];
+        $this->selected = null;
+        unset($this->pile, $this->chosen);
+        $this->stamp(trans_choice(':count moved to the bin.|:count moved to the bin.', $n));
+    }
+
+    public function tickAll(array $ids): void
+    {
+        $ids = array_values(array_map('intval', array_filter($ids, 'is_numeric')));
+        $this->ticked = array_diff($ids, $this->ticked) === []
+            ? array_values(array_diff($this->ticked, $ids))
+            : array_values(array_unique(array_merge($this->ticked, $ids)));
+    }
+
+    /** @param  iterable<Comment>  $comments */
+    protected function moveTo(iterable $comments, string $status): void
+    {
+        foreach ($comments as $comment) {
+            if ($comment->status === $status) {
+                continue;
+            }
+            $comment->update(['status' => $status]);
+            ActivityLog::record(
+                $status === 'approved' ? 'approved a comment on' : ($status === 'spam' ? 'marked a comment as spam on' : 'moved a comment back to waiting on'),
+                'comments', 'comment', (string) $comment->id, $comment->entry()?->title(),
+            );
+        }
+        unset($this->pile, $this->chosen);
+    }
+
     #[Computed]
     public function pile()
     {
@@ -51,6 +157,10 @@ class Comments extends Component
         $pile = Comment::query()
             ->where(fn ($q) => $q->whereNull('parent_id')->orWhere('status', '!=', 'approved'))
             ->where('status', $this->status)
+            ->when(trim($this->search) !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->where('author_name', 'like', '%'.trim($this->search).'%')
+                ->orWhere('author_email', 'like', '%'.trim($this->search).'%')
+                ->orWhere('body', 'like', '%'.trim($this->search).'%')))
             ->with('parent')
             ->latest();
 
@@ -71,6 +181,8 @@ class Comments extends Component
 
     public function updatedStatus(): void
     {
+        $this->ticked = [];
+        $this->drawer = false;
         $this->selected = null;
         $this->reply = '';
         unset($this->pile, $this->chosen);
@@ -79,6 +191,7 @@ class Comments extends Component
     public function pick(int $id): void
     {
         $this->selected = $id;
+        $this->drawer = true;
         $this->reply = '';
         unset($this->chosen);
     }
@@ -175,7 +288,12 @@ class Comments extends Component
         $chosen = $this->chosen;
         $entry = $chosen ? Booklet::entries()->find($chosen->entry_id) : null;
 
-        return view('livewire.admin.comments', [
+        $desk = \App\Support\YourBook::desk();
+        if ($desk) {
+            $this->ticked = array_values(array_intersect(array_map('intval', $this->ticked), Comment::query()->pluck('id')->all()));
+        }
+
+        return view($desk ? 'livewire.admin.comments-table' : 'livewire.admin.comments', [
             'statuses' => self::STATUSES,
             'counts' => $counts,
             'entry' => $entry,

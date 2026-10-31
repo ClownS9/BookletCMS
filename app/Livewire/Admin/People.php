@@ -47,11 +47,33 @@ class People extends Component
 
     public string $inviteRole = 'writer';
 
-    /** Shown once after an invite, so the admin can pass it on. */
+    // The Dashboard's table ----------------------------------------------------
+
+    /** Search everyone by name or email. */
+    #[Url(as: 'q', except: '')]
+    public string $search = '';
+
+    /** Only one role: a role key, or '' for everyone. */
+    #[Url(as: 'role', except: '')]
+    public string $only = '';
+
+    /** The drawer with one person (or one library card) open. */
+    public bool $drawer = false;
+
+    public function closeDrawer(): void
+    {
+        $this->drawer = false;
+        $this->card = null;
+        $this->temporaryPassword = null;
+    }
+
+        /** Shown once after an invite, so the admin can pass it on. */
     public ?string $temporaryPassword = null;
 
     public function mount(): void
     {
+        // Opened at someone (?person=…): the Dashboard shows them straight away.
+        $this->drawer = $this->selected !== null;
         $this->selected ??= request()->user()?->id;
         $this->role = (string) $this->chosen?->role;
         // "Invite someone" on the People sticky note opens the form straight away.
@@ -73,6 +95,8 @@ class People extends Component
     public function pick(int $id): void
     {
         $this->selected = $id;
+        $this->drawer = true;
+        $this->card = null;
         $this->temporaryPassword = null;
         unset($this->chosen);
         $this->role = (string) $this->chosen?->role;
@@ -144,6 +168,14 @@ class People extends Component
         $this->stamp('Two-step sign-in reset. They can sign in with their password and set it up again.');
     }
 
+    /** Remove someone from their row's menu. */
+    public function removeOne(int $id): void
+    {
+        $this->selected = $id;
+        unset($this->chosen);
+        $this->remove();
+    }
+
     public function remove(): void
     {
         abort_unless($this->canManage, 403);
@@ -160,6 +192,7 @@ class People extends Component
         $this->selected = request()->user()?->id;
         unset($this->chosen);
         $this->role = (string) $this->chosen?->role;
+        $this->drawer = false;
         $this->stamp('Removed from the book.');
     }
 
@@ -175,6 +208,7 @@ class People extends Component
     {
         abort_unless($this->canManage, 403);
         $this->card = 'new';
+        $this->drawer = true;
         $this->cardForm = ['name' => '', 'about' => '', 'tone' => 'sky', 'base' => 'writer', 'chapters' => $this->defaultChapters('writer'), 'media' => true, 'stacy' => true];
         $this->resetErrorBag();
     }
@@ -183,6 +217,7 @@ class People extends Component
     {
         $role = Role::findOrFail($id);
         $this->card = (string) $role->id;
+        $this->drawer = true;
         $this->cardForm = [
             'name' => $role->name, 'about' => (string) $role->about, 'tone' => $role->tone, 'base' => $role->base,
             'chapters' => Booklet::collections()->all()->mapWithKeys(fn ($c) => [$c->handle() => $role->access($c->handle())])->all(),
@@ -194,6 +229,12 @@ class People extends Component
     public function closeCard(): void
     {
         $this->card = null;
+        $this->drawer = false;
+    }
+
+    public function clearFilters(): void
+    {
+        $this->reset('search', 'only');
     }
 
     /** Switching what it acts like resets chapters that would now be out of reach. */
@@ -263,6 +304,7 @@ class People extends Component
         ActivityLog::record('tore up the library card', 'people', 'role', $role->key, $role->name, ['moved' => $moved]);
         $role->delete();
         $this->card = null;
+        $this->drawer = false;
         $this->stamp($moved ? __('Card torn up.').' '.trans_choice($role->base === 'editor' ? ':count person went back to being an editor.|:count people went back to being editors.' : ':count person went back to being a writer.|:count people went back to being writers.', $moved) : __('Card torn up.'));
     }
 
@@ -286,7 +328,21 @@ class People extends Component
             ? $entries->filter(fn (Entry $e) => (string) $e->get('author') === (string) $chosen->id)
             : collect();
 
-        return view('livewire.admin.people', [
+        $desk = \App\Support\YourBook::desk();
+        $roles = Role::choices();
+        if (! array_key_exists($this->only, $roles)) {
+            $this->only = '';
+        }
+        $written = $desk ? $entries->countBy(fn (Entry $e) => (string) $e->get('author')) : collect();
+        $shown = $desk ? $people
+            ->when($this->only !== '', fn ($c) => $c->where('role', $this->only))
+            ->when(trim($this->search) !== '', fn ($c) => $c->filter(fn (User $u) => \Illuminate\Support\Str::contains(
+                \Illuminate\Support\Str::lower($u->name.' '.$u->email.' '.$u->byline), \Illuminate\Support\Str::lower(trim($this->search)))))
+            ->values() : $people;
+
+        return view($desk ? 'livewire.admin.people-table' : 'livewire.admin.people', [
+            'shown' => $shown,
+            'written' => $written,
             'people' => $people,
             'online' => $people->filter->isOnline()->count(),
             'roles' => Role::choices(),
