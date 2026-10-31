@@ -1269,3 +1269,26 @@ html { overflow-x: clip; } /* edge-to-edge pictures don't leave a sideways scrol
 
 /* A tall logo stays in proportion on a phone */
 @media (max-width: 640px) { .brand__logo { height: min(var(--logo-h, 32px), 44px); } }
+
+/* Dropdown lists on the site: where the browser lets a page draw them (Chrome
+   and Edge), a card in the site's colours with the accent on the chosen one. */
+select option:checked { background: color-mix(in srgb, var(--accent) 28%, var(--paper)); color: var(--ink); }
+@supports (appearance: base-select) {
+    select:not([multiple], [size]), select:not([multiple], [size])::picker(select) { appearance: base-select !important; }
+    select:not([multiple], [size]) { align-items: center; }
+    select:not([multiple], [size])::picker-icon { color: var(--faint, currentColor); transition: transform .18s ease; }
+    select:not([multiple], [size]):open::picker-icon { transform: rotate(180deg); }
+    select::picker(select) {
+        min-width: anchor-size(width); max-height: min(360px, 60vh); margin: 6px 0; padding: 6px; overflow-y: auto;
+        border: 1px solid var(--rule); border-radius: 12px; background: var(--paper); color: var(--ink);
+        box-shadow: 0 14px 32px rgba(30, 28, 24, .16); scrollbar-width: thin;
+        transition: opacity .14s ease, transform .14s ease, overlay .14s allow-discrete, display .14s allow-discrete;
+    }
+    @starting-style { select:open::picker(select) { opacity: 0; transform: translateY(-4px); } }
+    select option { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 6px 12px; border-radius: 8px; background: transparent; cursor: pointer; }
+    select option:hover, select option:focus-visible { background: var(--paper-2, rgba(30, 28, 24, .05)); outline: none; }
+    select option:checked { background: color-mix(in srgb, var(--accent) 24%, var(--paper)); font-weight: 600; }
+    select option::checkmark { order: 1; margin-left: auto; color: color-mix(in srgb, var(--accent) 72%, var(--ink)); }
+    select option:disabled { opacity: .45; cursor: default; }
+    @media (prefers-reduced-motion: reduce) { select::picker(select) { transition: none; } }
+}

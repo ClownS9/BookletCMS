@@ -33,4 +33,14 @@ class FocusColourTest extends TestCase
         $this->assertStringContainsString('body.layout-dashboard { --focus: var(--d-accent) !important; }', $css);
         $this->assertStringContainsString(':focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 72%, var(--ink));', (string) file_get_contents(public_path('booklet/site.css')));
     }
+
+    public function test_dropdown_lists_are_drawn_to_match_each_layout(): void
+    {
+        $admin = (string) file_get_contents(public_path('booklet/admin.css'));
+        $this->assertStringContainsString('@supports (appearance: base-select)', $admin);
+        $this->assertStringContainsString('select::picker(select) {', $admin);
+        $this->assertStringContainsString('body.layout-dashboard select::picker(select) {', $admin);
+        $this->assertStringContainsString('body.layout-dashboard select option:checked { background: var(--d-sel)', $admin);
+        $this->assertStringContainsString('select::picker(select) {', (string) file_get_contents(public_path('booklet/site.css')));
+    }
 }

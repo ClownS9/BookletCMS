@@ -8262,3 +8262,78 @@ body.layout-dashboard :is(.search, .slug, .editor-box):focus-within { outline: n
 body.layout-dashboard .slug:focus-within, body.layout-dashboard .editor-box:focus-within { border-color: var(--d-accent); box-shadow: var(--d-ring); }
 /* Selected words take the theme's tint too */
 body.layout-dashboard ::selection { background: color-mix(in srgb, var(--d-accent) 24%, transparent); color: inherit; }
+
+/* ==========================================================================
+   Dropdown lists. Where the browser lets a page draw a select's list
+   (Chrome and Edge, "customizable select"), it's drawn to match the layout:
+   a paper card in the Book layout with the chapter's colour on the chosen
+   one, a panel in the Dashboard layout with the theme's accent and a tick.
+   Elsewhere the browser's own list keeps the right light or dark colours.
+   ========================================================================== */
+select option:checked { background: color-mix(in srgb, var(--focus) 30%, var(--paper)); color: var(--ink); }
+body.layout-dashboard select option:checked { background: var(--d-sel); }
+
+@supports (appearance: base-select) {
+    select:not([multiple], [size]), select:not([multiple], [size])::picker(select) { appearance: base-select !important; }
+    select:not([multiple], [size]) { align-items: center; }
+    /* Our own chevron is drawn on fields already; other selects show the picker's, quietly */
+    select:not([multiple], [size])::picker-icon { color: var(--faint); transition: transform .18s ease; }
+    :is(.field select, select.input)::picker-icon { display: none; }
+    select:not([multiple], [size]):open::picker-icon { transform: rotate(180deg); }
+
+    /* The list: a card on the paper */
+    select::picker(select) {
+        min-width: anchor-size(width);
+        max-height: min(360px, 60vh);
+        margin: 6px 0;
+        padding: 6px;
+        overflow-y: auto;
+        border: 1px solid var(--rule-2);
+        border-radius: 12px;
+        background: var(--paper);
+        color: var(--ink);
+        box-shadow: 0 2px 0 var(--edge-2), 0 14px 32px rgba(30, 28, 24, .18);
+        scrollbar-width: thin;
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity .14s ease, transform .14s ease, overlay .14s allow-discrete, display .14s allow-discrete;
+    }
+    @starting-style { select:open::picker(select) { opacity: 0; transform: translateY(-4px); } }
+    select option {
+        display: flex; align-items: center; gap: 10px;
+        min-height: 36px; padding: 6px 12px 6px 10px;
+        border-radius: 8px;
+        background: transparent;
+        font-size: 15px; line-height: 1.35;
+        cursor: pointer;
+        transition: background-color .1s ease;
+    }
+    select option:hover, select option:focus-visible { background: var(--hover); outline: none; }
+    select option:checked { background: color-mix(in srgb, var(--focus) 32%, var(--paper)); font-weight: 600; }
+    select option:checked:hover, select option:checked:focus-visible { background: color-mix(in srgb, var(--focus) 44%, var(--paper)); }
+    /* The chosen one wears a sticker-dot in the chapter's colour, where the tick would be */
+    select option::checkmark { content: ''; order: -1; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--focus); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 18%, transparent); }
+    select option:not(:checked)::checkmark { visibility: hidden; }
+    select option:disabled { opacity: .45; cursor: default; }
+    select optgroup { padding-top: 4px; }
+    select optgroup legend, select optgroup::before { padding: 6px 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); }
+
+    /* Dashboard: a panel like its other menus; the accent and a tick on the chosen one */
+    body.layout-dashboard select::picker(select) {
+        margin: 4px 0; padding: 4px;
+        border-color: var(--d-line); border-radius: 8px;
+        background: var(--d-panel);
+        box-shadow: 0 12px 32px rgba(16, 18, 24, .16), 0 2px 6px rgba(16, 18, 24, .06);
+    }
+    body.layout-dashboard.night select::picker(select) { box-shadow: 0 12px 32px rgba(0, 0, 0, .5); }
+    body.layout-dashboard select option { min-height: 32px; padding: 5px 10px; border-radius: 6px; font-size: 13.5px; }
+    body.layout-dashboard select option:hover, body.layout-dashboard select option:focus-visible { background: var(--d-hover); }
+    body.layout-dashboard select option:checked { background: var(--d-sel); color: var(--d-accent-text); font-weight: 600; }
+    body.layout-dashboard select option:checked:hover, body.layout-dashboard select option:checked:focus-visible { background: color-mix(in srgb, var(--d-accent) 16%, var(--d-panel)); }
+    body.layout-dashboard select option::checkmark {
+        content: '✓'; order: 1; width: auto; height: auto; margin-left: auto; border-radius: 0; background: none; box-shadow: none;
+        color: var(--d-accent); font-size: 13px; font-weight: 700;
+    }
+    body.layout-dashboard select::picker-icon { color: var(--faint); }
+    @media (prefers-reduced-motion: reduce) { select::picker(select) { transition: none; } }
+}
