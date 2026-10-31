@@ -84,6 +84,7 @@ class Contents extends Component
         $preferences = (array) $user->preferences;
         $preferences['night'] = ! ($preferences['night'] ?? false);
         $user->update(['preferences' => $preferences]);
+        \App\Support\YourBook::save($user->fresh(), ['night_auto' => false]);
 
         $this->redirectRoute('admin.contents', navigate: true);
     }
