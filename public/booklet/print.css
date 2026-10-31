@@ -41,7 +41,7 @@ body { background: var(--desk); color: var(--ink); font-family: var(--serif); -w
 .press__back:hover { opacity: 1; }
 .press__what { flex: 1 1 200px; display: flex; flex-direction: column; min-width: 0; }
 .press__what strong { font-family: var(--serif); font-size: 17px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.press__status { font-family: var(--mono); font-size: 12px; opacity: .65; }
+.press__status { font-family: var(--label, var(--mono)); font-size: 12px; opacity: .65; }
 .press__do { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .press__tip { font-size: 12.5px; opacity: .65; }
 .press__print {

@@ -29,7 +29,7 @@ class YourBook
         'booklet' => ['Booklet', 'As it comes', "'Newsreader', Georgia, serif", "'Instrument Sans', system-ui, sans-serif", null],
         'classic' => ['Classic', 'Bookish and warm', "'Lora', Georgia, serif", "'Source Sans 3', system-ui, sans-serif", 'family=Lora:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;500;600;700'],
         'plain' => ['Plain', 'One clean sans', "'Instrument Sans', system-ui, sans-serif", "'Instrument Sans', system-ui, sans-serif", null],
-        'plex' => ['Plex', 'Crisp and technical', "'IBM Plex Serif', Georgia, serif", "'IBM Plex Sans', system-ui, sans-serif", 'family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700'],
+        'plex' => ['Plex', 'Crisp and technical', "'IBM Plex Serif', Georgia, serif", "'IBM Plex Sans', system-ui, sans-serif", 'family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500'],
         'friendly' => ['Friendly', 'Soft and round', "'Fraunces', Georgia, serif", "'Nunito', system-ui, sans-serif", 'family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Nunito:wght@400;500;600;700'],
         'easy' => ['Easy reading', 'Clearest letters', "'Atkinson Hyperlegible', system-ui, sans-serif", "'Atkinson Hyperlegible', system-ui, sans-serif", 'family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400'],
     ];
@@ -139,6 +139,23 @@ class YourBook
             'no-turn' => ! $look['turn'],
             'desk-narrow' => $look['layout'] === 'dashboard' && (bool) ($user?->preferences['sidebar_narrow'] ?? false),
         ];
+    }
+
+    /**
+     * The chosen fonts as custom properties, for admin pieces that live
+     * outside the admin's pages (the page builder's panel on the site).
+     */
+    public static function uiFontStyle(?User $user): string
+    {
+        $key = self::of($user)['font'];
+        [, , $serif, $sans] = self::FONTS[$key] ?? self::FONTS['booklet'];
+        $label = match ($key) {
+            'booklet' => "'JetBrains Mono', ui-monospace, monospace",
+            'plex' => "'IBM Plex Mono', ui-monospace, monospace",
+            default => $sans,
+        };
+
+        return '--ui-serif: '.$serif.'; --ui-sans: '.$sans.'; --ui-label: '.$label.';';
     }
 
     /** The Google Fonts address for the chosen fonts, when they aren't Booklet's own. */

@@ -229,6 +229,8 @@ class Look
         $vars = [
             '--serif' => $fonts[$look['title_font']][2] ?? self::FONTS['newsreader'][2],
             '--sans' => $fonts[$look['label_font']][2] ?? self::FONTS['instrument'][2],
+            // Small labels (the eyebrows, dates, captions) wear the "Menu and labels" font too.
+            '--label' => $fonts[$look['label_font']][2] ?? self::FONTS['instrument'][2],
             '--accent' => $look['accent'],
             '--on-accent' => self::onAccent($look['accent']),
         ];

@@ -34,7 +34,7 @@
         host.dataset.ready = '1';
         document.body.appendChild(host);
         host.hidden = false;
-        host.setAttribute('style', 'position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483000;');
+        host.setAttribute('style', 'position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483000; ' + (host.dataset.fonts || ''));
         const shadow = host.attachShadow({ mode: 'open' });
         shadow.innerHTML = `<link rel="stylesheet" href="${host.dataset.css}">
             <button type="button" class="start" part="start"><span aria-hidden="true">✎</span> <span class="start__words"></span></button>
@@ -60,7 +60,7 @@
 
     document.body.appendChild(host);
     host.hidden = false;
-    host.setAttribute('style', 'position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483000;');
+    host.setAttribute('style', 'position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483000; ' + (host.dataset.fonts || ''));
     const ui = host.attachShadow({ mode: 'open' });
     ui.innerHTML = `
         <link rel="stylesheet" href="${cfg.css}">
