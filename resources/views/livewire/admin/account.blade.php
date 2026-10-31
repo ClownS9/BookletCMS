@@ -269,7 +269,7 @@
                 </div>
 
                 <div class="field">
-                    <label for="stacy-rate">{{ __('Speed') }} <span style="font-family: var(--mono); font-size: 12px; color: var(--muted)" x-text="Number($wire.stacyRate).toFixed(1) + '×'"></span></label>
+                    <label for="stacy-rate">{{ __('Speed') }} <span style="font-family: var(--label); font-size: 12px; color: var(--muted)" x-text="Number($wire.stacyRate).toFixed(1) + '×'"></span></label>
                     <input id="stacy-rate" type="range" min="0.6" max="2" step="0.1" wire:model="stacyRate" class="range">
                 </div>
 

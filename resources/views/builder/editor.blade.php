@@ -10,7 +10,8 @@
     // The editor speaks the book's language (the page around it, the site's).
     $bookLang = \App\Support\BookLanguage::for(request());
 @endphp
-<div id="pb-editor" hidden
+@if ($uiFonts = \App\Support\YourBook::fontLink(request()->user()))<link rel="stylesheet" href="{{ $uiFonts }}">@endif
+<div id="pb-editor" hidden data-fonts="{{ \App\Support\YourBook::uiFontStyle(request()->user()) }}"
      data-edit="{{ route('builder.edit', $target) }}"
      data-act="{{ route('builder.act', $target) }}"
      data-preview="{{ route('builder.preview', $target) }}"
