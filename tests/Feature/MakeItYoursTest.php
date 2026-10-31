@@ -102,6 +102,31 @@ class MakeItYoursTest extends TestCase
         $this->assertTrue($this->admin->fresh()->preferences['night']);
     }
 
+    public function test_the_night_switch_sets_what_the_page_showed_and_stops_following_the_device(): void
+    {
+        // Following the device, which is dark: the switch showed on, so pressing it means off.
+        Livewire::actingAs($this->admin)->test(MakeItYours::class)->call('night', 'device');
+        $this->actingAs($this->admin->fresh())->postJson(route('admin.night'), ['to' => 'off'])->assertOk()->assertJson(['night' => false]);
+        $fresh = $this->admin->fresh();
+        $this->assertFalse($fresh->preferences['night']);
+        $this->assertFalse(YourBook::of($fresh)['night_auto']);
+
+        $this->actingAs($fresh)->postJson(route('admin.night'), ['to' => 'on'])->assertJson(['night' => true]);
+        $this->assertTrue($this->admin->fresh()->preferences['night']);
+    }
+
+    public function test_every_night_switch_is_marked_and_the_page_starts_dark_with_a_dark_device(): void
+    {
+        YourBook::save($this->admin, ['layout' => 'dashboard']);
+        Livewire::actingAs($this->admin->fresh())->test(MakeItYours::class)->call('night', 'device');
+        $html = $this->actingAs($this->admin->fresh())->get(route('admin.people'))->assertOk()->getContent();
+
+        $this->assertSame(2, substr_count($html, 'data-night-switch'), 'the top bar icon and the switch in your menu');
+        $this->assertSame(2, substr_count($html, 'data-night-form'));
+        $this->assertStringContainsString("document.body.dataset.nightAuto === 'on'", $html, 'dark before anything paints');
+        $this->assertDoesNotMatchRegularExpression('/<body class="[^"]*\bnight\b/', $html, 'following the device: the device decides, not an old choice');
+    }
+
     public function test_putting_back_booklets_own_look(): void
     {
         YourBook::save($this->admin, ['layout' => 'dashboard', 'theme' => 'rose', 'turn' => false]);

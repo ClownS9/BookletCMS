@@ -192,12 +192,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', TouchLastSeen::class
     Route::get('/account', Admin\Account::class)->name('account');
     Route::get('/account/yours', Admin\MakeItYours::class)->name('account.yours');
     Route::get('/account/menu', Admin\YourMenu::class)->name('account.menu');
-    // Night reading on or off, from anywhere (the Dashboard's own menu).
+    // Night reading on or off, from anywhere (the top bar, your menu, the Contents page).
+    // The page says what it should be ('to': on or off, from what's showing,
+    // which may be the device's own dark mode); a choice made here stops
+    // following the device. Without a 'to' it simply flips.
     Route::post('/night', function (\Illuminate\Http\Request $request) {
         $user = $request->user();
-        $user->forceFill(['preferences' => array_merge((array) $user->preferences, ['night' => ! ($user->preferences['night'] ?? false)])])->save();
+        $to = $request->input('to');
+        $on = in_array($to, ['on', 'off'], true) ? $to === 'on' : ! ($user->preferences['night'] ?? false);
+        $user->forceFill(['preferences' => array_merge((array) $user->preferences, ['night' => $on])])->save();
+        \App\Support\YourBook::save($user->fresh(), ['night_auto' => false]);
 
-        return back();
+        return $request->expectsJson() ? response()->json(['night' => $on]) : back();
     })->name('night');
     // The Dashboard's sidebar folded to a narrow rail, or open: each person's own.
     Route::post('/sidebar', function (\Illuminate\Http\Request $request) {
